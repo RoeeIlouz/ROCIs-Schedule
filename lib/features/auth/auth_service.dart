@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rocis_schedule/shared/services/local_db_service.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -45,7 +46,14 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    debugPrint('Signing out user...');
+    
+    // Clear local database cache to prevent data leakage between users
+    await LocalDbService.clearCache();
+    debugPrint('Local database cache cleared');
+    
     await _googleSignIn.signOut();
     await _auth.signOut();
+    debugPrint('Sign out complete');
   }
 }

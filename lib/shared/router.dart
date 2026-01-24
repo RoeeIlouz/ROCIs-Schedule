@@ -3,15 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/features/auth/login_screen.dart';
 import 'package:rocis_schedule/features/onboarding/onboarding_screen.dart';
 import 'package:rocis_schedule/features/onboarding/profile_setup_screen.dart';
-import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/courses/add_course_screen.dart';
-import 'package:rocis_schedule/features/profile/profile_screen.dart';
-import 'package:rocis_schedule/features/schedule/schedule_screen.dart';
 import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
-import 'package:rocis_schedule/features/friends/friends_screen.dart';
 import 'package:rocis_schedule/features/friends/schedule_comparison_screen.dart';
-import 'package:rocis_schedule/features/profile/settings_screen.dart';
-import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart';
 import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
 
@@ -35,48 +29,50 @@ class AppRouter {
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) => MainNavigationWrapper(child: child),
+        builder: (context, state, child) => MainNavigationWrapper(
+          initialRoute: state.uri.toString(),
+          child: child,
+        ),
         routes: [
           GoRoute(
             path: '/schedule',
-            builder: (context, state) => const ScheduleScreen(),
+            builder: (context, state) => const SizedBox.shrink(),
           ),
           GoRoute(
             path: '/courses',
-            builder: (context, state) => const CourseListScreen(),
+            builder: (context, state) => const SizedBox.shrink(),
           ),
           GoRoute(
             path: '/friends',
-            builder: (context, state) => const FriendsScreen(),
+            builder: (context, state) => const SizedBox.shrink(),
           ),
           GoRoute(
             path: '/assignments',
-            builder: (context, state) => const AssignmentListScreen(),
-          ),
-          GoRoute(
-            path: '/assignments/add',
-            builder: (context, state) => const AddAssignmentScreen(),
-          ),
-          GoRoute(
-            path: '/profile',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) => const SizedBox.shrink(),
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
-          ),
-          GoRoute(
-            path: '/friends/compare',
-            builder: (context, state) {
-              final extra = state.extra as Map<String, dynamic>;
-              return ScheduleComparisonScreen(
-                myEvents: extra['myEvents'],
-                friendEvents: extra['friendEvents'],
-                friendName: extra['friendName'],
-              );
-            },
+            builder: (context, state) => const SizedBox.shrink(),
           ),
         ],
+      ),
+      // Routes that should not be part of the swipeable navigation
+      GoRoute(
+        path: '/assignments/add',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AddAssignmentScreen(),
+      ),
+      GoRoute(
+        path: '/friends/compare',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return ScheduleComparisonScreen(
+            myEvents: extra['myEvents'],
+            friendEvents: extra['friendEvents'],
+            friendName: extra['friendName'],
+          );
+        },
       ),
       GoRoute(
         path: '/events/add',
@@ -87,6 +83,11 @@ class AppRouter {
         path: '/courses/add',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const AddCourseScreen(),
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ProfileSetupScreen(isEditing: true),
       ),
     ],
   );

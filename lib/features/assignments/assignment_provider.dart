@@ -39,6 +39,20 @@ class AssignmentProvider extends ChangeNotifier {
     _firestore.updateAssignment(uid, assignment);
   }
 
+  /// Add assignment from sync without triggering another sync
+  /// Used when downloading data from Firestore
+  Future<void> addAssignmentFromSync(Assignment assignment) async {
+    await _db.insertAssignment(assignment);
+    // Check if assignment already exists in memory
+    final existingIndex = _assignments.indexWhere((a) => a.id == assignment.id);
+    if (existingIndex >= 0) {
+      _assignments[existingIndex] = assignment;
+    } else {
+      _assignments.add(assignment);
+    }
+    notifyListeners();
+  }
+
   Future<void> toggleAssignmentCompletion(String id) async {
     final index = _assignments.indexWhere((a) => a.id == id);
     if (index != -1) {
@@ -65,5 +79,11 @@ class AssignmentProvider extends ChangeNotifier {
 
   List<Assignment> getAssignmentsByCourse(String courseId) {
     return _assignments.where((a) => a.courseId == courseId).toList();
+  }
+
+  /// Clear all local data (used when user signs out)
+  Future<void> clearLocalData() async {
+    _assignments.clear();
+    notifyListeners();
   }
 }

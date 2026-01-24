@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
+import 'package:rocis_schedule/shared/services/sync_service.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
@@ -17,6 +18,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handlePostLogin(String uid) async {
     final profile = await context.read<FirestoreService>().getProfile(uid);
+
+    // Trigger initial sync to download user data from Firestore
+    // This ensures the user sees their cloud data on this device
+    final syncService = context.read<SyncService?>();
+    if (syncService != null) {
+      debugPrint('Triggering initial sync after login...');
+      await syncService.performInitialSync();
+    }
+
     if (mounted) {
       if (profile.exists) {
         context.go('/schedule');
@@ -56,18 +66,14 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 3),
-              // Minimalist circular placeholder
-              Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.calendar_today_rounded,
-                  size: 60,
-                  color: Colors.black.withOpacity(0.8),
+              // App Logo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 180,
+                  height: 180,
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(height: 48),

@@ -125,6 +125,22 @@ class FirestoreService {
         .delete();
   }
 
+  Future<void> removeFriend(String uid, String friendUid) async {
+    final batch = _db.batch();
+
+    // Remove from my friends
+    batch.delete(
+      _db.collection('users').doc(uid).collection('friends').doc(friendUid),
+    );
+
+    // Remove myself from friend's friends
+    batch.delete(
+      _db.collection('users').doc(friendUid).collection('friends').doc(uid),
+    );
+
+    await batch.commit();
+  }
+
   // Assignments
   Future<void> updateAssignment(String uid, Assignment assignment) async {
     try {
@@ -149,6 +165,101 @@ class FirestoreService {
           .delete();
     } catch (e) {
       debugPrint('Firestore Error (Assignment Delete): $e');
+    }
+  }
+
+  // Download Methods for User Data Sync
+  Future<List<Course>> downloadCourses(String uid) async {
+    try {
+      debugPrint('Firestore: Downloading courses for $uid...');
+      final snapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('courses')
+          .get();
+      final courses = snapshot.docs.map((doc) => Course.fromMap(doc.data())).toList();
+      debugPrint('Firestore: Downloaded ${courses.length} courses');
+      return courses;
+    } catch (e) {
+      debugPrint('Firestore Error (Download Courses): $e');
+      return [];
+    }
+  }
+
+  Future<List<ScheduleEvent>> downloadEvents(String uid) async {
+    try {
+      debugPrint('Firestore: Downloading events for $uid...');
+      final snapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('events')
+          .get();
+      final events = snapshot.docs.map((doc) => ScheduleEvent.fromMap(doc.data())).toList();
+      debugPrint('Firestore: Downloaded ${events.length} events');
+      return events;
+    } catch (e) {
+      debugPrint('Firestore Error (Download Events): $e');
+      return [];
+    }
+  }
+
+  Future<List<Assignment>> downloadAssignments(String uid) async {
+    try {
+      debugPrint('Firestore: Downloading assignments for $uid...');
+      final snapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('assignments')
+          .get();
+      final assignments = snapshot.docs.map((doc) => Assignment.fromMap(doc.data())).toList();
+      debugPrint('Firestore: Downloaded ${assignments.length} assignments');
+      return assignments;
+    } catch (e) {
+      debugPrint('Firestore Error (Download Assignments): $e');
+      return [];
+    }
+  }
+
+  // Delete all user data from Firestore collections (for cleanup)
+  Future<void> deleteAllUserData(String uid) async {
+    try {
+      debugPrint('Firestore: Deleting all data for $uid...');
+      final batch = _db.batch();
+      
+      // Delete courses
+      final coursesSnapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('courses')
+          .get();
+      for (var doc in coursesSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      // Delete events
+      final eventsSnapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('events')
+          .get();
+      for (var doc in eventsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      // Delete assignments
+      final assignmentsSnapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('assignments')
+          .get();
+      for (var doc in assignmentsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      await batch.commit();
+      debugPrint('Firestore: All user data deleted');
+    } catch (e) {
+      debugPrint('Firestore Error (Delete All User Data): $e');
     }
   }
 }

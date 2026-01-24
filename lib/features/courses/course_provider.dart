@@ -29,6 +29,20 @@ class CourseProvider extends ChangeNotifier {
     await loadData();
   }
 
+  /// Add course from sync without triggering another sync
+  /// Used when downloading data from Firestore
+  Future<void> addCourseFromSync(Course course) async {
+    await _dbService.insertCourse(course);
+    // Check if course already exists in memory
+    final existingIndex = _courses.indexWhere((c) => c.id == course.id);
+    if (existingIndex >= 0) {
+      _courses[existingIndex] = course;
+    } else {
+      _courses.add(course);
+    }
+    notifyListeners();
+  }
+
   Future<void> deleteCourse(String id) async {
     await _dbService.deleteCourse(id);
     await loadData();
@@ -39,6 +53,20 @@ class CourseProvider extends ChangeNotifier {
     await loadData();
   }
 
+  /// Add event from sync without triggering another sync
+  /// Used when downloading data from Firestore
+  Future<void> addEventFromSync(ScheduleEvent event) async {
+    await _dbService.insertEvent(event);
+    // Check if event already exists in memory
+    final existingIndex = _events.indexWhere((e) => e.id == event.id);
+    if (existingIndex >= 0) {
+      _events[existingIndex] = event;
+    } else {
+      _events.add(event);
+    }
+    notifyListeners();
+  }
+
   Future<void> deleteEvent(String id) async {
     await _dbService.deleteEvent(id);
     await loadData();
@@ -46,5 +74,12 @@ class CourseProvider extends ChangeNotifier {
 
   List<ScheduleEvent> getEventsByCourse(String courseId) {
     return _events.where((e) => e.courseId == courseId).toList();
+  }
+
+  /// Clear all local data (used when user signs out)
+  Future<void> clearLocalData() async {
+    _courses.clear();
+    _events.clear();
+    notifyListeners();
   }
 }

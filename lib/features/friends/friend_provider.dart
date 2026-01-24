@@ -55,6 +55,11 @@ class FriendProvider extends ChangeNotifier {
     await loadRequests();
   }
 
+  Future<void> removeFriend(String friendUid) async {
+    await _firestoreService.removeFriend(uid, friendUid);
+    await loadFriends();
+  }
+
   Future<void> loadRequests() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('users')

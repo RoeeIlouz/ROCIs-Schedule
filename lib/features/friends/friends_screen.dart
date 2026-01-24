@@ -104,6 +104,35 @@ class _FriendsList extends StatelessWidget {
   final List<Friend> friends;
   const _FriendsList({required this.friends});
 
+  void _showRemoveFriendDialog(BuildContext context, Friend friend) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.translate('remove_friend')),
+        content: Text(l10n.translate('confirm_remove_friend')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () async {
+              await context.read<FriendProvider?>()?.removeFriend(friend.uid);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            },
+            child: Text(
+              l10n.translate('remove'),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -165,6 +194,7 @@ class _FriendsList extends StatelessWidget {
                 },
               );
             },
+            onLongPress: () => _showRemoveFriendDialog(context, friend),
           ),
         );
       },

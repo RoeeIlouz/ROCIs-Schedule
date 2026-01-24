@@ -44,10 +44,56 @@ class AssignmentListScreen extends StatelessWidget {
               itemCount: assignments.length,
               itemBuilder: (context, index) {
                 final assignment = assignments[index];
-                final course = courseProvider.courses.firstWhere(
-                  (c) => c.id == assignment.courseId,
-                  orElse: () => throw Exception('Course not found'),
-                );
+                // Gracefully handle missing courses (can happen during sync or if course was deleted)
+                final course = courseProvider.courses
+                    .where((c) => c.id == assignment.courseId)
+                    .firstOrNull;
+
+                // Skip assignments with missing courses
+                if (course == null) {
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: Checkbox(
+                        value: assignment.isCompleted,
+                        onChanged: (v) {
+                          assignmentProvider.toggleAssignmentCompletion(
+                            assignment.id,
+                          );
+                        },
+                      ),
+                      title: Text(
+                        assignment.title,
+                        style: TextStyle(
+                          decoration: assignment.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.translate('unknown_course'),
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          Text(
+                            '${l10n.translate('due_date')}: ${DateFormat.yMMMd().format(assignment.dueDate)}',
+                          ),
+                        ],
+                      ),
+                      trailing: _buildPriorityChip(context, assignment.priority),
+                      onLongPress: () {
+                        _showDeleteDialog(
+                          context,
+                          assignmentProvider,
+                          assignment.id,
+                        );
+                      },
+                    ),
+                  );
+                }
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),

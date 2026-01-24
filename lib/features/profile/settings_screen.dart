@@ -51,7 +51,7 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.person_outline,
               title: l10n.translate('profile_info'),
               subtitle: l10n.translate('profile_subtitle'),
-              onTap: () => context.push('/profile-setup'),
+              onTap: () => context.push('/profile/edit'),
             ),
             const SizedBox(height: 24),
             _buildSectionHeader(context, l10n.translate('appearance')),
@@ -131,6 +131,13 @@ class SettingsScreen extends StatelessWidget {
               onChanged: isDark
                   ? (val) => themeProvider.setIsAmoled(val)
                   : null,
+            ),
+            _buildSwitchTile(
+              context,
+              icon: Icons.access_time_outlined,
+              title: l10n.translate('time_format_24h'),
+              value: themeProvider.use24HourFormat,
+              onChanged: (val) => themeProvider.setUse24HourFormat(val),
             ),
             const SizedBox(height: 24),
             _buildSectionHeader(context, l10n.translate('data_sync')),

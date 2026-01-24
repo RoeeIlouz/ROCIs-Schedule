@@ -6,16 +6,19 @@ class ThemeProvider extends ChangeNotifier {
   static const String _keyUseDynamicColor = 'use_dynamic_color';
   static const String _keyIsAmoled = 'is_amoled';
   static const String _keyLocale = 'locale';
+  static const String _keyUse24HourFormat = 'use_24_hour_format';
 
   ThemeMode _themeMode = ThemeMode.system;
   bool _useDynamicColor = true;
   bool _isAmoled = false;
   Locale? _locale;
+  bool _use24HourFormat = true; // Default to 24-hour format
 
   ThemeMode get themeMode => _themeMode;
   bool get useDynamicColor => _useDynamicColor;
   bool get isAmoled => _isAmoled;
   Locale? get locale => _locale;
+  bool get use24HourFormat => _use24HourFormat;
 
   ThemeProvider() {
     _loadSettings();
@@ -31,6 +34,7 @@ class ThemeProvider extends ChangeNotifier {
 
     _useDynamicColor = prefs.getBool(_keyUseDynamicColor) ?? true;
     _isAmoled = prefs.getBool(_keyIsAmoled) ?? false;
+    _use24HourFormat = prefs.getBool(_keyUse24HourFormat) ?? true;
 
     final localeCode = prefs.getString(_keyLocale);
     if (localeCode != null) {
@@ -78,5 +82,14 @@ class ThemeProvider extends ChangeNotifier {
     } else {
       await prefs.setString(_keyLocale, locale.languageCode);
     }
+  }
+
+  Future<void> setUse24HourFormat(bool value) async {
+    if (_use24HourFormat == value) return;
+    _use24HourFormat = value;
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyUse24HourFormat, value);
   }
 }

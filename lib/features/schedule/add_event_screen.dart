@@ -5,6 +5,7 @@ import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/widgets/app_button.dart';
 import 'package:rocis_schedule/shared/widgets/app_text_field.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
+import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -153,14 +154,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   Expanded(
                     child: ListTile(
                       title: Text(l10n.translate('start_time')),
-                      subtitle: Text(DateFormat.jm().format(_startTime)),
+                      subtitle: Text(_formatTime(context, _startTime)),
                       onTap: () => _pickTime(true),
                     ),
                   ),
                   Expanded(
                     child: ListTile(
                       title: Text(l10n.translate('end_time')),
-                      subtitle: Text(DateFormat.jm().format(_endTime)),
+                      subtitle: Text(_formatTime(context, _endTime)),
                       onTap: () => _pickTime(false),
                     ),
                   ),
@@ -222,6 +223,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
         ),
       ),
     );
+  }
+
+  String _formatTime(BuildContext context, DateTime time) {
+    final themeProvider = context.read<ThemeProvider>();
+    if (themeProvider.use24HourFormat) {
+      return DateFormat.Hm().format(time);
+    }
+    return DateFormat.jm().format(time);
   }
 
   String _getWeekdayName(int index) {

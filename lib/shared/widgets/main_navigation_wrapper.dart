@@ -1,47 +1,113 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
+import 'package:rocis_schedule/features/schedule/schedule_screen.dart';
+import 'package:rocis_schedule/features/courses/course_list_screen.dart';
+import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart';
+import 'package:rocis_schedule/features/friends/friends_screen.dart';
+import 'package:rocis_schedule/features/profile/settings_screen.dart';
 
-class MainNavigationWrapper extends StatelessWidget {
+class MainNavigationWrapper extends StatefulWidget {
   final Widget child;
+  final String initialRoute;
 
-  const MainNavigationWrapper({super.key, required this.child});
+  const MainNavigationWrapper({
+    super.key,
+    required this.child,
+    this.initialRoute = '/schedule',
+  });
+
+  @override
+  State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
+}
+
+class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
+  late PageController _pageController;
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = const [
+    ScheduleScreen(),
+    CourseListScreen(),
+    AssignmentListScreen(),
+    FriendsScreen(),
+    SettingsScreen(),
+  ];
+
+  final List<String> _routes = [
+    '/schedule',
+    '/courses',
+    '/assignments',
+    '/friends',
+    '/settings',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = _getIndexFromRoute(widget.initialRoute);
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void didUpdateWidget(MainNavigationWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final location = GoRouterState.of(context).uri.toString();
+    final newIndex = _getIndexFromRoute(location);
+    if (newIndex != _currentIndex) {
+      _currentIndex = newIndex;
+      _pageController.animateToPage(
+        _currentIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  int _getIndexFromRoute(String route) {
+    if (route.startsWith('/schedule')) return 0;
+    if (route.startsWith('/courses')) return 1;
+    if (route.startsWith('/assignments')) return 2;
+    if (route.startsWith('/friends')) return 3;
+    if (route.startsWith('/settings')) return 4;
+    return 0;
+  }
+
+  void _onPageChanged(int index) {
+    if (_currentIndex != index) {
+      setState(() => _currentIndex = index);
+      context.go(_routes[index]);
+    }
+  }
+
+  void _onDestinationSelected(int index) {
+    if (_currentIndex != index) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
     final l10n = AppLocalizations.of(context)!;
 
-    int currentIndex = 0;
-    if (location.startsWith('/schedule')) currentIndex = 0;
-    if (location.startsWith('/courses')) currentIndex = 1;
-    if (location.startsWith('/assignments')) currentIndex = 2;
-    if (location.startsWith('/friends')) currentIndex = 3;
-    if (location.startsWith('/profile')) currentIndex = 4;
-
     return Scaffold(
-      body: child,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        children: _pages,
+      ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              context.go('/schedule');
-              break;
-            case 1:
-              context.go('/courses');
-              break;
-            case 2:
-              context.go('/assignments');
-              break;
-            case 3:
-              context.go('/friends');
-              break;
-            case 4:
-              context.go('/profile');
-              break;
-          }
-        },
+        selectedIndex: _currentIndex,
+        onDestinationSelected: _onDestinationSelected,
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.calendar_today_outlined),
@@ -64,9 +130,9 @@ class MainNavigationWrapper extends StatelessWidget {
             label: l10n.translate('friends'),
           ),
           NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person),
-            label: l10n.translate('profile'),
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: l10n.translate('settings'),
           ),
         ],
       ),

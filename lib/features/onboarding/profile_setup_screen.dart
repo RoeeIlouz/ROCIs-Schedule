@@ -8,7 +8,9 @@ import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
-  const ProfileSetupScreen({super.key});
+  final bool isEditing;
+  
+  const ProfileSetupScreen({super.key, this.isEditing = false});
 
   @override
   State<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
@@ -83,7 +85,20 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               },
             );
       }
-      if (mounted) context.go('/schedule');
+      if (mounted) {
+        if (widget.isEditing) {
+          // If editing from settings, go back
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.translate('profile_saved')),
+            ),
+          );
+        } else {
+          // If onboarding, go to schedule
+          context.go('/schedule');
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +122,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.translate('profile_info'))),
+      appBar: AppBar(
+        title: Text(l10n.translate('profile_info')),
+        leading: widget.isEditing
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+      ),
       body: SafeArea(
         child: _isLoading && _nameController.text.isEmpty
             ? const Center(child: CircularProgressIndicator())

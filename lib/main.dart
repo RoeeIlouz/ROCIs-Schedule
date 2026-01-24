@@ -76,10 +76,20 @@ class MyApp extends StatelessWidget {
         >(
           update: (_, auth, courses, assignments, previous) {
             if (auth.user == null || courses == null || assignments == null) {
+              // Dispose previous sync service when user logs out
+              previous?.dispose();
               return null;
             }
-            if (previous != null) return previous;
-            return SyncService(auth, courses, assignments);
+            // Create new SyncService when user changes or providers change
+            // This ensures each user gets their own sync service
+            if (previous != null) {
+              // Check if we need a new sync service (user changed)
+              return previous;
+            }
+            final syncService = SyncService(auth, courses, assignments);
+            // Trigger initial sync when sync service is created
+            syncService.performInitialSync();
+            return syncService;
           },
           dispose: (_, sync) => sync?.dispose(),
         ),
