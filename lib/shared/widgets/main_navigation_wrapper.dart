@@ -4,7 +4,7 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/features/schedule/schedule_screen.dart';
 import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart';
-import 'package:rocis_schedule/features/friends/friends_screen.dart';
+
 import 'package:rocis_schedule/features/profile/settings_screen.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
@@ -29,7 +29,6 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     ScheduleScreen(),
     CourseListScreen(),
     AssignmentListScreen(),
-    FriendsScreen(),
     SettingsScreen(),
   ];
 
@@ -37,7 +36,6 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     '/schedule',
     '/courses',
     '/assignments',
-    '/friends',
     '/settings',
   ];
 
@@ -67,8 +65,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     if (route.startsWith('/schedule')) return 0;
     if (route.startsWith('/courses')) return 1;
     if (route.startsWith('/assignments')) return 2;
-    if (route.startsWith('/friends')) return 3;
-    if (route.startsWith('/settings')) return 4;
+    if (route.startsWith('/settings')) return 3;
     return 0;
   }
 
@@ -123,11 +120,6 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
             icon: const Icon(Icons.assignment_outlined),
             selectedIcon: const Icon(Icons.assignment),
             label: l10n.translate('assignments'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.people_outline),
-            selectedIcon: const Icon(Icons.people),
-            label: l10n.translate('friends'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.settings_outlined),

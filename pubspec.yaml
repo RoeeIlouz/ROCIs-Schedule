@@ -42,6 +42,7 @@ dependencies:
   # UI & Theme
   material_color_utilities: ^0.11.1
   dynamic_color: ^1.7.0
+  google_fonts: ^8.0.0
   flutter_local_notifications: ^17.2.1
 
   # State & Storage

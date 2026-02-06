@@ -177,7 +177,9 @@ class FirestoreService {
           .doc(uid)
           .collection('courses')
           .get();
-      final courses = snapshot.docs.map((doc) => Course.fromMap(doc.data())).toList();
+      final courses = snapshot.docs
+          .map((doc) => Course.fromMap(doc.data()))
+          .toList();
       debugPrint('Firestore: Downloaded ${courses.length} courses');
       return courses;
     } catch (e) {
@@ -194,7 +196,9 @@ class FirestoreService {
           .doc(uid)
           .collection('events')
           .get();
-      final events = snapshot.docs.map((doc) => ScheduleEvent.fromMap(doc.data())).toList();
+      final events = snapshot.docs
+          .map((doc) => ScheduleEvent.fromMap(doc.data()))
+          .toList();
       debugPrint('Firestore: Downloaded ${events.length} events');
       return events;
     } catch (e) {
@@ -211,7 +215,9 @@ class FirestoreService {
           .doc(uid)
           .collection('assignments')
           .get();
-      final assignments = snapshot.docs.map((doc) => Assignment.fromMap(doc.data())).toList();
+      final assignments = snapshot.docs
+          .map((doc) => Assignment.fromMap(doc.data()))
+          .toList();
       debugPrint('Firestore: Downloaded ${assignments.length} assignments');
       return assignments;
     } catch (e) {
@@ -220,12 +226,67 @@ class FirestoreService {
     }
   }
 
+  // Delete Course and associated data
+  Future<void> deleteCourse(String uid, String courseId) async {
+    try {
+      debugPrint('Firestore: Deleting course $courseId and its contents...');
+      final batch = _db.batch();
+
+      // 1. Delete the course document
+      batch.delete(
+        _db.collection('users').doc(uid).collection('courses').doc(courseId),
+      );
+
+      // 2. Find and delete all events for this course
+      final eventsSnapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('events')
+          .where('courseId', isEqualTo: courseId)
+          .get();
+      for (var doc in eventsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 3. Find and delete all assignments for this course
+      final assignmentsSnapshot = await _db
+          .collection('users')
+          .doc(uid)
+          .collection('assignments')
+          .where('courseId', isEqualTo: courseId)
+          .get();
+      for (var doc in assignmentsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      debugPrint('Firestore: Course and associated data deleted successfully');
+    } catch (e) {
+      debugPrint('Firestore Error (Delete Course): $e');
+    }
+  }
+
+  // Delete specific Event
+  Future<void> deleteEvent(String uid, String eventId) async {
+    try {
+      await _db
+          .collection('users')
+          .doc(uid)
+          .collection('events')
+          .doc(eventId)
+          .delete();
+      debugPrint('Firestore: Event $eventId deleted');
+    } catch (e) {
+      debugPrint('Firestore Error (Delete Event): $e');
+    }
+  }
+
   // Delete all user data from Firestore collections (for cleanup)
   Future<void> deleteAllUserData(String uid) async {
     try {
       debugPrint('Firestore: Deleting all data for $uid...');
       final batch = _db.batch();
-      
+
       // Delete courses
       final coursesSnapshot = await _db
           .collection('users')
@@ -235,7 +296,7 @@ class FirestoreService {
       for (var doc in coursesSnapshot.docs) {
         batch.delete(doc.reference);
       }
-      
+
       // Delete events
       final eventsSnapshot = await _db
           .collection('users')
@@ -245,7 +306,7 @@ class FirestoreService {
       for (var doc in eventsSnapshot.docs) {
         batch.delete(doc.reference);
       }
-      
+
       // Delete assignments
       final assignmentsSnapshot = await _db
           .collection('users')
@@ -255,7 +316,7 @@ class FirestoreService {
       for (var doc in assignmentsSnapshot.docs) {
         batch.delete(doc.reference);
       }
-      
+
       await batch.commit();
       debugPrint('Firestore: All user data deleted');
     } catch (e) {

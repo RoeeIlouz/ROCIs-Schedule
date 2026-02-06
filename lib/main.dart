@@ -7,7 +7,7 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/router.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
-import 'package:rocis_schedule/features/friends/friend_provider.dart';
+
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
@@ -60,14 +60,7 @@ class MyApp extends StatelessWidget {
             return AssignmentProvider(auth.user!.uid)..loadAssignments();
           },
         ),
-        ChangeNotifierProxyProvider<AuthService, FriendProvider?>(
-          create: (_) => null,
-          update: (_, auth, previous) {
-            if (auth.user == null) return null;
-            if (previous?.uid == auth.user!.uid) return previous;
-            return FriendProvider(auth.user!.uid)..loadFriends();
-          },
-        ),
+
         ProxyProvider3<
           AuthService,
           CourseProvider?,
@@ -98,13 +91,14 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return DynamicColorBuilder(
             builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-              ColorScheme? lightScheme;
-              ColorScheme? darkScheme;
-
-              if (themeProvider.useDynamicColor) {
-                lightScheme = lightDynamic;
-                darkScheme = darkDynamic;
-              }
+              // Only use dynamic colors when enabled, otherwise pass null
+              // to force AppTheme to use custom color scheme
+              final ColorScheme? lightScheme = themeProvider.useDynamicColor
+                  ? lightDynamic
+                  : null;
+              final ColorScheme? darkScheme = themeProvider.useDynamicColor
+                  ? darkDynamic
+                  : null;
 
               return MaterialApp.router(
                 title: 'ROCIs Schedule',

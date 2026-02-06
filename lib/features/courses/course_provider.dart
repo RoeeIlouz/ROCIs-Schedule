@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
+import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 
 class CourseProvider extends ChangeNotifier {
   final LocalDbService _dbService;
+  final FirestoreService _firestoreService = FirestoreService();
   final String userId;
   List<Course> _courses = [];
   List<ScheduleEvent> _events = [];
@@ -46,6 +48,8 @@ class CourseProvider extends ChangeNotifier {
   Future<void> deleteCourse(String id) async {
     await _dbService.deleteCourse(id);
     await loadData();
+    // Sync deletion to Firestore
+    await _firestoreService.deleteCourse(userId, id);
   }
 
   Future<void> addEvent(ScheduleEvent event) async {
@@ -70,6 +74,8 @@ class CourseProvider extends ChangeNotifier {
   Future<void> deleteEvent(String id) async {
     await _dbService.deleteEvent(id);
     await loadData();
+    // Sync deletion to Firestore
+    await _firestoreService.deleteEvent(userId, id);
   }
 
   List<ScheduleEvent> getEventsByCourse(String courseId) {

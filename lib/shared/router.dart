@@ -5,7 +5,7 @@ import 'package:rocis_schedule/features/onboarding/onboarding_screen.dart';
 import 'package:rocis_schedule/features/onboarding/profile_setup_screen.dart';
 import 'package:rocis_schedule/features/courses/add_course_screen.dart';
 import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
-import 'package:rocis_schedule/features/friends/schedule_comparison_screen.dart';
+
 import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
 
@@ -42,10 +42,7 @@ class AppRouter {
             path: '/courses',
             builder: (context, state) => const SizedBox.shrink(),
           ),
-          GoRoute(
-            path: '/friends',
-            builder: (context, state) => const SizedBox.shrink(),
-          ),
+
           GoRoute(
             path: '/assignments',
             builder: (context, state) => const SizedBox.shrink(),
@@ -62,18 +59,7 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const AddAssignmentScreen(),
       ),
-      GoRoute(
-        path: '/friends/compare',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>;
-          return ScheduleComparisonScreen(
-            myEvents: extra['myEvents'],
-            friendEvents: extra['friendEvents'],
-            friendName: extra['friendName'],
-          );
-        },
-      ),
+
       GoRoute(
         path: '/events/add',
         parentNavigatorKey: _rootNavigatorKey,
