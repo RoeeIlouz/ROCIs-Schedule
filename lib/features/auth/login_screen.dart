@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handlePostLogin(String uid) async {
     final profile = await context.read<FirestoreService>().getProfile(uid);
+    if (!mounted) return;
 
     // Trigger initial sync to download user data from Firestore
     // This ensures the user sees their cloud data on this device
@@ -80,9 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 l10n.translate('app_title'),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onBackground,
-                  letterSpacing: -0.5,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -92,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onBackground.withOpacity(0.6),
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -128,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onBackground.withOpacity(0.3),
+                  ).colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
                 textAlign: TextAlign.center,
               ),

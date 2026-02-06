@@ -75,9 +75,7 @@ class CourseListScreen extends StatelessWidget {
                 onDismissed: (direction) {
                   provider.deleteCourse(course.id);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.translate('course_deleted')),
-                    ),
+                    SnackBar(content: Text(l10n.translate('course_deleted'))),
                   );
                 },
                 child: Card(
@@ -98,10 +96,9 @@ class CourseListScreen extends StatelessWidget {
                         IconButton(
                           icon: Icon(
                             Icons.delete_outline,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.5),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                             size: 20,
                           ),
                           onPressed: () async {
@@ -140,8 +137,12 @@ class CourseListScreen extends StatelessWidget {
                             child: FractionallySizedBox(
                               heightFactor: 0.8,
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  8,
+                                  16,
+                                  16,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -152,8 +153,8 @@ class CourseListScreen extends StatelessWidget {
                                             course.name,
                                             style: theme.textTheme.titleLarge
                                                 ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                           ),
                                         ),
                                         IconButton(
@@ -165,15 +166,16 @@ class CourseListScreen extends StatelessWidget {
                                             Navigator.of(sheetContext).pop();
                                             final confirmed =
                                                 await _showDeleteConfirmation(
-                                              context,
-                                              l10n,
-                                              course.name,
-                                            );
+                                                  context,
+                                                  l10n,
+                                                  course.name,
+                                                );
                                             if (confirmed == true) {
                                               provider.deleteCourse(course.id);
                                               if (context.mounted) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
                                                   SnackBar(
                                                     content: Text(
                                                       l10n.translate(
@@ -222,13 +224,13 @@ class CourseListScreen extends StatelessWidget {
                                                 final event = events[index];
                                                 final timeText =
                                                     _formatEventTime(
-                                                  context,
-                                                  event,
-                                                );
+                                                      context,
+                                                      event,
+                                                    );
                                                 final locationText =
                                                     event.location.isNotEmpty
-                                                        ? ' • ${event.location}'
-                                                        : '';
+                                                    ? ' • ${event.location}'
+                                                    : '';
                                                 return ListTile(
                                                   dense: true,
                                                   contentPadding:
@@ -244,37 +246,41 @@ class CourseListScreen extends StatelessWidget {
                                                       IconButton(
                                                         icon: Icon(
                                                           Icons.delete_outline,
-                                                          color: Theme.of(
-                                                                  context)
-                                                              .colorScheme
-                                                              .onSurface
-                                                              .withOpacity(0.5),
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .onSurface
+                                                                  .withValues(
+                                                                    alpha: 0.5,
+                                                                  ),
                                                           size: 18,
                                                         ),
                                                         onPressed: () async {
                                                           final eventProvider =
-                                                              context.read<
-                                                                  CourseProvider>();
+                                                              context
+                                                                  .read<
+                                                                    CourseProvider
+                                                                  >();
                                                           final confirmed =
                                                               await _showDeleteEventConfirmation(
-                                                            context,
-                                                            l10n,
-                                                            event.title,
-                                                          );
+                                                                context,
+                                                                l10n,
+                                                                event.title,
+                                                              );
                                                           if (confirmed ==
                                                               true) {
                                                             eventProvider
                                                                 .deleteEvent(
-                                                                    event.id);
+                                                                  event.id,
+                                                                );
                                                             if (context
                                                                 .mounted) {
                                                               Navigator.of(
-                                                                      sheetContext)
-                                                                  .pop();
-                                                              ScaffoldMessenger
-                                                                      .of(
-                                                                          context)
-                                                                  .showSnackBar(
+                                                                sheetContext,
+                                                              ).pop();
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(
                                                                 SnackBar(
                                                                   content: Text(
                                                                     l10n.translate(
@@ -289,7 +295,8 @@ class CourseListScreen extends StatelessWidget {
                                                       ),
                                                       Icon(
                                                         _getEventIcon(
-                                                            event.type),
+                                                          event.type,
+                                                        ),
                                                         color: course.color,
                                                       ),
                                                     ],
@@ -330,7 +337,9 @@ class CourseListScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Text(l10n.translate('delete_course')),
         content: Text(
-          l10n.translate('delete_course_confirm').replaceAll('{name}', courseName),
+          l10n
+              .translate('delete_course_confirm')
+              .replaceAll('{name}', courseName),
         ),
         actions: [
           TextButton(
@@ -357,7 +366,9 @@ class CourseListScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Text(l10n.translate('delete_event')),
         content: Text(
-          l10n.translate('delete_event_confirm').replaceAll('{title}', eventTitle),
+          l10n
+              .translate('delete_event_confirm')
+              .replaceAll('{title}', eventTitle),
         ),
         actions: [
           TextButton(
@@ -377,10 +388,10 @@ class CourseListScreen extends StatelessWidget {
   String _formatEventTime(BuildContext context, ScheduleEvent event) {
     final themeProvider = context.read<ThemeProvider>();
     final use24Hour = themeProvider.use24HourFormat;
-    
+
     String start;
     String end;
-    
+
     if (use24Hour) {
       start = DateFormat.Hm().format(event.startTime);
       end = DateFormat.Hm().format(event.endTime);
@@ -388,7 +399,7 @@ class CourseListScreen extends StatelessWidget {
       start = DateFormat.jm().format(event.startTime);
       end = DateFormat.jm().format(event.endTime);
     }
-    
+
     if (event.recurring && event.daysOfWeek.isNotEmpty) {
       final l10n = AppLocalizations.of(context)!;
       final weekdayNames = l10n.locale.languageCode == 'he'

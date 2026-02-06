@@ -4,17 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Premium Color Palette - Blue variant
   static const Color _primaryColor = Color(0xFF2196F3);
-  static const Color _secondaryColor = Color(0xFF10B981); // Emerald (like tasks)
-  static const Color _tertiaryColor = Color(0xFFF59E0B); // Amber (like tasks)
 
   static ThemeData lightTheme(ColorScheme? dynamicColorScheme) {
     final colorScheme =
         dynamicColorScheme ??
         ColorScheme.fromSeed(
           seedColor: _primaryColor,
-          primary: _primaryColor,
-          secondary: _secondaryColor,
-          tertiary: _tertiaryColor,
           brightness: Brightness.light,
         );
 
@@ -23,9 +18,7 @@ class AppTheme {
       colorScheme: colorScheme,
       brightness: Brightness.light,
       scaffoldBackgroundColor: colorScheme.surface,
-      textTheme: GoogleFonts.outfitTextTheme(
-        ThemeData.light().textTheme,
-      ).apply(
+      textTheme: GoogleFonts.outfitTextTheme(ThemeData.light().textTheme).apply(
         bodyColor: colorScheme.onSurface,
         displayColor: colorScheme.onSurface,
       ),
@@ -43,9 +36,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: colorScheme.surfaceContainerLow,
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -60,9 +51,7 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         indicatorShape: RoundedRectangleBorder(
@@ -104,16 +93,16 @@ class AppTheme {
         );
 
     final bgColor = isAmoled ? Colors.black : colorScheme.surface;
-    final surfaceColor = isAmoled ? Colors.black : colorScheme.surfaceContainerLow;
+    final surfaceColor = isAmoled
+        ? Colors.black
+        : colorScheme.surfaceContainerLow;
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme.copyWith(surface: bgColor),
       brightness: Brightness.dark,
       scaffoldBackgroundColor: bgColor,
-      textTheme: GoogleFonts.outfitTextTheme(
-        ThemeData.dark().textTheme,
-      ).apply(
+      textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).apply(
         bodyColor: colorScheme.onSurface,
         displayColor: colorScheme.onSurface,
       ),
@@ -149,9 +138,7 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: isAmoled ? Colors.black : const Color(0xFF121212),

@@ -23,7 +23,7 @@ class Course {
       'name': name,
       'code': code,
       'instructor': instructor,
-      'color': color.value,
+      'color': color.toARGB32(),
       'credits': credits,
     };
   }
@@ -34,7 +34,7 @@ class Course {
       name: map['name'],
       code: map['code'],
       instructor: map['instructor'],
-      color: Color(map['color']),
+      color: Color(map['color'] as int),
       credits: map['credits'],
     );
   }

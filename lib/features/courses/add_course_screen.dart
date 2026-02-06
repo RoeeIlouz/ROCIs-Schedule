@@ -125,7 +125,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _colors.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final color = _colors[index];
                     return GestureDetector(
@@ -142,7 +142,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                           boxShadow: _selectedColor == color
                               ? [
                                   BoxShadow(
-                                    color: color.withOpacity(0.5),
+                                    color: color.withValues(alpha: 0.5),
                                     blurRadius: 8,
                                   ),
                                 ]

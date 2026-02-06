@@ -27,7 +27,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   EventType _selectedType = EventType.classType;
   DateTime _startTime = DateTime.now().add(const Duration(hours: 1));
   DateTime _endTime = DateTime.now().add(const Duration(hours: 2));
-  List<int> _selectedDays = [];
+  final List<int> _selectedDays = [];
   bool _recurring = true;
   bool _isLoading = false;
 
@@ -127,7 +127,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedCourseId,
+                initialValue: _selectedCourseId,
                 decoration: InputDecoration(
                   labelText: l10n.translate('course'),
                 ),
@@ -138,7 +138,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<EventType>(
-                value: _selectedType,
+                initialValue: _selectedType,
                 decoration: InputDecoration(labelText: l10n.translate('type')),
                 items: EventType.values.map((v) {
                   return DropdownMenuItem(

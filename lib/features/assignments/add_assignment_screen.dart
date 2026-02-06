@@ -101,7 +101,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedCourseId,
+                initialValue: _selectedCourseId,
                 decoration: InputDecoration(
                   labelText: l10n.translate('course'),
                 ),

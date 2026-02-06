@@ -17,15 +17,15 @@ class SettingsScreen extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(
         switchTheme: SwitchThemeData(
-          thumbColor: MaterialStateProperty.resolveWith((states) {
-            if (states.contains(MaterialState.selected)) {
-              return const Color(0xFF261818);
+          thumbColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return Theme.of(context).colorScheme.primary;
             }
             return null;
           }),
-          trackColor: MaterialStateProperty.resolveWith((states) {
-            if (states.contains(MaterialState.selected)) {
-              return const Color(0xFFE9B7B7);
+          trackColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return Theme.of(context).colorScheme.primaryContainer;
             }
             return null;
           }),
@@ -67,7 +67,7 @@ class SettingsScreen extends StatelessWidget {
                     style: TextStyle(
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -159,7 +159,7 @@ class SettingsScreen extends StatelessWidget {
                     style: TextStyle(
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -220,8 +220,10 @@ class SettingsScreen extends StatelessWidget {
                   if (context.mounted) context.go('/login');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF261818),
-                  foregroundColor: const Color(0xFFE9B7B7),
+                  backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                  foregroundColor: Theme.of(
+                    context,
+                  ).colorScheme.onErrorContainer,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -240,7 +242,7 @@ class SettingsScreen extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.3),
+                  ).colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -261,7 +263,7 @@ class SettingsScreen extends StatelessWidget {
     return ListTile(
       leading: Icon(
         icon,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
       title: Text(
         title,
@@ -274,14 +276,18 @@ class SettingsScreen extends StatelessWidget {
           ? Text(
               subtitle,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             )
           : null,
       trailing: trailing != null
           ? IconTheme.merge(
               data: IconThemeData(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               child: trailing,
             )
@@ -300,7 +306,7 @@ class SettingsScreen extends StatelessWidget {
     return SwitchListTile(
       secondary: Icon(
         icon,
-        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
       title: Text(
         title,
@@ -326,20 +332,20 @@ class SettingsScreen extends StatelessWidget {
       leading: Icon(
         icon,
         color: isSelected
-            ? const Color(0xFFE9B7B7)
-            : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
       ),
       title: Text(
         label,
         style: TextStyle(
           color: isSelected
-              ? const Color(0xFFE9B7B7)
+              ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       trailing: isSelected
-          ? const Icon(Icons.check, color: Color(0xFFE9B7B7))
+          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
           : null,
       onTap: () {
         provider.setThemeMode(mode);
@@ -360,13 +366,13 @@ class SettingsScreen extends StatelessWidget {
         label,
         style: TextStyle(
           color: isSelected
-              ? const Color(0xFFE9B7B7)
+              ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
       trailing: isSelected
-          ? const Icon(Icons.check, color: Color(0xFFE9B7B7))
+          ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
           : null,
       onTap: () {
         provider.setLocale(locale);
@@ -401,7 +407,7 @@ class SettingsScreen extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(
-          color: const Color(0xFFE9B7B7),
+          color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
           fontSize: 14,
           letterSpacing: 1.2,

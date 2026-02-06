@@ -276,7 +276,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
                     color: isToday
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.2)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -297,7 +299,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         style: TextStyle(
                           color: Theme.of(
                             context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       if (dayEvents.isNotEmpty) ...[
@@ -335,7 +337,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       style: TextStyle(
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.5),
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
                         fontSize: 12,
                       ),
                     ),
@@ -431,11 +433,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         color: isSelected
                             ? Theme.of(
                                 context,
-                              ).colorScheme.primary.withOpacity(0.3)
+                              ).colorScheme.primary.withValues(alpha: 0.3)
                             : isToday
                             ? Theme.of(
                                 context,
-                              ).colorScheme.primary.withOpacity(0.1)
+                              ).colorScheme.primary.withValues(alpha: 0.1)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: isToday
@@ -488,7 +490,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 fontSize: 10,
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withOpacity(0.5),
+                                ).colorScheme.onSurface.withValues(alpha: 0.5),
                               ),
                             ),
                         ],
@@ -511,7 +513,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           day,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.7),
             fontSize: 12,
           ),
         ),
@@ -612,7 +616,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       Icons.delete_outline,
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurface.withOpacity(0.5),
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                       size: 20,
                     ),
                     onPressed: () async {
@@ -623,7 +627,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       );
                       if (confirmed == true) {
                         provider.deleteEvent(event.id);
-                        if (context.mounted) {
+                        if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(l10n.translate('event_deleted')),
@@ -635,7 +639,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   ),
                   Icon(
                     _getEventIcon(event.type),
-                    color: course.color.withOpacity(0.7),
+                    color: course.color.withValues(alpha: 0.7),
                     size: 20,
                   ),
                 ],
@@ -647,7 +651,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   style: TextStyle(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.5),
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
                     fontSize: 14,
                   ),
                 ),
@@ -698,7 +702,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             _formatTime(context, event.startTime),
             style: TextStyle(
               fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(width: 12),
@@ -715,7 +721,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
           Icon(
             _getEventIcon(event.type),
-            color: course.color.withOpacity(0.7),
+            color: course.color.withValues(alpha: 0.7),
             size: 16,
           ),
         ],
@@ -799,7 +805,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           ? Colors.black
                           : Theme.of(
                               context,
-                            ).colorScheme.onSurface.withOpacity(0.5),
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                       fontSize: 12,
                       fontWeight: isSelected
                           ? FontWeight.bold
