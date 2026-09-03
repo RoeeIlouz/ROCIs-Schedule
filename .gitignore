@@ -27,3 +27,14 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Android keystore & signing files
+*.jks
+*.keystore
+key.properties
+**/android/key.properties
+**/android/app/*.jks
+**/android/app/*.keystore
+
+# Firebase cache
+.firebase/

@@ -1,21 +1,31 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore? _customDb;
+
+  FirestoreService({FirebaseFirestore? firestore}) : _customDb = firestore;
+
+  FirebaseFirestore? get _db {
+    if (_customDb != null) return _customDb;
+    try {
+      if (Firebase.apps.isEmpty) return null;
+      return FirebaseFirestore.instance;
+    } catch (e) {
+      return null;
+    }
+  }
 
   // User Profile
   Future<void> updateProfile(String uid, Map<String, dynamic> data) async {
+    final db = _db;
+    if (db == null) return;
     try {
       debugPrint('Firestore: Starting profile update for $uid...');
-      // Ensure Firestore is pointing to the right settings for troubleshooting
-      _db.settings = const Settings(
-        persistenceEnabled: false, // Force network for troubleshooting
-      );
-
-      await _db.collection('users').doc(uid).set(data, SetOptions(merge: true));
+      await db.collection('users').doc(uid).set(data, SetOptions(merge: true));
       debugPrint('Firestore: Profile update successful for $uid');
     } catch (e) {
       debugPrint('Firestore Error: Failed to update profile: $e');
@@ -23,42 +33,58 @@ class FirestoreService {
     }
   }
 
-  Future<DocumentSnapshot> getProfile(String uid) async {
-    return await _db.collection('users').doc(uid).get();
+  Future<DocumentSnapshot?> getProfile(String uid) async {
+    final db = _db;
+    if (db == null) return null;
+    return await db.collection('users').doc(uid).get();
   }
 
   // Sync Courses
   Future<void> uploadCourses(String uid, List<Course> courses) async {
-    final batch = _db.batch();
-    for (var course in courses) {
-      final ref = _db
-          .collection('users')
-          .doc(uid)
-          .collection('courses')
-          .doc(course.id);
-      batch.set(ref, course.toMap());
+    final db = _db;
+    if (db == null) return;
+    try {
+      final batch = db.batch();
+      for (var course in courses) {
+        final ref = db
+            .collection('users')
+            .doc(uid)
+            .collection('courses')
+            .doc(course.id);
+        batch.set(ref, course.toMap());
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Firestore Error (Upload Courses): $e');
     }
-    await batch.commit();
   }
 
   // Sync Events
   Future<void> uploadEvents(String uid, List<ScheduleEvent> events) async {
-    final batch = _db.batch();
-    for (var event in events) {
-      final ref = _db
-          .collection('users')
-          .doc(uid)
-          .collection('events')
-          .doc(event.id);
-      batch.set(ref, event.toMap());
+    final db = _db;
+    if (db == null) return;
+    try {
+      final batch = db.batch();
+      for (var event in events) {
+        final ref = db
+            .collection('users')
+            .doc(uid)
+            .collection('events')
+            .doc(event.id);
+        batch.set(ref, event.toMap());
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Firestore Error (Upload Events): $e');
     }
-    await batch.commit();
   }
 
   // Assignments
   Future<void> updateAssignment(String uid, Assignment assignment) async {
+    final db = _db;
+    if (db == null) return;
     try {
-      await _db
+      await db
           .collection('users')
           .doc(uid)
           .collection('assignments')
@@ -70,8 +96,10 @@ class FirestoreService {
   }
 
   Future<void> deleteAssignment(String uid, String id) async {
+    final db = _db;
+    if (db == null) return;
     try {
-      await _db
+      await db
           .collection('users')
           .doc(uid)
           .collection('assignments')
@@ -84,9 +112,11 @@ class FirestoreService {
 
   // Download Methods for User Data Sync
   Future<List<Course>> downloadCourses(String uid) async {
+    final db = _db;
+    if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading courses for $uid...');
-      final snapshot = await _db
+      final snapshot = await db
           .collection('users')
           .doc(uid)
           .collection('courses')
@@ -103,9 +133,11 @@ class FirestoreService {
   }
 
   Future<List<ScheduleEvent>> downloadEvents(String uid) async {
+    final db = _db;
+    if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading events for $uid...');
-      final snapshot = await _db
+      final snapshot = await db
           .collection('users')
           .doc(uid)
           .collection('events')
@@ -122,9 +154,11 @@ class FirestoreService {
   }
 
   Future<List<Assignment>> downloadAssignments(String uid) async {
+    final db = _db;
+    if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading assignments for $uid...');
-      final snapshot = await _db
+      final snapshot = await db
           .collection('users')
           .doc(uid)
           .collection('assignments')
@@ -142,17 +176,17 @@ class FirestoreService {
 
   // Delete Course and associated data
   Future<void> deleteCourse(String uid, String courseId) async {
+    final db = _db;
+    if (db == null) return;
     try {
       debugPrint('Firestore: Deleting course $courseId and its contents...');
-      final batch = _db.batch();
+      final batch = db.batch();
 
-      // 1. Delete the course document
       batch.delete(
-        _db.collection('users').doc(uid).collection('courses').doc(courseId),
+        db.collection('users').doc(uid).collection('courses').doc(courseId),
       );
 
-      // 2. Find and delete all events for this course
-      final eventsSnapshot = await _db
+      final eventsSnapshot = await db
           .collection('users')
           .doc(uid)
           .collection('events')
@@ -162,8 +196,7 @@ class FirestoreService {
         batch.delete(doc.reference);
       }
 
-      // 3. Find and delete all assignments for this course
-      final assignmentsSnapshot = await _db
+      final assignmentsSnapshot = await db
           .collection('users')
           .doc(uid)
           .collection('assignments')
@@ -182,8 +215,10 @@ class FirestoreService {
 
   // Delete specific Event
   Future<void> deleteEvent(String uid, String eventId) async {
+    final db = _db;
+    if (db == null) return;
     try {
-      await _db
+      await db
           .collection('users')
           .doc(uid)
           .collection('events')
@@ -197,12 +232,13 @@ class FirestoreService {
 
   // Delete all user data from Firestore collections (for cleanup)
   Future<void> deleteAllUserData(String uid) async {
+    final db = _db;
+    if (db == null) return;
     try {
       debugPrint('Firestore: Deleting all data for $uid...');
-      final batch = _db.batch();
+      final batch = db.batch();
 
-      // Delete courses
-      final coursesSnapshot = await _db
+      final coursesSnapshot = await db
           .collection('users')
           .doc(uid)
           .collection('courses')
@@ -211,8 +247,7 @@ class FirestoreService {
         batch.delete(doc.reference);
       }
 
-      // Delete events
-      final eventsSnapshot = await _db
+      final eventsSnapshot = await db
           .collection('users')
           .doc(uid)
           .collection('events')
@@ -221,8 +256,7 @@ class FirestoreService {
         batch.delete(doc.reference);
       }
 
-      // Delete assignments
-      final assignmentsSnapshot = await _db
+      final assignmentsSnapshot = await db
           .collection('users')
           .doc(uid)
           .collection('assignments')

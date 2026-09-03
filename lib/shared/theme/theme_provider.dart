@@ -5,20 +5,26 @@ class ThemeProvider extends ChangeNotifier {
   static const String _keyThemeMode = 'theme_mode';
   static const String _keyUseDynamicColor = 'use_dynamic_color';
   static const String _keyIsAmoled = 'is_amoled';
+  static const String _keyUseGlassmorphism = 'use_glassmorphism';
   static const String _keyLocale = 'locale';
   static const String _keyUse24HourFormat = 'use_24_hour_format';
+  static const String _keyEnableReminders = 'enable_reminders';
 
   ThemeMode _themeMode = ThemeMode.system;
   bool _useDynamicColor = true;
   bool _isAmoled = false;
+  bool _useGlassmorphism = true;
   Locale? _locale;
-  bool _use24HourFormat = true; // Default to 24-hour format
+  bool _use24HourFormat = true;
+  bool _enableReminders = true;
 
   ThemeMode get themeMode => _themeMode;
   bool get useDynamicColor => _useDynamicColor;
   bool get isAmoled => _isAmoled;
+  bool get useGlassmorphism => _useGlassmorphism;
   Locale? get locale => _locale;
   bool get use24HourFormat => _use24HourFormat;
+  bool get enableReminders => _enableReminders;
 
   ThemeProvider() {
     _loadSettings();
@@ -34,7 +40,9 @@ class ThemeProvider extends ChangeNotifier {
 
     _useDynamicColor = prefs.getBool(_keyUseDynamicColor) ?? true;
     _isAmoled = prefs.getBool(_keyIsAmoled) ?? false;
+    _useGlassmorphism = prefs.getBool(_keyUseGlassmorphism) ?? true;
     _use24HourFormat = prefs.getBool(_keyUse24HourFormat) ?? true;
+    _enableReminders = prefs.getBool(_keyEnableReminders) ?? true;
 
     final localeCode = prefs.getString(_keyLocale);
     if (localeCode != null) {
@@ -71,6 +79,15 @@ class ThemeProvider extends ChangeNotifier {
     await prefs.setBool(_keyIsAmoled, value);
   }
 
+  Future<void> setUseGlassmorphism(bool value) async {
+    if (_useGlassmorphism == value) return;
+    _useGlassmorphism = value;
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyUseGlassmorphism, value);
+  }
+
   Future<void> setLocale(Locale? locale) async {
     if (_locale == locale) return;
     _locale = locale;
@@ -91,5 +108,14 @@ class ThemeProvider extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyUse24HourFormat, value);
+  }
+
+  Future<void> setEnableReminders(bool value) async {
+    if (_enableReminders == value) return;
+    _enableReminders = value;
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyEnableReminders, value);
   }
 }

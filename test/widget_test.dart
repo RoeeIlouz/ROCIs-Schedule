@@ -12,6 +12,7 @@ void main() {
         themeProvider: ThemeProvider(),
       ),
     );
+    await tester.pumpAndSettle();
 
     // Verify that the login screen is shown (it has the app name)
     expect(find.text('ROCIs Schedule'), findsOneWidget);

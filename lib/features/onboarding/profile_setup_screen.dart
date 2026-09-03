@@ -37,7 +37,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         final profile = await context.read<FirestoreService>().getProfile(
           user.uid,
         );
-        if (profile.exists) {
+        if (profile != null && profile.exists && profile.data() != null) {
           final data = profile.data() as Map<String, dynamic>;
           _nameController.text = data['name'] ?? '';
           _universityController.text = data['university'] ?? '';

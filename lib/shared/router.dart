@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/features/auth/login_screen.dart';
+import 'package:rocis_schedule/features/auth/register_screen.dart';
 import 'package:rocis_schedule/features/onboarding/onboarding_screen.dart';
 import 'package:rocis_schedule/features/onboarding/profile_setup_screen.dart';
 import 'package:rocis_schedule/features/courses/add_course_screen.dart';
 import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
-
 import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
 
@@ -19,6 +19,11 @@ class AppRouter {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/register',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const RegisterScreen(),
+      ),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
@@ -42,7 +47,6 @@ class AppRouter {
             path: '/courses',
             builder: (context, state) => const SizedBox.shrink(),
           ),
-
           GoRoute(
             path: '/assignments',
             builder: (context, state) => const SizedBox.shrink(),
@@ -59,7 +63,6 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const AddAssignmentScreen(),
       ),
-
       GoRoute(
         path: '/events/add',
         parentNavigatorKey: _rootNavigatorKey,
@@ -77,17 +80,4 @@ class AppRouter {
       ),
     ],
   );
-}
-
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text(title)),
-    );
-  }
 }

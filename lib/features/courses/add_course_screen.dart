@@ -21,18 +21,18 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   final _codeController = TextEditingController();
   final _instructorController = TextEditingController();
   final _creditsController = TextEditingController();
-  Color _selectedColor = Colors.blue;
+  Color _selectedColor = const Color(0xFF6366F1);
   bool _isLoading = false;
 
-  final List<Color> _colors = [
-    Colors.blue,
-    Colors.red,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.indigo,
-    Colors.brown,
+  final List<Color> _colors = const [
+    Color(0xFF6366F1), // Primary Indigo
+    Color(0xFF10B981), // Emerald
+    Color(0xFFF59E0B), // Amber
+    Color(0xFFEF4444), // Red
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFF06B6D4), // Cyan
+    Color(0xFFEC4899), // Pink
+    Color(0xFF3B82F6), // Blue
   ];
 
   @override
@@ -49,12 +49,14 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final creditsValue =
+          double.tryParse(_creditsController.text.trim()) ?? 3.0;
       final course = Course(
         id: const Uuid().v4(),
         name: _nameController.text.trim(),
         code: _codeController.text.trim().toUpperCase(),
         instructor: _instructorController.text.trim(),
-        credits: int.parse(_creditsController.text.trim()),
+        credits: creditsValue,
         color: _selectedColor,
       );
 
@@ -88,14 +90,18 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 label: l10n.translate('course_name'),
                 hint: 'e.g. Computer Science 101',
                 controller: _nameController,
-                validator: (v) => (v?.isNotEmpty ?? false) ? null : 'Required',
+                validator: (v) => (v != null && v.trim().isNotEmpty)
+                    ? null
+                    : l10n.translate('field_required'),
               ),
               const SizedBox(height: 16),
               AppTextField(
                 label: l10n.translate('course_code'),
                 hint: 'e.g. CS101',
                 controller: _codeController,
-                validator: (v) => (v?.isNotEmpty ?? false) ? null : 'Required',
+                validator: (v) => (v != null && v.trim().isNotEmpty)
+                    ? null
+                    : l10n.translate('field_required'),
               ),
               const SizedBox(height: 16),
               AppTextField(
@@ -106,11 +112,21 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               const SizedBox(height: 16),
               AppTextField(
                 label: l10n.translate('credits_label'),
-                hint: '3',
+                hint: '3.0',
                 controller: _creditsController,
-                keyboardType: TextInputType.number,
-                validator: (v) =>
-                    (int.tryParse(v ?? '') != null) ? null : 'Invalid',
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return l10n.translate('field_required');
+                  }
+                  final parsed = double.tryParse(v.trim());
+                  if (parsed == null || parsed <= 0) {
+                    return l10n.translate('invalid_number');
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               Text(

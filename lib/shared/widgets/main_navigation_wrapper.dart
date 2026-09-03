@@ -4,7 +4,6 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/features/schedule/schedule_screen.dart';
 import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart';
-
 import 'package:rocis_schedule/features/profile/settings_screen.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
@@ -95,6 +94,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
       body: PageView(
@@ -102,31 +102,44 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
         onPageChanged: _onPageChanged,
         children: _pages,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onDestinationSelected,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.calendar_today_outlined),
-            selectedIcon: const Icon(Icons.calendar_today),
-            label: l10n.translate('schedule'),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: theme.brightness == Brightness.dark
+                  ? Colors.white10
+                  : Colors.black12,
+              width: 0.5,
+            ),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.school_outlined),
-            selectedIcon: const Icon(Icons.school),
-            label: l10n.translate('my_courses'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.assignment_outlined),
-            selectedIcon: const Icon(Icons.assignment),
-            label: l10n.translate('assignments'),
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings),
-            label: l10n.translate('settings'),
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: _onDestinationSelected,
+          elevation: 0,
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.calendar_today_outlined),
+              selectedIcon: const Icon(Icons.calendar_today_rounded),
+              label: l10n.translate('schedule'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.school_outlined),
+              selectedIcon: const Icon(Icons.school_rounded),
+              label: l10n.translate('my_courses'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.assignment_outlined),
+              selectedIcon: const Icon(Icons.assignment_rounded),
+              label: l10n.translate('assignments'),
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.settings_outlined),
+              selectedIcon: const Icon(Icons.settings_rounded),
+              label: l10n.translate('settings'),
+            ),
+          ],
+        ),
       ),
     );
   }

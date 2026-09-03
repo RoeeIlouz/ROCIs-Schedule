@@ -10,14 +10,21 @@ class LocalDbService {
 
   LocalDbService(this.userId);
 
-  Future<Database> get database async {
-    if (_database != null && _currentUserId == userId) return _database!;
-    if (_database != null) {
-      await _database!.close();
+  Future<Database?> get database async {
+    try {
+      if (_database != null && _currentUserId == userId && _database!.isOpen) {
+        return _database!;
+      }
+      if (_database != null && _database!.isOpen) {
+        await _database!.close();
+        _database = null;
+      }
+      _database = await _initDB();
+      _currentUserId = userId;
+      return _database;
+    } catch (e) {
+      return null;
     }
-    _database = await _initDB();
-    _currentUserId = userId;
-    return _database!;
   }
 
   Future<Database> _initDB() async {
@@ -29,7 +36,7 @@ class LocalDbService {
     );
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -37,7 +44,9 @@ class LocalDbService {
 
   static Future<void> clearCache() async {
     if (_database != null) {
-      await _database!.close();
+      if (_database!.isOpen) {
+        await _database!.close();
+      }
       _database = null;
       _currentUserId = null;
     }
@@ -46,6 +55,11 @@ class LocalDbService {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createAssignmentsTable(db);
+    }
+    if (oldVersion < 3) {
+      try {
+        await db.execute('ALTER TABLE courses ADD COLUMN grade REAL');
+      } catch (_) {}
     }
   }
 
@@ -57,7 +71,8 @@ class LocalDbService {
         code TEXT,
         instructor TEXT,
         color INTEGER,
-        credits INTEGER
+        credits INTEGER,
+        grade REAL
       )
     ''');
 
@@ -98,6 +113,7 @@ class LocalDbService {
   // Course CRUD
   Future<void> insertCourse(Course course) async {
     final db = await database;
+    if (db == null) return;
     await db.insert(
       'courses',
       course.toMap(),
@@ -107,18 +123,21 @@ class LocalDbService {
 
   Future<List<Course>> getCourses() async {
     final db = await database;
+    if (db == null) return [];
     final List<Map<String, dynamic>> maps = await db.query('courses');
     return List.generate(maps.length, (i) => Course.fromMap(maps[i]));
   }
 
   Future<void> deleteCourse(String id) async {
     final db = await database;
+    if (db == null) return;
     await db.delete('courses', where: 'id = ?', whereArgs: [id]);
   }
 
   // Event CRUD
   Future<void> insertEvent(ScheduleEvent event) async {
     final db = await database;
+    if (db == null) return;
     await db.insert(
       'events',
       event.toMap(),
@@ -128,18 +147,21 @@ class LocalDbService {
 
   Future<List<ScheduleEvent>> getEvents() async {
     final db = await database;
+    if (db == null) return [];
     final List<Map<String, dynamic>> maps = await db.query('events');
     return List.generate(maps.length, (i) => ScheduleEvent.fromMap(maps[i]));
   }
 
   Future<void> deleteEvent(String id) async {
     final db = await database;
+    if (db == null) return;
     await db.delete('events', where: 'id = ?', whereArgs: [id]);
   }
 
   // Assignment CRUD
   Future<void> insertAssignment(Assignment assignment) async {
     final db = await database;
+    if (db == null) return;
     await db.insert(
       'assignments',
       assignment.toMap(),
@@ -149,12 +171,14 @@ class LocalDbService {
 
   Future<List<Assignment>> getAssignments() async {
     final db = await database;
+    if (db == null) return [];
     final List<Map<String, dynamic>> maps = await db.query('assignments');
     return List.generate(maps.length, (i) => Assignment.fromMap(maps[i]));
   }
 
   Future<void> deleteAssignment(String id) async {
     final db = await database;
+    if (db == null) return;
     await db.delete('assignments', where: 'id = ?', whereArgs: [id]);
   }
 }

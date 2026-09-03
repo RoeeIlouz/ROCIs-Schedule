@@ -7,7 +7,6 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/router.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
-
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
@@ -47,7 +46,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthService, CourseProvider?>(
           create: (_) => null,
           update: (_, auth, previous) {
-            if (auth.user == null) return null;
+            if (auth.user == null) {
+              previous?.clearLocalData();
+              return null;
+            }
             if (previous?.userId == auth.user!.uid) return previous;
             return CourseProvider(auth.user!.uid)..loadData();
           },
@@ -55,12 +57,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthService, AssignmentProvider?>(
           create: (_) => null,
           update: (_, auth, previous) {
-            if (auth.user == null) return null;
+            if (auth.user == null) {
+              previous?.clearLocalData();
+              return null;
+            }
             if (previous?.uid == auth.user!.uid) return previous;
             return AssignmentProvider(auth.user!.uid)..loadAssignments();
           },
         ),
-
         ProxyProvider3<
           AuthService,
           CourseProvider?,
@@ -69,18 +73,13 @@ class MyApp extends StatelessWidget {
         >(
           update: (_, auth, courses, assignments, previous) {
             if (auth.user == null || courses == null || assignments == null) {
-              // Dispose previous sync service when user logs out
               previous?.dispose();
               return null;
             }
-            // Create new SyncService when user changes or providers change
-            // This ensures each user gets their own sync service
             if (previous != null) {
-              // Check if we need a new sync service (user changed)
               return previous;
             }
             final syncService = SyncService(auth, courses, assignments);
-            // Trigger initial sync when sync service is created
             syncService.performInitialSync();
             return syncService;
           },
@@ -91,8 +90,6 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return DynamicColorBuilder(
             builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-              // Only use dynamic colors when enabled, otherwise pass null
-              // to force AppTheme to use custom color scheme
               final ColorScheme? lightScheme = themeProvider.useDynamicColor
                   ? lightDynamic
                   : null;
@@ -117,7 +114,7 @@ class MyApp extends StatelessWidget {
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,
                 ],
-                supportedLocales: const [Locale('en', ''), Locale('he', '')],
+                supportedLocales: AppLocalizations.supportedLocales,
               );
             },
           );
@@ -126,3 +123,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
