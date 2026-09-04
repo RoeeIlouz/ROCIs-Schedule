@@ -42,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDfHAfG-A3o0ZUyMtudxKkah6wsTKy9z10',
-    appId: '1:318456267857:android:c43162aad6a3c8f553a470',
+    appId: '1:318456267857:android:4e12279b28b58c3353a470',
     messagingSenderId: '318456267857',
     projectId: 'rocis-schedule',
     databaseURL:
