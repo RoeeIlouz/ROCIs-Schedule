@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:rocis_schedule/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'package:rocis_schedule/shared/theme/app_theme.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
@@ -16,7 +20,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await NotificationService().init();
 
@@ -43,36 +52,36 @@ class MyApp extends StatelessWidget {
         Provider(create: (_) => FirestoreService()),
         ChangeNotifierProvider.value(value: authService),
         ChangeNotifierProvider.value(value: themeProvider),
-        ChangeNotifierProxyProvider<AuthService, CourseProvider?>(
-          create: (_) => null,
+        ChangeNotifierProxyProvider<AuthService, CourseProvider>(
+          create: (context) {
+            final auth = context.read<AuthService>();
+            return CourseProvider(auth.effectiveUserId)..loadData();
+          },
           update: (_, auth, previous) {
-            if (auth.user == null) {
-              previous?.clearLocalData();
-              return null;
-            }
-            if (previous?.userId == auth.user!.uid) return previous;
-            return CourseProvider(auth.user!.uid)..loadData();
+            final uid = auth.effectiveUserId;
+            if (previous != null && previous.userId == uid) return previous;
+            return CourseProvider(uid)..loadData();
           },
         ),
-        ChangeNotifierProxyProvider<AuthService, AssignmentProvider?>(
-          create: (_) => null,
+        ChangeNotifierProxyProvider<AuthService, AssignmentProvider>(
+          create: (context) {
+            final auth = context.read<AuthService>();
+            return AssignmentProvider(auth.effectiveUserId)..loadAssignments();
+          },
           update: (_, auth, previous) {
-            if (auth.user == null) {
-              previous?.clearLocalData();
-              return null;
-            }
-            if (previous?.uid == auth.user!.uid) return previous;
-            return AssignmentProvider(auth.user!.uid)..loadAssignments();
+            final uid = auth.effectiveUserId;
+            if (previous != null && previous.uid == uid) return previous;
+            return AssignmentProvider(uid)..loadAssignments();
           },
         ),
         ProxyProvider3<
           AuthService,
-          CourseProvider?,
-          AssignmentProvider?,
+          CourseProvider,
+          AssignmentProvider,
           SyncService?
         >(
           update: (_, auth, courses, assignments, previous) {
-            if (auth.user == null || courses == null || assignments == null) {
+            if (auth.user == null) {
               previous?.dispose();
               return null;
             }
@@ -123,4 +132,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

@@ -26,7 +26,8 @@ class AppLocalizations {
       'welcome': 'Welcome Back',
       'login_subtitle': 'Manage your academic life seamlessly and stay ahead',
       'continue_google': 'Continue with Google',
-      'terms_privacy': 'By continuing, you agree to our Terms of Service & Privacy Policy',
+      'terms_privacy':
+          'By continuing, you agree to our Terms of Service & Privacy Policy',
       'settings': 'Settings',
       'appearance': 'Appearance',
       'theme_mode': 'Theme Mode',
@@ -66,7 +67,8 @@ class AppLocalizations {
       'credits_label': 'Credits',
       'events': 'Events',
       'no_events_course': 'No events for this course',
-      'error_timeout': 'Connection timed out. Please check your internet connection.',
+      'error_timeout':
+          'Connection timed out. Please check your internet connection.',
       'notifications': 'Notifications',
       'version': 'App Version',
       'terms': 'Terms of Service',
@@ -76,7 +78,8 @@ class AppLocalizations {
       'retry': 'Try Again',
       'cancel': 'Cancel',
       'onboarding_title': 'Welcome to ROCIs Schedule',
-      'onboarding_subtitle': 'Organize your classes, exams, and assignments effortlessly',
+      'onboarding_subtitle':
+          'Organize your classes, exams, and assignments effortlessly',
       'get_started': 'Get Started',
       'add_course': 'Add Course',
       'course_name': 'Course Name',
@@ -123,7 +126,8 @@ class AppLocalizations {
       'delete_event_confirm': 'Are you sure you want to delete "{title}"?',
       'event_deleted': 'Event deleted',
       'delete_course': 'Delete Course',
-      'delete_course_confirm': 'Are you sure you want to delete "{name}"? This will also delete all associated events.',
+      'delete_course_confirm':
+          'Are you sure you want to delete "{name}"? This will also delete all associated events.',
       'course_deleted': 'Course deleted',
       'view_daily': 'Daily',
       'view_weekly': 'Weekly',
@@ -169,7 +173,8 @@ class AppLocalizations {
       'passwords_dont_match': 'Passwords do not match',
       'password_too_short': 'Password must be at least 6 characters',
       'guest_mode_title': 'Guest Mode',
-      'guest_mode_banner': 'You are currently in Guest Mode. Sign in to sync your schedule across all devices.',
+      'guest_mode_banner':
+          'You are currently in Guest Mode. Sign in to sync your schedule across all devices.',
       'field_required': 'This field is required',
       'invalid_number': 'Please enter a valid number',
       'select_days_error': 'Please select at least one day of the week',
@@ -204,7 +209,8 @@ class AppLocalizations {
       'welcome': 'ברוך שובך',
       'login_subtitle': 'ניהול כל חיי הלימודים שלך במקום אחד בצורה חלקה',
       'continue_google': 'המשך עם Google',
-      'terms_privacy': 'בהמשך השימוש, הינך מסכים/ה לתנאי השימוש ומדיניות הפרטיות שלנו',
+      'terms_privacy':
+          'בהמשך השימוש, הינך מסכים/ה לתנאי השימוש ומדיניות הפרטיות שלנו',
       'settings': 'הגדרות',
       'appearance': 'מראה',
       'theme_mode': 'מצב ערכת נושא',
@@ -301,7 +307,8 @@ class AppLocalizations {
       'delete_event_confirm': 'האם אתה בטוח שברצונך למחוק את האירוע "{title}"?',
       'event_deleted': 'האירוע נמחק',
       'delete_course': 'מחק קורס',
-      'delete_course_confirm': 'האם אתה בטוח שברצונך למחוק את "{name}"? פעולה זו תמחק גם את כל האירועים המשויכים.',
+      'delete_course_confirm':
+          'האם אתה בטוח שברצונך למחוק את "{name}"? פעולה זו תמחק גם את כל האירועים המשויכים.',
       'course_deleted': 'הקורס נמחק',
       'view_daily': 'יומי',
       'view_weekly': 'שבועי',
@@ -347,7 +354,8 @@ class AppLocalizations {
       'passwords_dont_match': 'הסיסמאות אינן תואמות',
       'password_too_short': 'הסיסמה חייבת להכיל לפחות 6 תווים',
       'guest_mode_title': 'מצב אורח',
-      'guest_mode_banner': 'הינך במצב אורח. התחבר כדי לגבות ולסנכרן את המערכת בין כל המכשירים שלך.',
+      'guest_mode_banner':
+          'הינך במצב אורח. התחבר כדי לגבות ולסנכרן את המערכת בין כל המכשירים שלך.',
       'field_required': 'שדה זה הינו חובה',
       'invalid_number': 'אנא הזן מספר תקין',
       'select_days_error': 'יש לבחור לפחות יום אחד בשבוע',
@@ -382,7 +390,8 @@ class AppLocalizations {
       'welcome': 'Bienvenido de nuevo',
       'login_subtitle': 'Gestiona tu vida académica sin problemas',
       'continue_google': 'Continuar con Google',
-      'terms_privacy': 'Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad',
+      'terms_privacy':
+          'Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad',
       'settings': 'Ajustes',
       'appearance': 'Apariencia',
       'theme_mode': 'Modo de tema',
@@ -432,7 +441,8 @@ class AppLocalizations {
       'retry': 'Reintentar',
       'cancel': 'Cancelar',
       'onboarding_title': 'Bienvenido a ROCIs Schedule',
-      'onboarding_subtitle': 'Organiza tus clases, exámenes y tareas sin esfuerzo',
+      'onboarding_subtitle':
+          'Organiza tus clases, exámenes y tareas sin esfuerzo',
       'get_started': 'Comenzar',
       'add_course': 'Agregar curso',
       'course_name': 'Nombre del curso',
@@ -479,7 +489,8 @@ class AppLocalizations {
       'delete_event_confirm': '¿Deseas eliminar "{title}"?',
       'event_deleted': 'Evento eliminado',
       'delete_course': 'Eliminar curso',
-      'delete_course_confirm': '¿Deseas eliminar "{name}"? Esto también eliminará todos los eventos asociados.',
+      'delete_course_confirm':
+          '¿Deseas eliminar "{name}"? Esto también eliminará todos los eventos asociados.',
       'course_deleted': 'Curso eliminado',
       'view_daily': 'Diario',
       'view_weekly': 'Semanal',
@@ -504,7 +515,8 @@ class AppLocalizations {
       'set_grade': 'Asignar calificación',
       'grade': 'Calificación',
       'class_reminders': 'Recordatorios de clase',
-      'class_reminders_subtitle': 'Recibe notificaciones 15 min antes de la clase',
+      'class_reminders_subtitle':
+          'Recibe notificaciones 15 min antes de la clase',
       'send_to_tasks': 'Enviar a ROCIs Tasks',
       'exported_to_tasks': '¡Exportado a ROCIs Tasks!',
       'ecosystem_apps': 'Ecosistema ROCIs Suite',
@@ -525,14 +537,16 @@ class AppLocalizations {
       'passwords_dont_match': 'Las contraseñas no coinciden',
       'password_too_short': 'La contraseña debe tener al menos 6 caracteres',
       'guest_mode_title': 'Modo Invitado',
-      'guest_mode_banner': 'Estás en modo invitado. Inicia sesión para sincronizar tu horario en todos tus dispositivos.',
+      'guest_mode_banner':
+          'Estás en modo invitado. Inicia sesión para sincronizar tu horario en todos tus dispositivos.',
     },
     'de': {
       'app_title': 'ROCIs Schedule',
       'welcome': 'Willkommen zurück',
       'login_subtitle': 'Organisiere deinen Studienalltag mühelos',
       'continue_google': 'Mit Google fortfahren',
-      'terms_privacy': 'Mit dem Fortfahren stimmst du unseren AGB & Datenschutzbestimmungen zu',
+      'terms_privacy':
+          'Mit dem Fortfahren stimmst du unseren AGB & Datenschutzbestimmungen zu',
       'settings': 'Einstellungen',
       'appearance': 'Erscheinungsbild',
       'theme_mode': 'Design-Modus',
@@ -572,7 +586,8 @@ class AppLocalizations {
       'credits_label': 'Credits',
       'events': 'Termine',
       'no_events_course': 'Keine Termine für diesen Kurs',
-      'error_timeout': 'Zeitüberschreitung. Bitte prüfe deine Internetverbindung.',
+      'error_timeout':
+          'Zeitüberschreitung. Bitte prüfe deine Internetverbindung.',
       'notifications': 'Benachrichtigungen',
       'version': 'App-Version',
       'terms': 'Nutzungsbedingungen',
@@ -582,7 +597,8 @@ class AppLocalizations {
       'retry': 'Erneut versuchen',
       'cancel': 'Abbrechen',
       'onboarding_title': 'Willkommen bei ROCIs Schedule',
-      'onboarding_subtitle': 'Organisiere Vorlesungen, Prüfungen und Aufgaben spielend leicht',
+      'onboarding_subtitle':
+          'Organisiere Vorlesungen, Prüfungen und Aufgaben spielend leicht',
       'get_started': 'Loslegen',
       'add_course': 'Kurs hinzufügen',
       'course_name': 'Kursname',
@@ -629,7 +645,8 @@ class AppLocalizations {
       'delete_event_confirm': 'Möchtest du "{title}" wirklich löschen?',
       'event_deleted': 'Termin gelöscht',
       'delete_course': 'Kurs löschen',
-      'delete_course_confirm': 'Möchtest du "{name}" wirklich löschen? Alle zugehörigen Termine werden gelöscht.',
+      'delete_course_confirm':
+          'Möchtest du "{name}" wirklich löschen? Alle zugehörigen Termine werden gelöscht.',
       'course_deleted': 'Kurs gelöscht',
       'view_daily': 'Täglich',
       'view_weekly': 'Wöchentlich',
@@ -654,7 +671,8 @@ class AppLocalizations {
       'set_grade': 'Note eintragen',
       'grade': 'Note',
       'class_reminders': 'Vorlesungserinnerungen',
-      'class_reminders_subtitle': 'Erhalte 15 Minuten vor Vorlesungsbeginn eine Erinnerung',
+      'class_reminders_subtitle':
+          'Erhalte 15 Minuten vor Vorlesungsbeginn eine Erinnerung',
       'send_to_tasks': 'An ROCIs Tasks senden',
       'exported_to_tasks': 'Erfolgreich an ROCIs Tasks exportiert!',
       'ecosystem_apps': 'ROCIs Suite Ökosystem',
@@ -675,14 +693,17 @@ class AppLocalizations {
       'passwords_dont_match': 'Passwörter stimmen nicht überein',
       'password_too_short': 'Passwort muss mindestens 6 Zeichen lang sein',
       'guest_mode_title': 'Gastmodus',
-      'guest_mode_banner': 'Du befindest dich im Gastmodus. Melde dich an, um deinen Stundenplan geräteübergreifend zu sichern.',
+      'guest_mode_banner':
+          'Du befindest dich im Gastmodus. Melde dich an, um deinen Stundenplan geräteübergreifend zu sichern.',
     },
     'fr': {
       'app_title': 'ROCIs Schedule',
       'welcome': 'Bon retour',
-      'login_subtitle': 'Gérez votre vie étudiante et restez organisé en toute simplicité',
+      'login_subtitle':
+          'Gérez votre vie étudiante et restez organisé en toute simplicité',
       'continue_google': 'Continuer avec Google',
-      'terms_privacy': 'En continuant, vous acceptez nos Conditions d\'utilisation et notre Politique de confidentialité',
+      'terms_privacy':
+          'En continuant, vous acceptez nos Conditions d\'utilisation et notre Politique de confidentialité',
       'settings': 'Paramètres',
       'appearance': 'Apparence',
       'theme_mode': 'Mode de thème',
@@ -718,11 +739,13 @@ class AppLocalizations {
       'no_events': 'No events for this day',
       'my_courses': 'Mes cours',
       'no_courses': 'Aucun cours ajouté pour l\'instant',
-      'add_first_course': 'Touchez le bouton ci-dessous pour ajouter votre premier cours',
+      'add_first_course':
+          'Touchez le bouton ci-dessous pour ajouter votre premier cours',
       'credits_label': 'Crédits',
       'events': 'Événements',
       'no_events_course': 'Aucun événement pour ce cours',
-      'error_timeout': 'Délai d\'attente dépassé. Veuillez vérifier votre connexion.',
+      'error_timeout':
+          'Délai d\'attente dépassé. Veuillez vérifier votre connexion.',
       'notifications': 'Notifications',
       'version': 'Version de l\'application',
       'terms': 'Conditions d\'utilisation',
@@ -732,7 +755,8 @@ class AppLocalizations {
       'retry': 'Réessayer',
       'cancel': 'Annuler',
       'onboarding_title': 'Bienvenue sur ROCIs Schedule',
-      'onboarding_subtitle': 'Organisez vos cours, examens et devoirs sans effort',
+      'onboarding_subtitle':
+          'Organisez vos cours, examens et devoirs sans effort',
       'get_started': 'Commencer',
       'add_course': 'Ajouter un cours',
       'course_name': 'Nom du cours',
@@ -752,7 +776,8 @@ class AppLocalizations {
       'notes': 'Notes',
       'save_event': 'Enregistrer l\'événement',
       'select_course_error': 'Veuillez sélectionner un cours',
-      'login_for_friends': 'Connectez-vous pour accéder aux fonctionnalités communautaires',
+      'login_for_friends':
+          'Connectez-vous pour accéder aux fonctionnalités communautaires',
       'assignments': 'Devoirs',
       'no_assignments': 'Aucun devoir à rendre',
       'add_assignment': 'Ajouter un devoir',
@@ -779,7 +804,8 @@ class AppLocalizations {
       'delete_event_confirm': 'Voulez-vous supprimer "{title}" ?',
       'event_deleted': 'Événement supprimé',
       'delete_course': 'Supprimer le cours',
-      'delete_course_confirm': 'Voulez-vous supprimer "{name}" ? Tous les événements associés seront supprimés.',
+      'delete_course_confirm':
+          'Voulez-vous supprimer "{name}" ? Tous les événements associés seront supprimés.',
       'course_deleted': 'Cours supprimé',
       'view_daily': 'Jour',
       'view_weekly': 'Semaine',
@@ -799,7 +825,8 @@ class AppLocalizations {
       'average_grade': 'Note moyenne',
       'total_credits': 'Total des crédits',
       'import_ics': 'Importer l\'emploi du temps (.ics)',
-      'import_ics_desc': 'Collez les données de calendrier .ics de Moodle ou Canvas',
+      'import_ics_desc':
+          'Collez les données de calendrier .ics de Moodle ou Canvas',
       'import': 'Importer',
       'set_grade': 'Attribuer une note',
       'grade': 'Note',
@@ -823,16 +850,19 @@ class AppLocalizations {
       'password_reset_sent': 'E-mail de réinitialisation envoyé !',
       'invalid_email': 'Veuillez entrer un e-mail valide',
       'passwords_dont_match': 'Les mots de passe ne correspondent pas',
-      'password_too_short': 'Le mot de passe doit comporter au moins 6 caractères',
+      'password_too_short':
+          'Le mot de passe doit comporter au moins 6 caractères',
       'guest_mode_title': 'Mode Invité',
-      'guest_mode_banner': 'Vous êtes en mode invité. Connectez-vous pour sauvegarder votre emploi du temps sur tous vos appareils.',
+      'guest_mode_banner':
+          'Vous êtes en mode invité. Connectez-vous pour sauvegarder votre emploi du temps sur tous vos appareils.',
     },
     'ar': {
       'app_title': 'ROCIs Schedule',
       'welcome': 'مرحباً بعودتك',
       'login_subtitle': 'نظم حياتك الجامعية وحافظ على تفوقك بكل سهولة',
       'continue_google': 'المتابعة باستخدام Google',
-      'terms_privacy': 'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بنا',
+      'terms_privacy':
+          'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بنا',
       'settings': 'الإعدادات',
       'appearance': 'المظهر',
       'theme_mode': 'وضع السمة',
@@ -929,7 +959,8 @@ class AppLocalizations {
       'delete_event_confirm': 'هل أنت متأكد من حذف "{title}"؟',
       'event_deleted': 'تم حذف المحاضرة',
       'delete_course': 'حذف المادة',
-      'delete_course_confirm': 'هل أنت متأكد من حذف "{name}"؟ سيؤدي ذلك أيضاً لحذف جميع المحاضرات المرتبطة بها.',
+      'delete_course_confirm':
+          'هل أنت متأكد من حذف "{name}"؟ سيؤدي ذلك أيضاً لحذف جميع المحاضرات المرتبطة بها.',
       'course_deleted': 'تم حذف المادة',
       'view_daily': 'يومي',
       'view_weekly': 'أسبوعي',
@@ -975,14 +1006,17 @@ class AppLocalizations {
       'passwords_dont_match': 'كلمتا المرور غير متطابقتين',
       'password_too_short': 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
       'guest_mode_title': 'وضع الزائر',
-      'guest_mode_banner': 'أنت تستخدم التطبيق بوضع الزائر. سجل الدخول لمزامنة جدولك الدراسي عبر جميع أجهزتك.',
+      'guest_mode_banner':
+          'أنت تستخدم التطبيق بوضع الزائر. سجل الدخول لمزامنة جدولك الدراسي عبر جميع أجهزتك.',
     },
     'hi': {
       'app_title': 'ROCIs Schedule',
       'welcome': 'वापसी पर स्वागत है',
-      'login_subtitle': 'अपने शैक्षणिक जीवन को सरलता से प्रबंधित करें और आगे रहें',
+      'login_subtitle':
+          'अपने शैक्षणिक जीवन को सरलता से प्रबंधित करें और आगे रहें',
       'continue_google': 'Google के साथ जारी रखें',
-      'terms_privacy': 'जारी रखकर, आप हमारी सेवा की शर्तों और गोपनीयता नीति से सहमत होते हैं',
+      'terms_privacy':
+          'जारी रखकर, आप हमारी सेवा की शर्तों और गोपनीयता नीति से सहमत होते हैं',
       'settings': 'सेटिंग्स',
       'appearance': 'दिखावट',
       'theme_mode': 'थीम मोड',
@@ -1018,7 +1052,8 @@ class AppLocalizations {
       'no_events': 'No events for this day',
       'my_courses': 'मेरे पाठ्यक्रम',
       'no_courses': 'अभी तक कोई पाठ्यक्रम नहीं जोड़ा गया',
-      'add_first_course': 'अपना पहला पाठ्यक्रम जोड़ने के लिए नीचे दिए गए बटन पर टैप करें',
+      'add_first_course':
+          'अपना पहला पाठ्यक्रम जोड़ने के लिए नीचे दिए गए बटन पर टैप करें',
       'credits_label': 'क्रेडिट्स',
       'events': 'कार्यक्रम',
       'no_events_course': 'इस पाठ्यक्रम के लिए कोई कार्यक्रम नहीं है',
@@ -1032,7 +1067,8 @@ class AppLocalizations {
       'retry': 'पुनः प्रयास करें',
       'cancel': 'रद्द करें',
       'onboarding_title': 'ROCIs Schedule में आपका स्वागत है',
-      'onboarding_subtitle': 'अपनी कक्षाओं, परीक्षाओं और असाइनमेंट को आसानी से व्यवस्थित करें',
+      'onboarding_subtitle':
+          'अपनी कक्षाओं, परीक्षाओं और असाइनमेंट को आसानी से व्यवस्थित करें',
       'get_started': 'शुरू करें',
       'add_course': 'पाठ्यक्रम जोड़ें',
       'course_name': 'पाठ्यक्रम का नाम',
@@ -1079,7 +1115,8 @@ class AppLocalizations {
       'delete_event_confirm': 'क्या आप वाकई "{title}" को हटाना चाहते हैं?',
       'event_deleted': 'कार्यक्रम हटा दिया गया',
       'delete_course': 'पाठ्यक्रम हटाएं',
-      'delete_course_confirm': 'क्या आप वाकई "{name}" को हटाना चाहते हैं? इससे सभी संबंधित कक्षाएं भी हट जाएंगी।',
+      'delete_course_confirm':
+          'क्या आप वाकई "{name}" को हटाना चाहते हैं? इससे सभी संबंधित कक्षाएं भी हट जाएंगी।',
       'course_deleted': 'पाठ्यक्रम हटा दिया गया',
       'view_daily': 'दैनिक',
       'view_weekly': 'साप्ताहिक',
@@ -1104,7 +1141,8 @@ class AppLocalizations {
       'set_grade': 'अंक दर्ज करें',
       'grade': 'ग्रेड',
       'class_reminders': 'कक्षा अनुस्मारक',
-      'class_reminders_subtitle': 'कक्षा शुरू होने से 15 मिनट पहले सूचना प्राप्त करें',
+      'class_reminders_subtitle':
+          'कक्षा शुरू होने से 15 मिनट पहले सूचना प्राप्त करें',
       'send_to_tasks': 'ROCIs Tasks में भेजें',
       'exported_to_tasks': 'सफलतापूर्वक ROCIs Tasks में निर्यात किया गया!',
       'ecosystem_apps': 'ROCIs Suite इकोसिस्टम',
@@ -1125,14 +1163,17 @@ class AppLocalizations {
       'passwords_dont_match': 'पासवर्ड मेल नहीं खाते',
       'password_too_short': 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
       'guest_mode_title': 'अतिथि मोड',
-      'guest_mode_banner': 'आप अतिथि मोड में हैं। सभी डिवाइसों पर अपनी समय सारणी सिंक करने के लिए साइन इन करें।',
+      'guest_mode_banner':
+          'आप अतिथि मोड में हैं। सभी डिवाइसों पर अपनी समय सारणी सिंक करने के लिए साइन इन करें।',
     },
     'sv': {
       'app_title': 'ROCIs Schedule',
       'welcome': 'Välkommen tillbaka',
-      'login_subtitle': 'Hantera ditt akademiska liv smidigt och ligg steget före',
+      'login_subtitle':
+          'Hantera ditt akademiska liv smidigt och ligg steget före',
       'continue_google': 'Fortsätt med Google',
-      'terms_privacy': 'Genom att fortsätta godkänner du våra användarvillkor och integritetspolicy',
+      'terms_privacy':
+          'Genom att fortsätta godkänner du våra användarvillkor och integritetspolicy',
       'settings': 'Inställningar',
       'appearance': 'Utseende',
       'theme_mode': 'Temaläge',
@@ -1168,11 +1209,13 @@ class AppLocalizations {
       'no_events': 'No events for this day',
       'my_courses': 'Mina kurser',
       'no_courses': 'Inga kurser tillagda än',
-      'add_first_course': 'Tryck på knappen nedan för att lägga till din första kurs',
+      'add_first_course':
+          'Tryck på knappen nedan för att lägga till din första kurs',
       'credits_label': 'Poäng',
       'events': 'Händelser',
       'no_events_course': 'Inga händelser för denna kurs',
-      'error_timeout': 'Anslutningen tog för lång tid. Kontrollera din internetanslutning.',
+      'error_timeout':
+          'Anslutningen tog för lång tid. Kontrollera din internetanslutning.',
       'notifications': 'Aviseringar',
       'version': 'Appversion',
       'terms': 'Användarvillkor',
@@ -1182,7 +1225,8 @@ class AppLocalizations {
       'retry': 'Försök igen',
       'cancel': 'Avbryt',
       'onboarding_title': 'Välkommen till ROCIs Schedule',
-      'onboarding_subtitle': 'Organisera dina lektioner, tentor och uppgifter utan ansträngning',
+      'onboarding_subtitle':
+          'Organisera dina lektioner, tentor och uppgifter utan ansträngning',
       'get_started': 'Kom igång',
       'add_course': 'Lägg till kurs',
       'course_name': 'Kursnamn',
@@ -1202,7 +1246,8 @@ class AppLocalizations {
       'notes': 'Anteckningar',
       'save_event': 'Spara händelse',
       'select_course_error': 'Vänligen välj en kurs',
-      'login_for_friends': 'Logga in för att få tillgång till gemenskapsfunktioner',
+      'login_for_friends':
+          'Logga in för att få tillgång till gemenskapsfunktioner',
       'assignments': 'Uppgifter',
       'no_assignments': 'Inga förfallna uppgifter',
       'add_assignment': 'Lägg till uppgift',
@@ -1229,7 +1274,8 @@ class AppLocalizations {
       'delete_event_confirm': 'Är du säker på att du vill ta bort "{title}"?',
       'event_deleted': 'Händelse borttagen',
       'delete_course': 'Ta bort kurs',
-      'delete_course_confirm': 'Är du säker på att du vill ta bort "{name}"? Detta raderar även alla tillhörande händelser.',
+      'delete_course_confirm':
+          'Är du säker på att du vill ta bort "{name}"? Detta raderar även alla tillhörande händelser.',
       'course_deleted': 'Kurs borttagen',
       'view_daily': 'Dag',
       'view_weekly': 'Vecka',
@@ -1249,12 +1295,14 @@ class AppLocalizations {
       'average_grade': 'Medelbetyg',
       'total_credits': 'Totala poäng',
       'import_ics': 'Importera schema (.ics)',
-      'import_ics_desc': 'Klistra in .ics-kalenderdata från Moodle eller Canvas',
+      'import_ics_desc':
+          'Klistra in .ics-kalenderdata från Moodle eller Canvas',
       'import': 'Importera',
       'set_grade': 'Ange betyg',
       'grade': 'Betyg',
       'class_reminders': 'Lektionspåminnelser',
-      'class_reminders_subtitle': 'Få avisering 15 minuter innan lektionen börjar',
+      'class_reminders_subtitle':
+          'Få avisering 15 minuter innan lektionen börjar',
       'send_to_tasks': 'Skicka till ROCIs Tasks',
       'exported_to_tasks': 'Exporterades till ROCIs Tasks!',
       'ecosystem_apps': 'ROCIs Suite Ekosystem',
@@ -1275,11 +1323,13 @@ class AppLocalizations {
       'passwords_dont_match': 'Lösenorden matchar inte',
       'password_too_short': 'Lösenordet måste vara minst 6 tecken',
       'guest_mode_title': 'Gästläge',
-      'guest_mode_banner': 'Du använder appen i gästläge. Logga in för att säkerhetskopiera ditt schema över alla enheter.',
+      'guest_mode_banner':
+          'Du använder appen i gästläge. Logga in för att säkerhetskopiera ditt schema över alla enheter.',
     },
   };
 
-  static Map<String, Map<String, String>> get localizedValues => _localizedValues;
+  static Map<String, Map<String, String>> get localizedValues =>
+      _localizedValues;
 
   String translate(String key) {
     return _localizedValues[locale.languageCode]?[key] ??

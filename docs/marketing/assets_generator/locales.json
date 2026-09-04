@@ -1,0 +1,124 @@
+{
+  "en": {
+    "name": "English",
+    "playstore_locale": "en-US",
+    "isRTL": false,
+    "slide1": {
+      "tag": "📚 ACADEMIC TIMETABLE PLANNER",
+      "title": "Master Your Semester. <span class=\"highlight-blue\">Effortlessly.</span>",
+      "subtitle": "Intuitive weekly class schedule, glassmorphic UI, and quick day-strip navigation.",
+      "badge": "⚡ Weekly Class Schedule"
+    },
+    "slide2": {
+      "tag": "🎓 GPA & CREDIT CALCULATOR",
+      "title": "Track Your Grades. <span class=\"highlight-emerald\">Know Your Standing.</span>",
+      "subtitle": "Real-time 4.0 GPA scale converter and semester credit weight calculations.",
+      "badge": "⚡ Accurate 4.0 GPA Scale"
+    },
+    "slide3": {
+      "tag": "🚨 LIVE EXAM COUNTDOWN",
+      "title": "Never Miss an Exam. <span class=\"highlight-crimson\">Stay Test-Ready.</span>",
+      "subtitle": "Pinned countdown banner highlights upcoming midterms and finals with real-time badges.",
+      "badge": "⏳ Live Exam Countdown"
+    },
+    "slide4": {
+      "tag": "📝 ASSIGNMENTS & TASKS",
+      "title": "Conquer Deadlines. <span class=\"highlight-purple\">Prioritize Smartly.</span>",
+      "subtitle": "Track homework, lab reports, and projects with priority pills and instant checkboxes.",
+      "badge": "⚡ Due Date Alerts"
+    },
+    "slide5": {
+      "tag": "📥 1-CLICK CALENDAR IMPORT",
+      "title": "Import Your Timetable <span class=\"highlight-blue\">in Seconds.</span>",
+      "subtitle": "Seamlessly load .ics schedule files exported from Canvas, Moodle, Blackboard, or Google Calendar.",
+      "badge": "⚡ Instant .ICS Parsing"
+    },
+    "slide6": {
+      "tag": "🔗 UNIFIED PRODUCTIVITY ECOSYSTEM",
+      "title": "ROCIs Schedule <span class=\"highlight-crimson\">+ ROCIs Tasks.</span>",
+      "subtitle": "Send course assignments straight into ROCIs Tasks with one tap for unified productivity.",
+      "badge": "⚡ Cross-App Synergy"
+    },
+    "slide7": {
+      "tag": "🌍 8 GLOBAL LANGUAGES & RTL",
+      "title": "Built for Students <span class=\"highlight-emerald\">Everywhere.</span>",
+      "subtitle": "Native English, Hebrew (עברית), Spanish, German, French, Arabic, Hindi, and Swedish support.",
+      "badge": "🌐 Full RTL & L10n"
+    },
+    "slide8": {
+      "tag": "🎨 MATERIAL YOU & GLASSMORPHISM",
+      "title": "Stunning Glassmorphism. <span class=\"highlight-blue\">Pure AMOLED.</span>",
+      "subtitle": "Battery-saving true black AMOLED theme, Gaussian backdrop blurs, and dynamic palette accents.",
+      "badge": "✨ Ultra-Clean UI"
+    },
+    "featureGraphic": {
+      "appName": "ROCIs Schedule",
+      "tagline": "Master Your Semester. Effortlessly.",
+      "badge1": "📅 Weekly Timetable",
+      "badge2": "🎓 GPA Tracker",
+      "badge3": "🚨 Exam Alerts",
+      "badge4": "📥 .ICS Importer"
+    }
+  },
+  "he": {
+    "name": "Hebrew",
+    "playstore_locale": "he-IL",
+    "isRTL": true,
+    "slide1": {
+      "tag": "📚 מערכת שעות אקדמית חכמה",
+      "title": "שליטה מלאה בסמסטר. <span class=\"highlight-blue\">בקלות ובסטייל.</span>",
+      "subtitle": "לוח הרצאות שבועי אינטואיטיבי, עיצוב גלאסמורפיזם וניווט ימי שבוע מהיר.",
+      "badge": "⚡ מערכת שעות שבועית"
+    },
+    "slide2": {
+      "tag": "🎓 מחשבון ממוצע ציונים ונק\"ז",
+      "title": "מעקב ציונים חי. <span class=\"highlight-emerald\">דע את הממוצע שלך.</span>",
+      "subtitle": "המרה מדויקת לסולם 4.0, חישוב ממוצע משוקלל וסך נקודות זכות בסמסטר.",
+      "badge": "⚡ חישוב GPA בזמן אמת"
+    },
+    "slide3": {
+      "tag": "🚨 ספירה לאחור למבחנים",
+      "title": "לא מפספסים מבחן. <span class=\"highlight-crimson\">מוכנים לכל מועד.</span>",
+      "subtitle": "כרטיס ייעודי למבחנים הקרובים עם תגיות ספירה לאחור בזמן אמת.",
+      "badge": "⏳ ספירה לאחור למבחנים"
+    },
+    "slide4": {
+      "tag": "📝 מטלות ותרגילים",
+      "title": "עומדים בכל הדדליינים. <span class=\"highlight-purple\">סדר עדיפויות חכם.</span>",
+      "subtitle": "מעקב ש\"ב, דוחות מעבדה ועבודות עם רמות עדיפות וסימון ביצוע מיידי.",
+      "badge": "⚡ תזכורות מועדי הגשה"
+    },
+    "slide5": {
+      "tag": "📥 ייבוא מערכת שעות בלחיצה",
+      "title": "ייבוא מערכת שעות <span class=\"highlight-blue\">בשניות ספורות.</span>",
+      "subtitle": "טעינה חלקה של קובצי .ics מ-Moodle, Canvas, Blackboard או Google Calendar.",
+      "badge": "⚡ פענוח .ICS מהיר"
+    },
+    "slide6": {
+      "tag": "🔗 אקו-סיסטם מאוחד",
+      "title": "ROCIs Schedule <span class=\"highlight-crimson\">+ ROCIs Tasks.</span>",
+      "subtitle": "ייצוא מטלות ומשימות ישירות לאפליקציית ROCIs Tasks בלחיצה אחת.",
+      "badge": "⚡ סנכרון בין אפליקציות"
+    },
+    "slide7": {
+      "tag": "🌍 תמיכה מלאה ב-8 שפות",
+      "title": "מותאם לסטודנטים <span class=\"highlight-emerald\">בכל העולם.</span>",
+      "subtitle": "עברית שפת אם עם תמיכת RTL מלאה, אנגלית, ספרדית, צרפתית, גרמנית ועוד.",
+      "badge": "🌐 תמיכת עברית מלאה"
+    },
+    "slide8": {
+      "tag": "🎨 עיצוב מודרני ו-AMOLED",
+      "title": "עיצוב Glassmorphism. <span class=\"highlight-blue\">חיסכון בסוללה.</span>",
+      "subtitle": "מצב AMOLED כהה עמוק, טשטוש Gaussian זכוכיתי והתאמת צבעים דינמית.",
+      "badge": "✨ ממשק מרהיב ונקי"
+    },
+    "featureGraphic": {
+      "appName": "ROCIs Schedule",
+      "tagline": "שליטה מלאה בסמסטר. בקלות ובסטייל.",
+      "badge1": "📅 מערכת שעות",
+      "badge2": "🎓 מחשבון GPA",
+      "badge3": "🚨 ספירה למבחנים",
+      "badge4": "📥 ייבוא קובצי ICS"
+    }
+  }
+}

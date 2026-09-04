@@ -152,36 +152,90 @@ class SettingsScreen extends StatelessWidget {
             onTap: () {
               showModalBottomSheet(
                 context: context,
-                builder: (context) => Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                builder: (context) => SafeArea(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(context).size.height * 0.7,
                     ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildLocaleOption(
-                        context,
-                        null,
-                        l10n.translate('system'),
-                        themeProvider,
-                      ),
-                      _buildLocaleOption(
-                        context,
-                        const Locale('en'),
-                        l10n.translate('english'),
-                        themeProvider,
-                      ),
-                      _buildLocaleOption(
-                        context,
-                        const Locale('he'),
-                        l10n.translate('hebrew'),
-                        themeProvider,
-                      ),
-                    ],
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 8,
+                          ),
+                          child: Text(
+                            l10n.translate('language'),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const Divider(),
+                        _buildLocaleOption(
+                          context,
+                          null,
+                          l10n.translate('system'),
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('en'),
+                          'English',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('he'),
+                          'עברית',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('es'),
+                          'Español',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('de'),
+                          'Deutsch',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('fr'),
+                          'Français',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('ar'),
+                          'العربية',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('hi'),
+                          'हिन्दी',
+                          themeProvider,
+                        ),
+                        _buildLocaleOption(
+                          context,
+                          const Locale('sv'),
+                          'Svenska',
+                          themeProvider,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -246,7 +300,9 @@ class SettingsScreen extends StatelessWidget {
                       if (context.mounted) context.go('/login');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.errorContainer,
                       foregroundColor: Theme.of(
                         context,
                       ).colorScheme.onErrorContainer,
@@ -389,7 +445,10 @@ class SettingsScreen extends StatelessWidget {
     String label,
     ThemeProvider provider,
   ) {
-    final isSelected = provider.locale == locale;
+    final isSelected =
+        (locale == null && provider.locale == null) ||
+        (locale != null &&
+            provider.locale?.languageCode == locale.languageCode);
     return ListTile(
       title: Text(
         label,
@@ -461,6 +520,3 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
-
-
-

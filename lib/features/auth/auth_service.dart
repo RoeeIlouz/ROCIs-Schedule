@@ -15,8 +15,8 @@ class AuthService extends ChangeNotifier {
   String get effectiveUserId => _user?.uid ?? 'guest';
 
   AuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
-      : _customAuth = auth,
-        _googleSignIn = googleSignIn ?? GoogleSignIn() {
+    : _customAuth = auth,
+      _googleSignIn = googleSignIn ?? GoogleSignIn() {
     _init();
   }
 
@@ -42,6 +42,20 @@ class AuthService extends ChangeNotifier {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       debugPrint('Starting Google Sign-In...');
+
+      if (kIsWeb) {
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        final UserCredential result = await _auth.signInWithPopup(
+          googleProvider,
+        );
+        _user = result.user;
+        notifyListeners();
+        debugPrint(
+          'Firebase Web Sign-In successful for: ${result.user?.email}',
+        );
+        return result;
+      }
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         debugPrint('Google Sign-In aborted by user.');
@@ -125,15 +139,17 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signOut() async {
     debugPrint('Signing out user...');
-    
+
     // Clear local database cache to prevent data leakage between users
     await LocalDbService.clearCache();
     debugPrint('Local database cache cleared');
-    
-    try {
-      await _googleSignIn.signOut();
-    } catch (e) {
-      debugPrint('Google sign out error: $e');
+
+    if (!kIsWeb) {
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('Google sign out error: $e');
+      }
     }
 
     try {

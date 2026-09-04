@@ -23,9 +23,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final courseProvider = context.watch<CourseProvider?>();
+    final courseProvider = context.watch<CourseProvider>();
 
-    if (courseProvider == null || courseProvider.isLoading) {
+    if (courseProvider.isLoading) {
       return Scaffold(
         body: Center(
           child: Column(

@@ -25,10 +25,10 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final assignmentProvider = context.watch<AssignmentProvider?>();
-    final courseProvider = context.watch<CourseProvider?>();
+    final assignmentProvider = context.watch<AssignmentProvider>();
+    final courseProvider = context.watch<CourseProvider>();
 
-    if (assignmentProvider == null || courseProvider == null) {
+    if (assignmentProvider.isLoading || courseProvider.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 

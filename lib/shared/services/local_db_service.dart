@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
@@ -23,6 +24,7 @@ class LocalDbService {
       _currentUserId = userId;
       return _database;
     } catch (e) {
+      debugPrint('LocalDbService: Error initializing database: $e');
       return null;
     }
   }
@@ -30,13 +32,19 @@ class LocalDbService {
   Future<Database> _initDB() async {
     // Sanitize userId for filename
     final safeUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-    String path = join(
-      await getDatabasesPath(),
-      'rocis_schedule_$safeUserId.db',
-    );
+    final dbName = 'rocis_schedule_$safeUserId.db';
+    final String path;
+    if (kIsWeb) {
+      path = dbName;
+    } else {
+      path = join(await getDatabasesPath(), dbName);
+    }
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -60,6 +68,9 @@ class LocalDbService {
       try {
         await db.execute('ALTER TABLE courses ADD COLUMN grade REAL');
       } catch (_) {}
+    }
+    if (oldVersion < 4) {
+      await _createIndices(db);
     }
   }
 
@@ -93,6 +104,7 @@ class LocalDbService {
     ''');
 
     await _createAssignmentsTable(db);
+    await _createIndices(db);
   }
 
   Future<void> _createAssignmentsTable(Database db) async {
@@ -108,6 +120,24 @@ class LocalDbService {
         FOREIGN KEY (courseId) REFERENCES courses (id) ON DELETE CASCADE
       )
     ''');
+  }
+
+  static Future<void> _createIndices(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_events_courseId ON events(courseId)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_events_startTime ON events(startTime)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assignments_courseId ON assignments(courseId)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assignments_dueDate ON assignments(dueDate)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_assignments_isCompleted ON assignments(isCompleted)',
+    );
   }
 
   // Course CRUD

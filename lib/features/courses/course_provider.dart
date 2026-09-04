@@ -51,10 +51,15 @@ class CourseProvider extends ChangeNotifier {
   Future<void> loadData() async {
     _isLoading = true;
     notifyListeners();
-    _courses = await _dbService.getCourses();
-    _events = await _dbService.getEvents();
-    _isLoading = false;
-    notifyListeners();
+    try {
+      _courses = await _dbService.getCourses();
+      _events = await _dbService.getEvents();
+    } catch (e) {
+      debugPrint('CourseProvider.loadData error: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> addCourse(Course course) async {

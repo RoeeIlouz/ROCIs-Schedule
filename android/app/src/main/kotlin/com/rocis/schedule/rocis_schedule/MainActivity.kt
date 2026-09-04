@@ -1,4 +1,4 @@
-package com.rocis.schedule.rocis_schedule
+package com.rocisapps.schedule
 
 import io.flutter.embedding.android.FlutterActivity
 
