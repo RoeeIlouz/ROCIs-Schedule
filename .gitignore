@@ -40,3 +40,7 @@ key.properties
 
 # Firebase cache
 .firebase/
+
+# Stray version artifacts
+1.1.0
+ignored/
