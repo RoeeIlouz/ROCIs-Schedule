@@ -6,6 +6,9 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
+# Application Classes
+-keep class com.rocisapps.schedule.** { *; }
+
 # SQLite FFI & Native libraries
 -keep class com.tekartik.sqflite.** { *; }
 -dontwarn com.tekartik.sqflite.**
@@ -24,3 +27,12 @@
 
 # Android Desugaring
 -dontwarn java.time.**
+
+# Play Core / Deferred Components
+-dontwarn com.google.android.play.core.**
+
+# Google Sign-In & Play Services Auth
+-keep class com.google.android.gms.auth.api.signin.** { *; }
+-keep class com.google.android.gms.common.api.** { *; }
+-keep class com.google.android.gms.common.internal.safeparcel.** { *; }
+-dontwarn com.google.android.gms.**

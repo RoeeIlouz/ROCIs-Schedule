@@ -25,9 +25,19 @@ void main() async {
     databaseFactory = databaseFactoryFfiWeb;
   }
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('main(): Firebase initialization error: $e');
+  }
 
-  await NotificationService().init();
+  try {
+    await NotificationService().init();
+  } catch (e) {
+    debugPrint('main(): NotificationService initialization error: $e');
+  }
 
   final authService = AuthService();
   final themeProvider = ThemeProvider();
@@ -124,6 +134,15 @@ class MyApp extends StatelessWidget {
                   GlobalCupertinoLocalizations.delegate,
                 ],
                 supportedLocales: AppLocalizations.supportedLocales,
+                localeResolutionCallback: (locale, supportedLocales) {
+                  if (locale == null) return const Locale('en', '');
+                  for (final supportedLocale in supportedLocales) {
+                    if (supportedLocale.languageCode == locale.languageCode) {
+                      return supportedLocale;
+                    }
+                  }
+                  return const Locale('en', '');
+                },
               );
             },
           );

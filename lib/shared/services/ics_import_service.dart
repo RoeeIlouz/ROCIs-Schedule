@@ -11,14 +11,14 @@ class IcsImportResult {
 
 class IcsImportService {
   static const List<Color> _palette = [
-    Color(0xFF2196F3), // Blue
-    Color(0xFF00BFA5), // Teal
-    Color(0xFFAB47BC), // Purple
-    Color(0xFFFF7043), // Deep Orange
-    Color(0xFFEC407A), // Pink
-    Color(0xFF5C6BC0), // Indigo
-    Color(0xFF26A69A), // Sea Green
-    Color(0xFFFFA726), // Amber
+    Color(0xFF6366F1), // Indigo
+    Color(0xFF0EA5E9), // Sky Blue
+    Color(0xFF10B981), // Emerald
+    Color(0xFFF59E0B), // Amber
+    Color(0xFFEF4444), // Rose
+    Color(0xFF8B5CF6), // Violet
+    Color(0xFF14B8A6), // Teal
+    Color(0xFFEC4899), // Pink
   ];
 
   static IcsImportResult parseIcsContent(String icsContent) {
@@ -26,12 +26,16 @@ class IcsImportService {
     final events = <ScheduleEvent>[];
     const uuid = Uuid();
 
-    final lines = icsContent.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n');
+    final lines = icsContent
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .split('\n');
     final unfoldedLines = <String>[];
 
     // Unfold multi-line entries (lines starting with space or tab)
     for (var line in lines) {
-      if ((line.startsWith(' ') || line.startsWith('\t')) && unfoldedLines.isNotEmpty) {
+      if ((line.startsWith(' ') || line.startsWith('\t')) &&
+          unfoldedLines.isNotEmpty) {
         unfoldedLines.last += line.substring(1);
       } else {
         unfoldedLines.add(line);
@@ -66,11 +70,14 @@ class IcsImportService {
               : startTime.add(const Duration(hours: 1));
 
           final daysOfWeek = _parseDaysOfWeek(rruleStr, startTime);
-          final isRecurring = rruleStr.contains('FREQ=WEEKLY') || daysOfWeek.isNotEmpty;
+          final isRecurring =
+              rruleStr.contains('FREQ=WEEKLY') || daysOfWeek.isNotEmpty;
           final eventType = _detectEventType(summary);
 
           final rawKey = _extractCourseKey(summary);
-          final courseKey = rawKey.isNotEmpty ? rawKey : (summary.trim().isNotEmpty ? summary.trim() : 'Course');
+          final courseKey = rawKey.isNotEmpty
+              ? rawKey
+              : (summary.trim().isNotEmpty ? summary.trim() : 'Course');
           if (!coursesMap.containsKey(courseKey)) {
             final colorIndex = coursesMap.length % _palette.length;
             final courseCode = _extractCourseCode(summary);
@@ -85,18 +92,20 @@ class IcsImportService {
           }
 
           final course = coursesMap[courseKey]!;
-          events.add(ScheduleEvent(
-            id: 'e_${uuid.v4().substring(0, 8)}',
-            title: summary,
-            courseId: course.id,
-            type: eventType,
-            startTime: startTime,
-            endTime: endTime,
-            location: location,
-            daysOfWeek: daysOfWeek,
-            recurring: isRecurring,
-            notes: description,
-          ));
+          events.add(
+            ScheduleEvent(
+              id: 'e_${uuid.v4().substring(0, 8)}',
+              title: summary,
+              courseId: course.id,
+              type: eventType,
+              startTime: startTime,
+              endTime: endTime,
+              location: location,
+              daysOfWeek: daysOfWeek,
+              recurring: isRecurring,
+              notes: description,
+            ),
+          );
         }
       } else if (inEvent) {
         if (line.startsWith('SUMMARY:')) {
@@ -117,15 +126,15 @@ class IcsImportService {
       }
     }
 
-    return IcsImportResult(
-      courses: coursesMap.values.toList(),
-      events: events,
-    );
+    return IcsImportResult(courses: coursesMap.values.toList(), events: events);
   }
 
   static DateTime _parseDateTime(String raw) {
     try {
-      final clean = raw.replaceAll('Z', '').replaceAll('-', '').replaceAll(':', '');
+      final clean = raw
+          .replaceAll('Z', '')
+          .replaceAll('-', '')
+          .replaceAll(':', '');
       if (clean.length >= 8) {
         final year = int.parse(clean.substring(0, 4));
         final month = int.parse(clean.substring(4, 6));
@@ -136,9 +145,15 @@ class IcsImportService {
 
         if (clean.length >= 13 && clean.contains('T')) {
           final timePart = clean.substring(clean.indexOf('T') + 1);
-          if (timePart.length >= 2) hour = int.parse(timePart.substring(0, 2));
-          if (timePart.length >= 4) minute = int.parse(timePart.substring(2, 4));
-          if (timePart.length >= 6) second = int.parse(timePart.substring(4, 6));
+          if (timePart.length >= 2) {
+            hour = int.parse(timePart.substring(0, 2));
+          }
+          if (timePart.length >= 4) {
+            minute = int.parse(timePart.substring(2, 4));
+          }
+          if (timePart.length >= 6) {
+            second = int.parse(timePart.substring(4, 6));
+          }
         }
         return DateTime(year, month, day, hour, minute, second);
       }
@@ -154,13 +169,27 @@ class IcsImportService {
       for (var token in byDayPart.split(',')) {
         final code = token.replaceAll(RegExp(r'[^A-Z]'), '');
         switch (code) {
-          case 'SU': days.add(0); break;
-          case 'MO': days.add(1); break;
-          case 'TU': days.add(2); break;
-          case 'WE': days.add(3); break;
-          case 'TH': days.add(4); break;
-          case 'FR': days.add(5); break;
-          case 'SA': days.add(6); break;
+          case 'SU':
+            days.add(0);
+            break;
+          case 'MO':
+            days.add(1);
+            break;
+          case 'TU':
+            days.add(2);
+            break;
+          case 'WE':
+            days.add(3);
+            break;
+          case 'TH':
+            days.add(4);
+            break;
+          case 'FR':
+            days.add(5);
+            break;
+          case 'SA':
+            days.add(6);
+            break;
         }
       }
     } else if (rrule.contains('FREQ=WEEKLY')) {
@@ -171,13 +200,21 @@ class IcsImportService {
 
   static EventType _detectEventType(String summary) {
     final lower = summary.toLowerCase();
-    if (lower.contains('exam') || lower.contains('midterm') || lower.contains('final') || lower.contains('test') || lower.contains('quiz') || lower.contains('מבחן')) {
+    if (lower.contains('exam') ||
+        lower.contains('midterm') ||
+        lower.contains('final') ||
+        lower.contains('test') ||
+        lower.contains('quiz') ||
+        lower.contains('מבחן')) {
       return EventType.exam;
     }
     if (lower.contains('lab') || lower.contains('מעבדה')) {
       return EventType.lab;
     }
-    if (lower.contains('study') || lower.contains('tutorial') || lower.contains('recitation') || lower.contains('תרגול')) {
+    if (lower.contains('study') ||
+        lower.contains('tutorial') ||
+        lower.contains('recitation') ||
+        lower.contains('תרגול')) {
       return EventType.study;
     }
     return EventType.classType;
@@ -200,7 +237,9 @@ class IcsImportService {
     }
     final rawKey = _extractCourseKey(summary);
     if (rawKey.isNotEmpty) {
-      return rawKey.length > 6 ? rawKey.substring(0, 6).toUpperCase() : rawKey.toUpperCase();
+      return rawKey.length > 6
+          ? rawKey.substring(0, 6).toUpperCase()
+          : rawKey.toUpperCase();
     }
     return 'CRS';
   }

@@ -16,7 +16,13 @@ class AuthService extends ChangeNotifier {
 
   AuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
     : _customAuth = auth,
-      _googleSignIn = googleSignIn ?? GoogleSignIn() {
+      _googleSignIn =
+          googleSignIn ??
+          GoogleSignIn(
+            serverClientId:
+                '318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com',
+            scopes: ['email', 'profile'],
+          ) {
     _init();
   }
 
@@ -56,6 +62,11 @@ class AuthService extends ChangeNotifier {
         return result;
       }
 
+      // Ensure any previous session is cleared so user can always pick an account
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         debugPrint('Google Sign-In aborted by user.');
@@ -66,7 +77,15 @@ class AuthService extends ChangeNotifier {
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      debugPrint('Obtaining Firebase credential...');
+      debugPrint(
+        'Obtaining Firebase credential (idToken: ${googleAuth.idToken != null}, accessToken: ${googleAuth.accessToken != null})...',
+      );
+      if (googleAuth.idToken == null && googleAuth.accessToken == null) {
+        throw Exception(
+          'Google Sign-In failed: No authorization tokens received from Google Play Services.',
+        );
+      }
+
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,

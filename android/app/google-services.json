@@ -8,78 +8,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:318456267857:android:812500841ec5c3aa53a470",
-        "android_client_info": {
-          "package_name": "com.example.rocis_tasks"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDfHAfG-A3o0ZUyMtudxKkah6wsTKy9z10"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:318456267857:android:c43162aad6a3c8f553a470",
-        "android_client_info": {
-          "package_name": "com.rocis.schedule.rocis_schedule"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "318456267857-ujepu107jmo8t3gt5a3qrob6kqoib2b0.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.rocis.schedule.rocis_schedule",
-            "certificate_hash": "cd3996d21c1b612182dcc13a7def74371f3969e2"
-          }
-        },
-        {
-          "client_id": "318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDfHAfG-A3o0ZUyMtudxKkah6wsTKy9z10"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:318456267857:android:4e12279b28b58c3353a470",
         "android_client_info": {
           "package_name": "com.rocisapps.schedule"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "318456267857-ldv4503cmvh6f657tub8g2kdb7dqnid4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rocisapps.schedule",
+            "certificate_hash": "9098bd9855ebeb4ee73c1a404eda55d106cc5ee8"
+          }
+        },
+        {
+          "client_id": "318456267857-ur6mtbi2sfe8omcfvvlmtcbl7325ejot.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rocisapps.schedule",
+            "certificate_hash": "c471af381f6cdf80ff849d6c577838fae78d6814"
+          }
+        },
         {
           "client_id": "318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com",
           "client_type": 3

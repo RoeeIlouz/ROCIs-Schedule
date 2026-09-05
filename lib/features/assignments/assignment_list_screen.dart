@@ -145,9 +145,11 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 8,
+                      bottom: 100,
                     ),
                     itemCount: assignments.length,
                     itemBuilder: (context, index) {
@@ -362,37 +364,41 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
     AssignmentPriority priority,
   ) {
     final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Color color;
     String label;
 
     switch (priority) {
       case AssignmentPriority.high:
-        color = const Color(0xFFFF5252);
+        color = const Color(0xFFEF4444);
         label = l10n.translate('high');
         break;
       case AssignmentPriority.medium:
-        color = const Color(0xFFFFAB40);
+        color = const Color(0xFFF59E0B);
         label = l10n.translate('medium');
         break;
       case AssignmentPriority.low:
-        color = const Color(0xFF69F0AE);
+        color = const Color(0xFF10B981);
         label = l10n.translate('low');
         break;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
+        color: color.withValues(alpha: isDark ? 0.2 : 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: isDark ? 0.35 : 0.25),
+          width: 1,
+        ),
       ),
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
           color: color,
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
       ),

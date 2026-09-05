@@ -117,9 +117,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 8,
+                      bottom: 100,
                     ),
                     itemCount: dayEvents.length,
                     itemBuilder: (context, index) {
@@ -187,6 +189,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         itemCount: exams.length,
         itemBuilder: (context, index) {
+          final theme = Theme.of(context);
+          final errorColor = theme.colorScheme.error;
           final exam = exams[index];
           final course = courses[exam.courseId];
           final diff = exam.startTime.difference(DateTime.now());
@@ -210,7 +214,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             width: 260,
             margin: const EdgeInsets.only(right: 12),
             child: GlassContainer(
-              tintColor: const Color(0xFFFF5252),
+              tintColor: errorColor,
               borderRadius: BorderRadius.circular(16),
               padding: const EdgeInsets.all(12),
               child: Row(
@@ -219,12 +223,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF5252).withValues(alpha: 0.2),
+                      color: errorColor.withValues(alpha: 0.14),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.assignment_late_rounded,
-                      color: Color(0xFFFF5252),
+                      color: errorColor,
                       size: 20,
                     ),
                   ),
@@ -256,8 +260,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         const SizedBox(height: 2),
                         Text(
                           timeText,
-                          style: const TextStyle(
-                            color: Color(0xFFFF5252),
+                          style: TextStyle(
+                            color: errorColor,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -514,7 +518,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ? theme.colorScheme.primary
                       : (isToday
                             ? theme.colorScheme.primary.withValues(alpha: 0.4)
-                            : (isDark ? Colors.white10 : Colors.black12)),
+                            : (isDark
+                                  ? Colors.white12
+                                  : const Color(0xFFE2E8F0))),
                   width: isSelected ? 2 : 1,
                 ),
                 boxShadow: isSelected

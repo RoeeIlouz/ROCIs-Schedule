@@ -64,9 +64,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errStr = e.toString();
+        String displayMsg = errStr;
+        if (errStr.contains('10') || errStr.contains('DEVELOPER_ERROR')) {
+          displayMsg =
+              'Google Sign-In configuration mismatch (Code 10). Add Google Play App Signing SHA-1 to Firebase Console.';
+        }
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(displayMsg)));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -77,10 +83,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final creds = await context.read<AuthService>().signInWithEmailAndPassword(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+      final creds = await context
+          .read<AuthService>()
+          .signInWithEmailAndPassword(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
       if (creds.user != null && mounted) {
         await _handlePostLogin(creds.user!.uid);
       }
@@ -99,9 +107,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.translate('invalid_email'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.translate('invalid_email'))));
       return;
     }
 
@@ -151,7 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 8.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -198,7 +209,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
-                      if (value == null || value.isEmpty || !value.contains('@')) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !value.contains('@')) {
                         return l10n.translate('invalid_email');
                       }
                       return null;
@@ -272,7 +285,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Expanded(
                         child: Divider(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
                       ),
                       Padding(
@@ -283,13 +298,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.0,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.4,
+                            ),
                           ),
                         ),
                       ),
                       Expanded(
                         child: Divider(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
                       ),
                     ],
@@ -303,7 +322,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       side: BorderSide(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.2,
+                        ),
                       ),
                     ),
                     child: Row(

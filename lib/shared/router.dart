@@ -18,7 +18,11 @@ class AppRouter {
     navigatorKey: _rootNavigatorKey,
     routes: [
       GoRoute(path: '/', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/login',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const LoginScreen(),
+      ),
       GoRoute(
         path: '/register',
         parentNavigatorKey: _rootNavigatorKey,
@@ -26,10 +30,12 @@ class AppRouter {
       ),
       GoRoute(
         path: '/onboarding',
+        parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: '/profile-setup',
+        parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const ProfileSetupScreen(),
       ),
       ShellRoute(

@@ -50,10 +50,7 @@ class CourseListScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     l10n.translate('no_courses'),
-                    style: TextStyle(
-                      color: theme.disabledColor,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: theme.disabledColor, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
@@ -73,13 +70,24 @@ class CourseListScreen extends StatelessWidget {
           }
 
           return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: 100,
+            ),
             children: [
               _buildGpaSummaryCard(provider, l10n, theme),
               const SizedBox(height: 16),
               ...provider.courses.map((course) {
                 final courseEvents = provider.getEventsByCourse(course.id);
-                return _buildCourseCard(context, course, courseEvents, l10n, theme);
+                return _buildCourseCard(
+                  context,
+                  course,
+                  courseEvents,
+                  l10n,
+                  theme,
+                );
               }),
             ],
           );
@@ -100,7 +108,9 @@ class CourseListScreen extends StatelessWidget {
     final gpa = provider.calculatedGpa;
     final avgGrade = provider.averageGrade;
     final totalCredits = provider.totalCredits;
-    final creditsText = totalCredits % 1 == 0 ? totalCredits.toInt().toString() : totalCredits.toStringAsFixed(1);
+    final creditsText = totalCredits % 1 == 0
+        ? totalCredits.toInt().toString()
+        : totalCredits.toStringAsFixed(1);
 
     return GlassContainer(
       tintColor: theme.colorScheme.primary,
@@ -119,7 +129,10 @@ class CourseListScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 l10n.translate('academic_overview'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ],
           ),
@@ -145,7 +158,9 @@ class CourseListScreen extends StatelessWidget {
               Expanded(
                 child: _buildMetricPill(
                   title: l10n.translate('average_grade'),
-                  value: avgGrade != null ? '${avgGrade.toStringAsFixed(1)}%' : '--',
+                  value: avgGrade != null
+                      ? '${avgGrade.toStringAsFixed(1)}%'
+                      : '--',
                   accentColor: Colors.orangeAccent.shade700,
                 ),
               ),
@@ -208,7 +223,11 @@ class CourseListScreen extends StatelessWidget {
           color: Colors.red.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 28),
+        child: const Icon(
+          Icons.delete_outline_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
       ),
       confirmDismiss: (direction) async {
         return await _showDeleteConfirmation(context, l10n, course.name);
@@ -226,7 +245,8 @@ class CourseListScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           padding: const EdgeInsets.all(16),
           child: InkWell(
-            onTap: () => _showCourseDetails(context, course, courseEvents, l10n),
+            onTap: () =>
+                _showCourseDetails(context, course, courseEvents, l10n),
             borderRadius: BorderRadius.circular(20),
             child: Row(
               children: [
@@ -244,7 +264,14 @@ class CourseListScreen extends StatelessWidget {
                   child: Center(
                     child: Text(
                       course.code.isNotEmpty
-                          ? course.code.substring(0, course.code.length > 3 ? 3 : course.code.length).toUpperCase()
+                          ? course.code
+                                .substring(
+                                  0,
+                                  course.code.length > 3
+                                      ? 3
+                                      : course.code.length,
+                                )
+                                .toUpperCase()
                           : course.name.substring(0, 1).toUpperCase(),
                       style: TextStyle(
                         color: course.color,
@@ -281,7 +308,9 @@ class CourseListScreen extends StatelessWidget {
                           course.instructor,
                           style: TextStyle(
                             fontSize: 12,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ],
@@ -293,7 +322,10 @@ class CourseListScreen extends StatelessWidget {
                   children: [
                     if (course.grade != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
                           color: Colors.teal.withValues(alpha: 0.2),
@@ -309,9 +341,13 @@ class CourseListScreen extends StatelessWidget {
                         ),
                       ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -327,7 +363,9 @@ class CourseListScreen extends StatelessWidget {
                       '${courseEvents.length} ${l10n.translate('events')}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                   ],
@@ -390,7 +428,10 @@ class CourseListScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       course.name,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -399,7 +440,9 @@ class CourseListScreen extends StatelessWidget {
               Text(
                 '${course.code}   ${course.credits} ${l10n.translate('credits_label')}',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               if (course.instructor.isNotEmpty) ...[
@@ -407,7 +450,9 @@ class CourseListScreen extends StatelessWidget {
                 Text(
                   '${l10n.translate('instructor')}: ${course.instructor}',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -418,27 +463,44 @@ class CourseListScreen extends StatelessWidget {
                   Expanded(
                     child: TextField(
                       controller: gradeController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: InputDecoration(
                         labelText: l10n.translate('grade'),
                         hintText: 'e.g. 92',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () {
-                      final parsed = double.tryParse(gradeController.text.trim());
-                      context.read<CourseProvider>().updateCourseGrade(course.id, parsed);
+                      final parsed = double.tryParse(
+                        gradeController.text.trim(),
+                      );
+                      context.read<CourseProvider>().updateCourseGrade(
+                        course.id,
+                        parsed,
+                      );
                       Navigator.of(sheetContext).pop();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: course.color,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text(l10n.translate('set_grade')),
                   ),
@@ -447,7 +509,10 @@ class CourseListScreen extends StatelessWidget {
               const Divider(height: 32),
               Text(
                 l10n.translate('events'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               if (events.isEmpty)
@@ -461,23 +526,36 @@ class CourseListScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
                       children: [
-                        Icon(_getEventIcon(event.type), color: course.color, size: 20),
+                        Icon(
+                          _getEventIcon(event.type),
+                          color: course.color,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(event.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                              Text(
+                                event.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               Text(
                                 _formatEventTime(context, event),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -515,7 +593,9 @@ class CourseListScreen extends StatelessWidget {
               maxLines: 6,
               decoration: InputDecoration(
                 hintText: 'BEGIN:VCALENDAR\nBEGIN:VEVENT\n...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -560,7 +640,9 @@ class CourseListScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Text(l10n.translate('delete_course')),
         content: Text(
-          l10n.translate('delete_course_confirm').replaceAll('{name}', courseName),
+          l10n
+              .translate('delete_course_confirm')
+              .replaceAll('{name}', courseName),
         ),
         actions: [
           TextButton(
@@ -597,7 +679,9 @@ class CourseListScreen extends StatelessWidget {
       final weekdayNames = l10n.locale.languageCode == 'he'
           ? ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\'']
           : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      final days = event.daysOfWeek.map((day) => weekdayNames[((day % 7) + 7) % 7]).join(', ');
+      final days = event.daysOfWeek
+          .map((day) => weekdayNames[((day % 7) + 7) % 7])
+          .join(', ');
       return '$days   $start - $end';
     }
     final localizations = MaterialLocalizations.of(context);

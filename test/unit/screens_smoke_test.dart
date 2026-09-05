@@ -13,6 +13,7 @@ import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart'
 import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/profile/settings_screen.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
+import 'package:rocis_schedule/features/auth/auth_service.dart';
 
 void main() {
   setUp(() {
@@ -24,9 +25,13 @@ void main() {
     ThemeProvider? themeProvider,
     CourseProvider? courseProvider,
     AssignmentProvider? assignmentProvider,
+    AuthService? authService,
   }) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<AuthService>.value(
+          value: authService ?? AuthService(),
+        ),
         ChangeNotifierProvider<ThemeProvider>.value(
           value: themeProvider ?? ThemeProvider(),
         ),
@@ -162,6 +167,10 @@ void main() {
     });
 
     testWidgets('SettingsScreen toggles glassmorphism and preferences', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
       final themeProvider = ThemeProvider();
 
       await tester.pumpWidget(createTestWidget(
