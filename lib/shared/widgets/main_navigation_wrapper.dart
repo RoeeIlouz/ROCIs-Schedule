@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/features/schedule/schedule_screen.dart';
@@ -6,6 +7,7 @@ import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart';
 import 'package:rocis_schedule/features/profile/settings_screen.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
+import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
   final Widget child;
@@ -96,13 +98,24 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        children: _pages,
-      ),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () {
+          CommandPaletteDialog.show(context);
+        },
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () {
+          CommandPaletteDialog.show(context);
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          extendBody: true,
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            children: _pages,
+          ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -143,6 +156,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

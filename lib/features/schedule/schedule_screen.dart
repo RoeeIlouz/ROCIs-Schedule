@@ -6,8 +6,10 @@ import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
+import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -76,6 +78,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Command Palette (Ctrl+K)',
+            onPressed: () => CommandPaletteDialog.show(context),
+          ),
           IconButton(
             icon: const Icon(Icons.today_rounded),
             tooltip: l10n.translate('today'),
@@ -332,6 +339,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         tintColor: courseColor,
         margin: const EdgeInsets.only(bottom: 12),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? courseColor.withValues(alpha: 0.25)
+              : courseColor.withValues(alpha: 0.18),
+          width: 1.0,
+        ),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,17 +353,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 4,
-                  height: 38,
+                  width: 3.5,
+                  height: 42,
                   decoration: BoxDecoration(
                     color: courseColor,
                     borderRadius: BorderRadius.circular(2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: courseColor.withValues(alpha: 0.6),
-                        blurRadius: 6,
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -360,9 +367,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     children: [
                       Text(
                         event.title,
-                        style: const TextStyle(
+                        style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -0.3,
                         ),
                       ),
                       if (course != null) ...[

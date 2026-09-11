@@ -21,8 +21,8 @@ class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
-    this.blur = 12.0,
-    this.opacity = 0.92,
+    this.blur = 10.0,
+    this.opacity = 0.18,
     this.borderRadius,
     this.padding,
     this.margin,
@@ -44,76 +44,69 @@ class GlassContainer extends StatelessWidget {
 
     final effectiveTint = tintColor ?? color ?? theme.colorScheme.primary;
 
-    // Build modern base surface with subtle, elegant ambient tint
-    final Color baseSurface;
-    if (isAmoled) {
-      baseSurface = const Color(0xFF10131B);
-    } else if (isDark) {
-      baseSurface = const Color(0xFF1E293B);
-    } else {
-      baseSurface = Colors.white;
-    }
+    // Ambient surface base matching AMOLED or standard Material 3
+    final Color baseSurface = isAmoled
+        ? const Color(0xFF0B0D13)
+        : (isDark
+            ? theme.colorScheme.surface
+            : Colors.white);
 
-    final Color tintedSurface = Color.lerp(
-      baseSurface,
-      effectiveTint,
-      isDark ? 0.08 : 0.04,
-    )!;
-
-    final glassOpacity = isDark ? 0.72 : 0.78;
-    final Color surfaceColor = useGlass
-        ? tintedSurface.withValues(alpha: isSelected ? 0.92 : glassOpacity)
-        : (isSelected
-              ? Color.lerp(tintedSurface, theme.colorScheme.primary, 0.15)!
-              : tintedSurface);
+    // 12-18% subtle tint of the course/category color into the frosted backdrop
+    final glassColor = Color.lerp(baseSurface, effectiveTint, isDark ? 0.18 : 0.12)!;
 
     final radius = borderRadius ?? BorderRadius.circular(20.0);
 
-    // Modern crisp border
+    // Default border if not provided, subtly tinted with the course/event color
+    final borderTint = tintColor ?? color ?? theme.colorScheme.primary;
     final BoxBorder glassBorder =
         border ??
         Border.all(
           color: isSelected
               ? (selectedBorderColor ?? theme.colorScheme.primary)
               : (isAmoled
-                    ? Colors.white12
+                    ? borderTint.withValues(alpha: useGlass ? 0.15 : 0.22)
                     : (isDark
-                          ? effectiveTint.withValues(alpha: 0.22)
-                          : effectiveTint.withValues(alpha: 0.14))),
-          width: isSelected ? 2.0 : 1.0,
+                          ? borderTint.withValues(alpha: useGlass ? 0.14 : 0.20)
+                          : borderTint.withValues(alpha: useGlass ? 0.08 : 0.14))),
+          width: isSelected ? 1.5 : 1.0,
         );
 
-    // Soft diffused modern shadow
-    final double shadowElevation = elevation ?? 2.0;
-    final List<BoxShadow>? shadow = shadowElevation > 0.0
+    final double shadowElevation = elevation ?? (useGlass ? 0.0 : 2.0);
+    final List<BoxShadow>? shadow = (!useGlass && shadowElevation > 0.0)
         ? [
             BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: isAmoled ? 0.5 : 0.25)
-                  : effectiveTint.withValues(alpha: 0.05),
-              blurRadius: shadowElevation * 3.0 + 4.0,
-              spreadRadius: 0.0,
-              offset: Offset(0, shadowElevation + 1.0),
-            ),
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 3.0,
-                spreadRadius: 0.0,
-                offset: const Offset(0, 1),
+              color: Colors.black.withValues(
+                alpha: isDark ? (isAmoled ? 0.4 : 0.25) : 0.05,
               ),
+              blurRadius: shadowElevation * 2.0 + 2.0,
+              spreadRadius: 0.0,
+              offset: Offset(0, shadowElevation),
+            ),
           ]
         : null;
 
     final innerContainer = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: surfaceColor,
+        color: useGlass
+            ? glassColor.withValues(
+                alpha: isSelected ? (opacity + 0.1).clamp(0.0, 1.0) : opacity,
+              )
+            : (isSelected
+                  ? (color?.withValues(alpha: 0.2) ??
+                        (tintColor?.withValues(alpha: 0.2) ??
+                            theme.colorScheme.primary.withValues(alpha: 0.12)))
+                  : (color ?? theme.colorScheme.surfaceContainerLow)),
         borderRadius: radius,
         border: glassBorder,
         boxShadow: shadow,
       ),
-      child: child,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      ),
     );
 
     if (!useGlass) {

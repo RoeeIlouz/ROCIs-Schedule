@@ -5,9 +5,11 @@ import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
+import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:rocis_schedule/shared/services/ics_import_service.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CourseListScreen extends StatelessWidget {
   const CourseListScreen({super.key});
@@ -24,6 +26,11 @@ class CourseListScreen extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Command Palette (Ctrl+K)',
+            onPressed: () => CommandPaletteDialog.show(context),
+          ),
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
             tooltip: l10n.translate('import_ics'),
@@ -243,6 +250,12 @@ class CourseListScreen extends StatelessWidget {
         child: GlassContainer(
           tintColor: course.color,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: theme.brightness == Brightness.dark
+                ? course.color.withValues(alpha: 0.25)
+                : course.color.withValues(alpha: 0.18),
+            width: 1.0,
+          ),
           padding: const EdgeInsets.all(16),
           child: InkWell(
             onTap: () =>
@@ -288,9 +301,10 @@ class CourseListScreen extends StatelessWidget {
                     children: [
                       Text(
                         course.name,
-                        style: const TextStyle(
+                        style: GoogleFonts.outfit(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -0.3,
                         ),
                       ),
                       const SizedBox(height: 2),

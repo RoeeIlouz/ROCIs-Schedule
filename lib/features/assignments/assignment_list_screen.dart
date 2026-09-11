@@ -6,9 +6,12 @@ import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
+import 'package:rocis_schedule/shared/widgets/bouncy_checkbox.dart';
+import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:rocis_schedule/shared/services/cross_app_bridge_service.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AssignmentListScreen extends StatefulWidget {
   const AssignmentListScreen({super.key});
@@ -55,6 +58,11 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Command Palette (Ctrl+K)',
+            onPressed: () => CommandPaletteDialog.show(context),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort_rounded),
             tooltip: l10n.translate('sort_by'),
@@ -188,40 +196,49 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                         child: GlassContainer(
                           margin: const EdgeInsets.symmetric(vertical: 6),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: 14,
                             vertical: 12,
                           ),
                           tintColor: courseColor,
+                          border: Border.all(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? courseColor.withValues(alpha: 0.25)
+                                : courseColor.withValues(alpha: 0.18),
+                            width: 1.0,
+                          ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Transform.scale(
-                                scale: 1.1,
-                                child: Checkbox(
-                                  value: assignment.isCompleted,
-                                  activeColor: courseColor,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  onChanged: (v) {
-                                    HapticFeedback.lightImpact();
-                                    assignmentProvider
-                                        .toggleAssignmentCompletion(
-                                          assignment.id,
-                                        );
-                                  },
+                              Container(
+                                width: 3.5,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: courseColor,
+                                  borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
+                              BouncyCheckbox(
+                                isChecked: assignment.isCompleted,
+                                activeColor: courseColor,
+                                onTap: () {
+                                  assignmentProvider
+                                      .toggleAssignmentCompletion(
+                                        assignment.id,
+                                      );
+                                },
+                              ),
+                              const SizedBox(width: 8),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       assignment.title,
-                                      style: TextStyle(
+                                      style: GoogleFonts.outfit(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
+                                        letterSpacing: -0.3,
                                         decoration: assignment.isCompleted
                                             ? TextDecoration.lineThrough
                                             : null,

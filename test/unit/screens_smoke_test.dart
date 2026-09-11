@@ -13,6 +13,7 @@ import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart'
 import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/profile/settings_screen.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
+import 'package:rocis_schedule/shared/widgets/bouncy_checkbox.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 
 void main() {
@@ -43,20 +44,17 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        localizationsDelegates: const [
-          AppLocalizationsDelegate(),
-        ],
-        supportedLocales: const [
-          Locale('en'),
-          Locale('he'),
-        ],
+        localizationsDelegates: const [AppLocalizationsDelegate()],
+        supportedLocales: const [Locale('en'), Locale('he')],
         home: child,
       ),
     );
   }
 
   group('ROCIs-Schedule Full UI & Screen Tests', () {
-    testWidgets('ScheduleScreen renders empty state gracefully', (WidgetTester tester) async {
+    testWidgets('ScheduleScreen renders empty state gracefully', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(createTestWidget(child: const ScheduleScreen()));
       await tester.pumpAndSettle();
 
@@ -64,81 +62,93 @@ void main() {
       expect(find.text('No events for this day'), findsOneWidget);
     });
 
-    testWidgets('ScheduleScreen displays events with GlassContainer and course color', (WidgetTester tester) async {
-      final courseProvider = CourseProvider('test_uid');
-      final course = Course(
-        id: 'c1',
-        name: 'Algorithms',
-        code: 'CS201',
-        instructor: 'Dr. Turing',
-        color: Colors.teal,
-        credits: 4,
-      );
-      final event = ScheduleEvent(
-        id: 'e1',
-        courseId: 'c1',
-        title: 'Lecture 1',
-        type: EventType.classType,
-        startTime: DateTime.now(),
-        endTime: DateTime.now().add(const Duration(hours: 2)),
-        location: 'Hall B',
-      );
+    testWidgets(
+      'ScheduleScreen displays events with GlassContainer and course color',
+      (WidgetTester tester) async {
+        final courseProvider = CourseProvider('test_uid');
+        final course = Course(
+          id: 'c1',
+          name: 'Algorithms',
+          code: 'CS201',
+          instructor: 'Dr. Turing',
+          color: Colors.teal,
+          credits: 4,
+        );
+        final event = ScheduleEvent(
+          id: 'e1',
+          courseId: 'c1',
+          title: 'Lecture 1',
+          type: EventType.classType,
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 2)),
+          location: 'Hall B',
+        );
 
-      courseProvider.addCourseFromSync(course);
-      courseProvider.addEventFromSync(event);
+        courseProvider.addCourseFromSync(course);
+        courseProvider.addEventFromSync(event);
 
-      await tester.pumpWidget(createTestWidget(
-        child: const ScheduleScreen(),
-        courseProvider: courseProvider,
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          createTestWidget(
+            child: const ScheduleScreen(),
+            courseProvider: courseProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Lecture 1'), findsOneWidget);
-      expect(find.text('Algorithms'), findsOneWidget);
-      expect(find.text('Hall B'), findsOneWidget);
-    });
+        expect(find.text('Lecture 1'), findsOneWidget);
+        expect(find.text('Algorithms'), findsOneWidget);
+        expect(find.text('Hall B'), findsOneWidget);
+      },
+    );
 
-    testWidgets('AssignmentListScreen displays assignments with priority pill and toggles completion', (WidgetTester tester) async {
-      final assignmentProvider = AssignmentProvider('test_uid');
-      final courseProvider = CourseProvider('test_uid');
-      final course = Course(
-        id: 'c1',
-        name: 'Algorithms',
-        code: 'CS201',
-        instructor: 'Dr. Turing',
-        color: Colors.blue,
-        credits: 4,
-      );
-      final assignment = Assignment(
-        id: 'a1',
-        courseId: 'c1',
-        title: 'Homework 1',
-        dueDate: DateTime.now().add(const Duration(days: 3)),
-        priority: AssignmentPriority.high,
-      );
+    testWidgets(
+      'AssignmentListScreen displays assignments with priority pill and toggles completion',
+      (WidgetTester tester) async {
+        final assignmentProvider = AssignmentProvider('test_uid');
+        final courseProvider = CourseProvider('test_uid');
+        final course = Course(
+          id: 'c1',
+          name: 'Algorithms',
+          code: 'CS201',
+          instructor: 'Dr. Turing',
+          color: Colors.blue,
+          credits: 4,
+        );
+        final assignment = Assignment(
+          id: 'a1',
+          courseId: 'c1',
+          title: 'Homework 1',
+          dueDate: DateTime.now().add(const Duration(days: 3)),
+          priority: AssignmentPriority.high,
+        );
 
-      courseProvider.addCourseFromSync(course);
-      assignmentProvider.addAssignmentFromSync(assignment);
+        courseProvider.addCourseFromSync(course);
+        assignmentProvider.addAssignmentFromSync(assignment);
 
-      await tester.pumpWidget(createTestWidget(
-        child: const AssignmentListScreen(),
-        courseProvider: courseProvider,
-        assignmentProvider: assignmentProvider,
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          createTestWidget(
+            child: const AssignmentListScreen(),
+            courseProvider: courseProvider,
+            assignmentProvider: assignmentProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Homework 1'), findsOneWidget);
-      expect(find.text('HIGH'), findsOneWidget);
-      expect(find.text('Algorithms'), findsOneWidget);
+        expect(find.text('Homework 1'), findsOneWidget);
+        expect(find.text('HIGH'), findsOneWidget);
+        expect(find.text('Algorithms'), findsOneWidget);
 
-      // Tap completion checkbox
-      await tester.tap(find.byType(Checkbox));
-      await tester.pumpAndSettle();
+        // Tap completion checkbox
+        await tester.tap(find.byType(BouncyCheckbox));
+        await tester.pumpAndSettle();
 
-      expect(assignmentProvider.assignments.first.isCompleted, isTrue);
-    });
+        expect(assignmentProvider.assignments.first.isCompleted, isTrue);
+      },
+    );
 
-    testWidgets('CourseListScreen displays courses and opens details sheet', (WidgetTester tester) async {
+    testWidgets('CourseListScreen displays courses and opens details sheet', (
+      WidgetTester tester,
+    ) async {
       final courseProvider = CourseProvider('test_uid');
       final course = Course(
         id: 'c1',
@@ -150,10 +160,12 @@ void main() {
       );
       courseProvider.addCourseFromSync(course);
 
-      await tester.pumpWidget(createTestWidget(
-        child: const CourseListScreen(),
-        courseProvider: courseProvider,
-      ));
+      await tester.pumpWidget(
+        createTestWidget(
+          child: const CourseListScreen(),
+          courseProvider: courseProvider,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Database Systems'), findsOneWidget);
@@ -166,17 +178,17 @@ void main() {
       expect(find.text('Instructor: Prof. Codd'), findsOneWidget);
     });
 
-    testWidgets('SettingsScreen toggles glassmorphism and preferences', (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(800, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
+    testWidgets('SettingsScreen toggles glassmorphism and preferences', (
+      WidgetTester tester,
+    ) async {
       final themeProvider = ThemeProvider();
 
-      await tester.pumpWidget(createTestWidget(
-        child: const SettingsScreen(),
-        themeProvider: themeProvider,
-      ));
+      await tester.pumpWidget(
+        createTestWidget(
+          child: const SettingsScreen(),
+          themeProvider: themeProvider,
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Glassmorphism UI'), findsOneWidget);
@@ -184,7 +196,10 @@ void main() {
       expect(find.text('AMOLED Mode'), findsOneWidget);
 
       // Find switch for Glassmorphism and toggle it
-      final glassSwitch = find.widgetWithText(SwitchListTile, 'Glassmorphism UI');
+      final glassSwitch = find.widgetWithText(
+        SwitchListTile,
+        'Glassmorphism UI',
+      );
       expect(glassSwitch, findsOneWidget);
 
       await tester.tap(glassSwitch);
@@ -193,12 +208,14 @@ void main() {
       expect(themeProvider.useGlassmorphism, isFalse);
     });
 
-    testWidgets('MainNavigationWrapper displays navigation destinations', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget(
-        child: const MainNavigationWrapper(
-          child: SizedBox.shrink(),
+    testWidgets('MainNavigationWrapper displays navigation destinations', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          child: const MainNavigationWrapper(child: SizedBox.shrink()),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(NavigationBar), findsOneWidget);
