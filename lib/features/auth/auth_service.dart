@@ -2,16 +2,22 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 
 class AuthService extends ChangeNotifier {
+  static const String _keyGuestSession = 'has_active_guest_session';
   final FirebaseAuth? _customAuth;
   final GoogleSignIn _googleSignIn;
 
   User? _user;
+  bool _hasGuestSession = false;
+
   User? get user => _user;
   bool get isAuthenticated => _user != null && !_user!.isAnonymous;
   bool get isGuest => _user == null || _user!.isAnonymous;
+  bool get hasGuestSession => _hasGuestSession;
+  bool get hasActiveSession => isAuthenticated || _hasGuestSession;
   String get effectiveUserId => _user?.uid ?? 'guest';
 
   AuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
@@ -31,18 +37,44 @@ class AuthService extends ChangeNotifier {
     return FirebaseAuth.instance;
   }
 
-  void _init() {
+  Future<void> _init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _hasGuestSession = prefs.getBool(_keyGuestSession) ?? false;
+      notifyListeners();
+    } catch (_) {}
+
     try {
       if (_customAuth != null || Firebase.apps.isNotEmpty) {
         _user = _auth.currentUser;
         _auth.authStateChanges().listen((User? user) {
           _user = user;
+          if (user != null) {
+            _clearGuestSession();
+          }
           notifyListeners();
         });
       }
     } catch (e) {
       debugPrint('AuthService: Running in disconnected/test mode ($e)');
     }
+  }
+
+  Future<void> _setGuestSession(bool value) async {
+    _hasGuestSession = value;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyGuestSession, value);
+    } catch (_) {}
+  }
+
+  Future<void> _clearGuestSession() async {
+    _hasGuestSession = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyGuestSession);
+    } catch (_) {}
   }
 
   Future<UserCredential?> signInWithGoogle() async {
@@ -153,7 +185,7 @@ class AuthService extends ChangeNotifier {
   Future<void> continueAsGuest() async {
     debugPrint('Continuing as guest session');
     _user = null;
-    notifyListeners();
+    await _setGuestSession(true);
   }
 
   Future<void> signOut() async {
@@ -162,6 +194,8 @@ class AuthService extends ChangeNotifier {
     // Clear local database cache to prevent data leakage between users
     await LocalDbService.clearCache();
     debugPrint('Local database cache cleared');
+
+    await _clearGuestSession();
 
     if (!kIsWeb) {
       try {

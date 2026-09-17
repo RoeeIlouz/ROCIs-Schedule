@@ -1,3 +1,34 @@
+## Semester System, Course Management & v0.0.3+8 Release - 2026-09-12
+
+#### Features & Architecture Implemented
+* **Course Editing & Deletion**:
+  - Full course editing via `AddCourseScreen` with pre-filled fields (`name`, `code`, `instructor`, `credits`, `color`, `semester`).
+  - 3-dots popup menus on course cards and action buttons in course details sheet.
+* **Semester Filtering & Custom Dates**:
+  - `Semester` model and SQLite database upgrade to **Version 5** (`semesters` table, `courses.semester` column).
+  - `SemesterDatesSheet` modal for setting custom start and end date ranges per semester.
+  - Horizontal filter chips with dynamic credit hour and GPA recalculation.
+  - Recurring schedule events bounded strictly to active semester dates.
+* **Persistent Session & Launch Routing**:
+  - `AuthGate` prevents unexpected sign-outs on app restart, honoring active Firebase and Guest sessions.
+* **Google Play Internal Release**:
+  - Bumped version to `v0.0.3+8`, built signed Android App Bundle (`app-release.aab`), and published to Google Play Console Internal Testing track.
+
+## ROCIs Tasks Synergy & v0.0.2+7 Release - 2026-09-12
+
+#### Features & Architecture Implemented
+* **ROCIs Tasks Synergy (Beta)**:
+  - Enabled two-way cross-app synergy with ROCIs Tasks.
+  - Secret Easter Egg in `AboutAppDialog` (5 taps on version text) unlocks Beta Features and reveals "ROCIs Tasks Synergy (Beta)" toggle.
+  - State persisted via `ThemeProvider` (`beta_features_unlocked` and `beta_tasks_integration`).
+* **Cross-App Export**:
+  - `CrossAppBridgeService`: 1-tap export from courses, assignments, and timetable events directly into ROCIs Tasks via deep link (`rocistasks://add_task`).
+* **Firestore Cloud Sync**:
+  - `TasksFirestoreService` & `SyncedTasksProvider`: Connects to `rocis-todo` secondary Firebase instance to fetch and synchronize active tasks.
+* **UI Polish & Quality**:
+  - Frosted glass styling, BouncyCheckbox micro-interactions, and Command Palette dialog.
+  - Version bumped to `v0.0.2+7` in `pubspec.yaml`, `docs/CHANGELOG.md`, and Settings/About dialogs.
+
 ## 8-Language Localization Suite Parity - 2026-08-20
 
 #### Goals / Requirements

@@ -23,9 +23,10 @@ class SyncService {
     this._assignmentProvider,
   ) {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      ConnectivityResult result,
+      List<ConnectivityResult> results,
     ) {
-      if (!_isDisposed && result != ConnectivityResult.none) {
+      final isOnline = results.any((r) => r != ConnectivityResult.none);
+      if (!_isDisposed && isOnline) {
         syncData();
       }
     });
@@ -45,7 +46,9 @@ class SyncService {
     if (user == null || _isDisposed) return;
 
     try {
-      debugPrint('SyncService: Downloading user data from Firestore for ${user.uid}...');
+      debugPrint(
+        'SyncService: Downloading user data from Firestore for ${user.uid}...',
+      );
 
       // Download and save courses
       final remoteCourses = await _firestoreService.downloadCourses(user.uid);
@@ -64,7 +67,9 @@ class SyncService {
       // Download and save assignments
       final assignmentProvider = _assignmentProvider;
       if (assignmentProvider != null) {
-        final remoteAssignments = await _firestoreService.downloadAssignments(user.uid);
+        final remoteAssignments = await _firestoreService.downloadAssignments(
+          user.uid,
+        );
         for (var assignment in remoteAssignments) {
           if (_isDisposed) return;
           await assignmentProvider.addAssignmentFromSync(assignment);
@@ -87,19 +92,22 @@ class SyncService {
     _isSyncing = true;
     try {
       debugPrint('SyncService: Performing initial sync...');
-      
+
       final hasLocalCourses = _courseProvider.courses.isNotEmpty;
       final hasLocalEvents = _courseProvider.events.isNotEmpty;
-      final hasLocalAssignments = _assignmentProvider?.assignments.isNotEmpty ?? false;
-      
+      final hasLocalAssignments =
+          _assignmentProvider?.assignments.isNotEmpty ?? false;
+
       if (!hasLocalCourses && !hasLocalEvents && !hasLocalAssignments) {
-        debugPrint('SyncService: Local DB empty, downloading from Firestore...');
+        debugPrint(
+          'SyncService: Local DB empty, downloading from Firestore...',
+        );
         await downloadUserData();
       } else {
         debugPrint('SyncService: Local DB has data, uploading to Firestore...');
         await syncData();
       }
-      
+
       _isInitialSyncDone = true;
     } catch (e) {
       debugPrint('SyncService Error (Initial sync failed): $e');
@@ -147,10 +155,10 @@ class SyncService {
     _isSyncing = true;
     try {
       debugPrint('SyncService: Performing full bidirectional sync...');
-      
+
       await downloadUserData();
       await syncData();
-      
+
       debugPrint('SyncService: Full sync completed successfully.');
     } catch (e) {
       debugPrint('SyncService Error (Full sync failed): $e');

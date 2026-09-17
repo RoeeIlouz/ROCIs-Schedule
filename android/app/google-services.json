@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "318456267857-chgqqrqqlgri2ic0c36432d64ikik0qh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rocisapps.schedule",
+            "certificate_hash": "76873e8bd5c0083b9ca6a4d96934ee6afa3a5759"
+          }
+        },
+        {
           "client_id": "318456267857-ldv4503cmvh6f657tub8g2kdb7dqnid4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

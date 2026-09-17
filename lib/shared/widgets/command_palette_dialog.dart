@@ -180,7 +180,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
       CommandPaletteItem(
         id: 'toggle_amoled',
         title: 'Toggle AMOLED Pitch-Black Mode',
-        subtitle: themeProvider.isAmoled ? 'Disable pure black' : 'Enable pure black #000000',
+        subtitle: themeProvider.isAmoled
+            ? 'Disable pure black'
+            : 'Enable pure black #000000',
         icon: Icons.brightness_2_rounded,
         iconColor: const Color(0xFF6366F1),
         section: 'Preferences',
@@ -192,7 +194,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
       CommandPaletteItem(
         id: 'toggle_glass',
         title: 'Toggle Glassmorphism',
-        subtitle: themeProvider.useGlassmorphism ? 'Turn off frosted glass' : 'Turn on frosted glass',
+        subtitle: themeProvider.useGlassmorphism
+            ? 'Turn off frosted glass'
+            : 'Turn on frosted glass',
         icon: Icons.auto_awesome_rounded,
         iconColor: const Color(0xFF0EA5E9),
         section: 'Preferences',
@@ -230,7 +234,8 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         CommandPaletteItem(
           id: 'event_${event.id}',
           title: event.title,
-          subtitle: '${course?.name ?? 'Event'} • $timeStr ${event.location.isNotEmpty ? '• ${event.location}' : ''}',
+          subtitle:
+              '${course?.name ?? 'Event'} • $timeStr ${event.location.isNotEmpty ? '• ${event.location}' : ''}',
           icon: event.type == EventType.exam
               ? Icons.assignment_late_rounded
               : Icons.event_rounded,
@@ -250,7 +255,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
       final title = assignment.title.toLowerCase();
       final courseName = course?.name.toLowerCase() ?? '';
 
-      if (query.isNotEmpty && !title.contains(query) && !courseName.contains(query)) {
+      if (query.isNotEmpty &&
+          !title.contains(query) &&
+          !courseName.contains(query)) {
         continue;
       }
 
@@ -292,7 +299,8 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         CommandPaletteItem(
           id: 'course_${course.id}',
           title: course.name,
-          subtitle: '${course.code} • ${course.credits} credits ${course.instructor.isNotEmpty ? '• ${course.instructor}' : ''}',
+          subtitle:
+              '${course.code} • ${course.credits} credits ${course.instructor.isNotEmpty ? '• ${course.instructor}' : ''}',
           icon: Icons.school_rounded,
           iconColor: course.color,
           section: 'Courses',
@@ -400,9 +408,12 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                             color: theme.colorScheme.onSurface,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Type a command, event, course, or assignment...',
+                            hintText:
+                                'Type a command, event, course, or assignment...',
                             hintStyle: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.45,
+                              ),
                               fontSize: 15,
                             ),
                             border: InputBorder.none,
@@ -416,12 +427,19 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                           icon: const Icon(Icons.clear_rounded, size: 18),
                           onPressed: () => _searchController.clear(),
                           padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
                         ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -429,7 +447,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ),
@@ -438,7 +458,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                 ),
                 Divider(
                   height: 1,
-                  color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.06),
                 ),
 
                 // Results list
@@ -476,7 +498,8 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                             final isSelected = index == _selectedIndex;
 
                             // Show section header if first item of section
-                            final showSection = index == 0 ||
+                            final showSection =
+                                index == 0 ||
                                 items[index - 1].section != item.section;
 
                             return Column(
@@ -484,27 +507,39 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                               children: [
                                 if (showSection)
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      10,
+                                      16,
+                                      4,
+                                    ),
                                     child: Text(
                                       item.section.toUpperCase(),
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                         letterSpacing: 0.8,
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.85),
+                                        color: theme.colorScheme.primary
+                                            .withValues(alpha: 0.85),
                                       ),
                                     ),
                                   ),
                                 Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                                        ? theme.colorScheme.primary.withValues(
+                                            alpha: 0.12,
+                                          )
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(12),
                                     border: isSelected
                                         ? Border.all(
-                                            color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                                            color: theme.colorScheme.primary
+                                                .withValues(alpha: 0.25),
                                             width: 1,
                                           )
                                         : null,
@@ -521,21 +556,29 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                                         width: 32,
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: (item.iconColor ?? theme.colorScheme.primary)
-                                              .withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color:
+                                              (item.iconColor ??
+                                                      theme.colorScheme.primary)
+                                                  .withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Icon(
                                           item.icon,
                                           size: 18,
-                                          color: item.iconColor ?? theme.colorScheme.primary,
+                                          color:
+                                              item.iconColor ??
+                                              theme.colorScheme.primary,
                                         ),
                                       ),
                                       title: Text(
                                         item.title,
                                         style: GoogleFonts.outfit(
                                           fontSize: 14,
-                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.w500,
                                           color: theme.colorScheme.onSurface,
                                         ),
                                         maxLines: 1,
@@ -546,7 +589,10 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                                               item.subtitle!,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.55),
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -554,17 +600,28 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                                           : null,
                                       trailing: item.shortcut != null
                                           ? Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 7,
+                                                    vertical: 3,
+                                                  ),
                                               decoration: BoxDecoration(
-                                                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-                                                borderRadius: BorderRadius.circular(6),
+                                                color: theme
+                                                    .colorScheme
+                                                    .surfaceContainerHighest
+                                                    .withValues(alpha: 0.45),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                               ),
                                               child: Text(
                                                 item.shortcut!,
                                                 style: GoogleFonts.firaCode(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.6),
                                                 ),
                                               ),
                                             )
@@ -580,17 +637,24 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                 // Footer
                 Divider(
                   height: 1,
-                  color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.06),
+                  color: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.06),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Text(
                         'Navigate with ↑↓, select with ↵',
                         style: TextStyle(
                           fontSize: 11,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.45,
+                          ),
                         ),
                       ),
                       const Spacer(),
@@ -599,7 +663,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],

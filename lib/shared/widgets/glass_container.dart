@@ -21,7 +21,7 @@ class GlassContainer extends StatelessWidget {
   const GlassContainer({
     super.key,
     required this.child,
-    this.blur = 10.0,
+    this.blur = 12.0,
     this.opacity = 0.18,
     this.borderRadius,
     this.padding,
@@ -44,63 +44,108 @@ class GlassContainer extends StatelessWidget {
 
     final effectiveTint = tintColor ?? color ?? theme.colorScheme.primary;
 
-    // Ambient surface base matching AMOLED or standard Material 3
+    // Ambient surface base matching AMOLED, dark zinc, or clean light card
     final Color baseSurface = isAmoled
-        ? const Color(0xFF0B0D13)
+        ? const Color(0xFF000000)
         : (isDark
-            ? theme.colorScheme.surface
-            : Colors.white);
+              ? (kIsWeb
+                    ? const Color(0xFF18181B)
+                    : theme.colorScheme.surfaceContainer)
+              : Colors.white);
 
-    // 12-18% subtle tint of the course/category color into the frosted backdrop
-    final glassColor = Color.lerp(baseSurface, effectiveTint, isDark ? 0.18 : 0.12)!;
+    final radius = borderRadius ?? BorderRadius.circular(16.0);
 
-    final radius = borderRadius ?? BorderRadius.circular(20.0);
-
-    // Default border if not provided, subtly tinted with the course/event color
-    final borderTint = tintColor ?? color ?? theme.colorScheme.primary;
+    // Dynamic hairline border with high contrast on web/desktop
     final BoxBorder glassBorder =
         border ??
         Border.all(
           color: isSelected
               ? (selectedBorderColor ?? theme.colorScheme.primary)
               : (isAmoled
-                    ? borderTint.withValues(alpha: useGlass ? 0.15 : 0.22)
+                    ? const Color(0xFF27272A)
                     : (isDark
-                          ? borderTint.withValues(alpha: useGlass ? 0.14 : 0.20)
-                          : borderTint.withValues(alpha: useGlass ? 0.08 : 0.14))),
+                          ? (kIsWeb
+                                ? const Color(0xFF27272A)
+                                : effectiveTint.withValues(
+                                    alpha: useGlass ? 0.24 : 0.18,
+                                  ))
+                          : (kIsWeb
+                                ? const Color(0xFFE4E4E7)
+                                : effectiveTint.withValues(
+                                    alpha: useGlass ? 0.18 : 0.14,
+                                  )))),
           width: isSelected ? 1.5 : 1.0,
         );
 
-    final double shadowElevation = elevation ?? (useGlass ? 0.0 : 2.0);
-    final List<BoxShadow>? shadow = (!useGlass && shadowElevation > 0.0)
+    final double shadowElevation =
+        elevation ?? (useGlass ? 0.0 : (kIsWeb ? 1.0 : 2.0));
+    final List<BoxShadow>? shadow = shadowElevation > 0.0
         ? [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: isDark ? (isAmoled ? 0.4 : 0.25) : 0.05,
-              ),
-              blurRadius: shadowElevation * 2.0 + 2.0,
+              color: isDark
+                  ? (isAmoled
+                        ? Colors.black.withValues(alpha: 0.6)
+                        : Colors.black.withValues(alpha: 0.35))
+                  : (kIsWeb
+                        ? const Color(0x0A000000)
+                        : effectiveTint.withValues(alpha: 0.06)),
+              blurRadius: shadowElevation * 3.0 + 4.0,
               spreadRadius: 0.0,
-              offset: Offset(0, shadowElevation),
+              offset: Offset(0, shadowElevation * 1.5),
             ),
           ]
         : null;
 
+    final double effectiveOpacity = isSelected
+        ? (opacity + 0.08).clamp(0.0, 1.0)
+        : opacity;
+
+    // High-fidelity gradient for frosted glass simulating top specular lighting
+    final Decoration containerDecoration = useGlass
+        ? BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.lerp(
+                  baseSurface,
+                  effectiveTint,
+                  isDark ? 0.22 : 0.14,
+                )!.withValues(alpha: effectiveOpacity + 0.05),
+                Color.lerp(
+                  baseSurface,
+                  effectiveTint,
+                  isDark ? 0.15 : 0.08,
+                )!.withValues(alpha: effectiveOpacity),
+              ],
+            ),
+            borderRadius: radius,
+            border: glassBorder,
+            boxShadow: shadow,
+          )
+        : BoxDecoration(
+            color: isSelected
+                ? Color.alphaBlend(
+                    effectiveTint.withValues(alpha: 0.14),
+                    baseSurface,
+                  )
+                : (color ??
+                      (kIsWeb
+                          ? baseSurface
+                          : Color.alphaBlend(
+                              effectiveTint.withValues(
+                                alpha: isDark ? 0.07 : 0.04,
+                              ),
+                              theme.colorScheme.surfaceContainerLow,
+                            ))),
+            borderRadius: radius,
+            border: glassBorder,
+            boxShadow: shadow,
+          );
+
     final innerContainer = Container(
       padding: padding,
-      decoration: BoxDecoration(
-        color: useGlass
-            ? glassColor.withValues(
-                alpha: isSelected ? (opacity + 0.1).clamp(0.0, 1.0) : opacity,
-              )
-            : (isSelected
-                  ? (color?.withValues(alpha: 0.2) ??
-                        (tintColor?.withValues(alpha: 0.2) ??
-                            theme.colorScheme.primary.withValues(alpha: 0.12)))
-                  : (color ?? theme.colorScheme.surfaceContainerLow)),
-        borderRadius: radius,
-        border: glassBorder,
-        boxShadow: shadow,
-      ),
+      decoration: containerDecoration,
       child: Material(
         type: MaterialType.transparency,
         borderRadius: radius,

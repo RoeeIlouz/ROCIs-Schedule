@@ -44,3 +44,12 @@ key.properties
 # Stray version artifacts
 1.1.0
 ignored/
+
+# Agent & local skills
+.agent/
+.agents/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class

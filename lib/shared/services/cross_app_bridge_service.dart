@@ -57,10 +57,54 @@ class CrossAppBridgeService {
       } else {
         // App not installed, open store / web
         final fallbackUri = Uri.parse(_tasksPlayStoreUrl);
-        return await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+        return await launchUrl(
+          fallbackUri,
+          mode: LaunchMode.externalApplication,
+        );
       }
     } catch (e) {
       debugPrint('CrossAppBridgeService: Failed to export assignment: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> sendEventToTasks({
+    required ScheduleEvent event,
+    Course? course,
+  }) async {
+    try {
+      final notes = [
+        if (event.location.isNotEmpty) 'Location: ${event.location}',
+        if (course != null && course.instructor.isNotEmpty)
+          'Instructor: ${course.instructor}',
+        if (event.notes.isNotEmpty) event.notes,
+      ].join(' • ');
+
+      final queryParams = <String, String>{
+        'title': event.title,
+        'dueDate': event.startTime.toIso8601String(),
+        'priority': event.type == EventType.exam ? 'high' : 'medium',
+        if (notes.isNotEmpty) 'notes': notes,
+        if (course != null) 'category': course.name,
+      };
+
+      final uri = Uri(
+        scheme: _tasksScheme,
+        host: 'add_task',
+        queryParameters: queryParams,
+      );
+
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        final fallbackUri = Uri.parse(_tasksPlayStoreUrl);
+        return await launchUrl(
+          fallbackUri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('CrossAppBridgeService: Failed to export event: $e');
       return false;
     }
   }

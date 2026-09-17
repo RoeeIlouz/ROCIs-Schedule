@@ -186,7 +186,7 @@ void main() {
       );
       expect(courseProvider.courses.isNotEmpty, isTrue);
 
-      courseProvider.clearLocalData();
+      await courseProvider.clearLocalData();
       expect(courseProvider.courses, isEmpty);
       expect(courseProvider.events, isEmpty);
     });

@@ -5,6 +5,40 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4+10] - 2026-09-17
+
+### Added
+- **Student-Worker Hybrid Calendar**: Multi-domain event classification (Academic, Work, Personal) with dedicated properties, custom color palettes, and domain icons.
+- **Real-Time Schedule Collision Engine**: Live conflict detection warning when work shifts or appointments collide with lectures, labs, or exams.
+- **Desktop & Web Workspace UX**: Full responsive layout with sidebar navigation rail, KPI summary metrics, and desktop Command Palette (`Ctrl+K`).
+- **Database Schema v6**: Seamless local SQLite migration supporting custom event colors and domains with backwards compatibility.
+- **Localization Parity**: 100% string coverage across 8 languages (English, Hebrew, Spanish, German, French, Arabic, Hindi, Swedish) with dynamic RTL support.
+
+### Fixed & Hardened
+- **Firestore Security Rules**: Fully authenticated and UID-isolated access control across courses, events, and assignments.
+- **Web UI Clean-Up**: Removed redundant mobile glassmorphism and Material You artifacts for a crisp, responsive web experience.
+
+## [0.0.3+9] - 2026-09-13
+
+### Fixed
+- Automatic Firestore sync for timetable events, enabling live integration with ROCIs Tasks.
+
+## [0.0.3+8] - 2026-09-12
+
+### Added
+- Course management: edit and delete courses directly from cards and detail sheet.
+- Semester filters: filter courses by semester with start/end date bounds and dynamic GPA tracking.
+- Timetable bounds: recurring schedule events automatically align with semester dates.
+- Persistent session: retain user authentication and guest mode on app launch.
+
+## [0.0.2+7] - 2026-09-12
+
+### Added
+- ROCIs Tasks synergy: export assignments and timetable events directly to your task list with one tap.
+- Real-time cloud sync with ROCIs Tasks to view active tasks within Schedule.
+- Secret beta features toggle in the About screen.
+- Fresh frosted glass UI refinements, dynamic color themes, and quick command shortcuts.
+
 ## [0.0.1+6] - 2026-09-05
 
 ### Fixed

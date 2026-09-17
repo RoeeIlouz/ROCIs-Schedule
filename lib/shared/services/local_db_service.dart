@@ -41,7 +41,7 @@ class LocalDbService {
     }
     return await openDatabase(
       path,
-      version: 4,
+      version: 6,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -72,6 +72,20 @@ class LocalDbService {
     if (oldVersion < 4) {
       await _createIndices(db);
     }
+    if (oldVersion < 5) {
+      try {
+        await db.execute('ALTER TABLE courses ADD COLUMN semester TEXT');
+      } catch (_) {}
+      await _createSemestersTable(db);
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('ALTER TABLE events ADD COLUMN domain TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE events ADD COLUMN color INTEGER');
+      } catch (_) {}
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -83,7 +97,8 @@ class LocalDbService {
         instructor TEXT,
         color INTEGER,
         credits INTEGER,
-        grade REAL
+        grade REAL,
+        semester TEXT
       )
     ''');
 
@@ -99,12 +114,26 @@ class LocalDbService {
         daysOfWeek TEXT,
         recurring INTEGER,
         notes TEXT,
+        domain TEXT,
+        color INTEGER,
         FOREIGN KEY (courseId) REFERENCES courses (id) ON DELETE CASCADE
       )
     ''');
 
     await _createAssignmentsTable(db);
+    await _createSemestersTable(db);
     await _createIndices(db);
+  }
+
+  Future<void> _createSemestersTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS semesters(
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        startDate TEXT,
+        endDate TEXT
+      )
+    ''');
   }
 
   Future<void> _createAssignmentsTable(Database db) async {
@@ -210,5 +239,38 @@ class LocalDbService {
     final db = await database;
     if (db == null) return;
     await db.delete('assignments', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // Semester CRUD
+  Future<void> insertSemester(Semester semester) async {
+    final db = await database;
+    if (db == null) return;
+    await db.insert(
+      'semesters',
+      semester.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Semester>> getSemesters() async {
+    final db = await database;
+    if (db == null) return [];
+    final List<Map<String, dynamic>> maps = await db.query('semesters');
+    return List.generate(maps.length, (i) => Semester.fromMap(maps[i]));
+  }
+
+  Future<void> deleteSemester(String id) async {
+    final db = await database;
+    if (db == null) return;
+    await db.delete('semesters', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> clearAll() async {
+    final db = await database;
+    if (db == null) return;
+    await db.delete('assignments');
+    await db.delete('events');
+    await db.delete('courses');
+    await db.delete('semesters');
   }
 }

@@ -6,9 +6,15 @@ import 'package:rocis_schedule/shared/services/ics_import_service.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
 
   group('Ruthless ScheduleEvent Boundary & Edge Cases', () {
     test('ScheduleEvent.fromMap handles invalid date strings gracefully', () {
@@ -30,7 +36,11 @@ void main() {
       expect(event.title, 'Corrupted Date Event');
       expect(event.startTime, isNotNull);
       expect(event.endTime, isNotNull);
-      expect(event.endTime.isAfter(event.startTime) || event.endTime.isAtSameMomentAs(event.startTime), isTrue);
+      expect(
+        event.endTime.isAfter(event.startTime) ||
+            event.endTime.isAtSameMomentAs(event.startTime),
+        isTrue,
+      );
     });
 
     test('ScheduleEvent.fromMap handles leap years and century leap years', () {
@@ -88,22 +98,25 @@ void main() {
       expect(negativeEvent.isNegativeDuration, isTrue);
     });
 
-    test('ScheduleEvent recurring events across week transitions (Sunday & Saturday)', () {
-      final now = DateTime(2026, 9, 1, 10, 0);
-      final event = ScheduleEvent(
-        id: 'e_weekend',
-        title: 'Weekend Study',
-        courseId: 'c1',
-        type: EventType.study,
-        startTime: now,
-        endTime: now.add(const Duration(hours: 1)),
-        daysOfWeek: [0, 6], // Sunday and Saturday
-        recurring: true,
-      );
+    test(
+      'ScheduleEvent recurring events across week transitions (Sunday & Saturday)',
+      () {
+        final now = DateTime(2026, 9, 1, 10, 0);
+        final event = ScheduleEvent(
+          id: 'e_weekend',
+          title: 'Weekend Study',
+          courseId: 'c1',
+          type: EventType.study,
+          startTime: now,
+          endTime: now.add(const Duration(hours: 1)),
+          daysOfWeek: [0, 6], // Sunday and Saturday
+          recurring: true,
+        );
 
-      expect(event.daysOfWeek, containsAll([0, 6]));
-      expect(event.recurring, isTrue);
-    });
+        expect(event.daysOfWeek, containsAll([0, 6]));
+        expect(event.recurring, isTrue);
+      },
+    );
 
     test('ScheduleEvent with empty daysOfWeek parses and behaves safely', () {
       final map = {
@@ -119,34 +132,64 @@ void main() {
       expect(event.recurring, isTrue);
     });
 
-    test('ScheduleEvent.fromMap normalizes negative and out-of-range daysOfWeek', () {
-      final map = {
-        'id': 'e_bad_days',
-        'title': 'Bad Days Event',
-        'courseId': 'c1',
-        'daysOfWeek': '-1,7,8,-8,0,3',
-      };
+    test(
+      'ScheduleEvent.fromMap normalizes negative and out-of-range daysOfWeek',
+      () {
+        final map = {
+          'id': 'e_bad_days',
+          'title': 'Bad Days Event',
+          'courseId': 'c1',
+          'daysOfWeek': '-1,7,8,-8,0,3',
+        };
 
-      final event = ScheduleEvent.fromMap(map);
-      // -1 normalized is 6, 7 normalized is 0, 8 normalized is 1, -8 normalized is 6, 0 is 0, 3 is 3
-      for (final day in event.daysOfWeek) {
-        expect(day >= 0 && day <= 6, isTrue, reason: 'Day $day is out of 0..6 range');
-      }
-    });
+        final event = ScheduleEvent.fromMap(map);
+        // -1 normalized is 6, 7 normalized is 0, 8 normalized is 1, -8 normalized is 6, 0 is 0, 3 is 3
+        for (final day in event.daysOfWeek) {
+          expect(
+            day >= 0 && day <= 6,
+            isTrue,
+            reason: 'Day $day is out of 0..6 range',
+          );
+        }
+      },
+    );
 
-    test('ScheduleEvent.fromMap handles string booleans and numbers for recurring', () {
-      final mapTrue = {'id': '1', 'title': 'T', 'courseId': 'c', 'recurring': 'true'};
-      expect(ScheduleEvent.fromMap(mapTrue).recurring, isTrue);
+    test(
+      'ScheduleEvent.fromMap handles string booleans and numbers for recurring',
+      () {
+        final mapTrue = {
+          'id': '1',
+          'title': 'T',
+          'courseId': 'c',
+          'recurring': 'true',
+        };
+        expect(ScheduleEvent.fromMap(mapTrue).recurring, isTrue);
 
-      final mapOne = {'id': '2', 'title': 'T', 'courseId': 'c', 'recurring': '1'};
-      expect(ScheduleEvent.fromMap(mapOne).recurring, isTrue);
+        final mapOne = {
+          'id': '2',
+          'title': 'T',
+          'courseId': 'c',
+          'recurring': '1',
+        };
+        expect(ScheduleEvent.fromMap(mapOne).recurring, isTrue);
 
-      final mapFalse = {'id': '3', 'title': 'T', 'courseId': 'c', 'recurring': 'false'};
-      expect(ScheduleEvent.fromMap(mapFalse).recurring, isFalse);
+        final mapFalse = {
+          'id': '3',
+          'title': 'T',
+          'courseId': 'c',
+          'recurring': 'false',
+        };
+        expect(ScheduleEvent.fromMap(mapFalse).recurring, isFalse);
 
-      final mapZero = {'id': '4', 'title': 'T', 'courseId': 'c', 'recurring': 0};
-      expect(ScheduleEvent.fromMap(mapZero).recurring, isFalse);
-    });
+        final mapZero = {
+          'id': '4',
+          'title': 'T',
+          'courseId': 'c',
+          'recurring': 0,
+        };
+        expect(ScheduleEvent.fromMap(mapZero).recurring, isFalse);
+      },
+    );
 
     test('ScheduleEvent out-of-bounds type falls back to EventType.other', () {
       final mapHigh = {'id': '1', 'title': 'T', 'courseId': 'c', 'type': 99};
@@ -155,118 +198,132 @@ void main() {
       final mapNeg = {'id': '2', 'title': 'T', 'courseId': 'c', 'type': -1};
       expect(ScheduleEvent.fromMap(mapNeg).type, EventType.other);
 
-      final mapStr = {'id': '3', 'title': 'T', 'courseId': 'c', 'type': 'invalid'};
+      final mapStr = {
+        'id': '3',
+        'title': 'T',
+        'courseId': 'c',
+        'type': 'invalid',
+      };
       expect(ScheduleEvent.fromMap(mapStr).type, EventType.classType);
     });
   });
 
   group('Course Model & GPA Calculation Resilience', () {
-    test('Course model handles 0.0 credits and decimal credits (1.5, 3.5, 0.25)', () {
-      final zeroCredit = Course(
-        id: 'c_zero',
-        name: 'Orientation',
-        code: 'OR101',
-        instructor: 'Dean',
-        color: Colors.grey,
-        credits: 0.0,
-      );
-      expect(zeroCredit.credits, 0.0);
+    test(
+      'Course model handles 0.0 credits and decimal credits (1.5, 3.5, 0.25)',
+      () {
+        final zeroCredit = Course(
+          id: 'c_zero',
+          name: 'Orientation',
+          code: 'OR101',
+          instructor: 'Dean',
+          color: Colors.grey,
+          credits: 0.0,
+        );
+        expect(zeroCredit.credits, 0.0);
 
-      final decimalCredit = Course(
-        id: 'c_dec',
-        name: 'Physics Lab',
-        code: 'PHYS101L',
-        instructor: 'Dr. Bohr',
-        color: Colors.cyan,
-        credits: 1.5,
-        grade: 90.0,
-      );
-      expect(decimalCredit.credits, 1.5);
-      expect(decimalCredit.grade, 90.0);
+        final decimalCredit = Course(
+          id: 'c_dec',
+          name: 'Physics Lab',
+          code: 'PHYS101L',
+          instructor: 'Dr. Bohr',
+          color: Colors.cyan,
+          credits: 1.5,
+          grade: 90.0,
+        );
+        expect(decimalCredit.credits, 1.5);
+        expect(decimalCredit.grade, 90.0);
 
-      final map = {
-        'id': 'c_parsed',
-        'name': 'Chemistry Seminar',
-        'code': 'CHEM200',
-        'instructor': 'Dr. Curie',
-        'color': '4282663799',
-        'credits': '3.5',
-        'grade': '92.5',
-      };
-      final fromMap = Course.fromMap(map);
-      expect(fromMap.credits, 3.5);
-      expect(fromMap.grade, 92.5);
-    });
+        final map = {
+          'id': 'c_parsed',
+          'name': 'Chemistry Seminar',
+          'code': 'CHEM200',
+          'instructor': 'Dr. Curie',
+          'color': '4282663799',
+          'credits': '3.5',
+          'grade': '92.5',
+        };
+        final fromMap = Course.fromMap(map);
+        expect(fromMap.credits, 3.5);
+        expect(fromMap.grade, 92.5);
+      },
+    );
 
-    test('GPA calculation prevents division by zero with zero graded credits', () async {
-      final provider = CourseProvider('test_uid');
+    test(
+      'GPA calculation prevents division by zero with zero graded credits',
+      () async {
+        final provider = CourseProvider('test_uid');
 
-      // Empty courses
-      expect(provider.totalCredits, 0.0);
-      expect(provider.averageGrade, isNull);
-      expect(provider.calculatedGpa, isNull);
+        // Empty courses
+        expect(provider.totalCredits, 0.0);
+        expect(provider.averageGrade, isNull);
+        expect(provider.calculatedGpa, isNull);
 
-      // Add course with 0.0 credits and a grade
-      final zeroCourse = Course(
-        id: 'c0',
-        name: 'Voluntary Seminar',
-        code: 'VOL100',
-        instructor: 'Dr. Zero',
-        color: Colors.blue,
-        credits: 0.0,
-        grade: 98.0,
-      );
-      await provider.addCourseFromSync(zeroCourse);
+        // Add course with 0.0 credits and a grade
+        final zeroCourse = Course(
+          id: 'c0',
+          name: 'Voluntary Seminar',
+          code: 'VOL100',
+          instructor: 'Dr. Zero',
+          color: Colors.blue,
+          credits: 0.0,
+          grade: 98.0,
+        );
+        await provider.addCourseFromSync(zeroCourse);
 
-      expect(provider.totalCredits, 0.0);
-      // averageGrade must not be NaN or Infinity due to division by zero!
-      expect(provider.averageGrade, isNull);
-      expect(provider.calculatedGpa, isNull);
-    });
+        expect(provider.totalCredits, 0.0);
+        // averageGrade must not be NaN or Infinity due to division by zero!
+        expect(provider.averageGrade, isNull);
+        expect(provider.calculatedGpa, isNull);
+      },
+    );
 
-    test('GPA calculation with decimal credits computes precise weighted average', () async {
-      final provider = CourseProvider('test_uid');
+    test(
+      'GPA calculation with decimal credits computes precise weighted average',
+      () async {
+        final provider = CourseProvider('test_uid');
 
-      final courseA = Course(
-        id: 'ca',
-        name: 'Lecture',
-        code: 'LEC1',
-        instructor: 'Inst A',
-        color: Colors.blue,
-        credits: 3.5,
-        grade: 92.0,
-      );
-      final courseB = Course(
-        id: 'cb',
-        name: 'Lab',
-        code: 'LAB1',
-        instructor: 'Inst B',
-        color: Colors.green,
-        credits: 1.5,
-        grade: 80.0,
-      );
-      final courseC = Course(
-        id: 'cc',
-        name: 'Ungraded Workshop',
-        code: 'WRK1',
-        instructor: 'Inst C',
-        color: Colors.orange,
-        credits: 2.0,
-        grade: null, // Null grade
-      );
+        final courseA = Course(
+          id: 'ca',
+          name: 'Lecture',
+          code: 'LEC1',
+          instructor: 'Inst A',
+          color: Colors.blue,
+          credits: 3.5,
+          grade: 92.0,
+        );
+        final courseB = Course(
+          id: 'cb',
+          name: 'Lab',
+          code: 'LAB1',
+          instructor: 'Inst B',
+          color: Colors.green,
+          credits: 1.5,
+          grade: 80.0,
+        );
+        final courseC = Course(
+          id: 'cc',
+          name: 'Ungraded Workshop',
+          code: 'WRK1',
+          instructor: 'Inst C',
+          color: Colors.orange,
+          credits: 2.0,
+          grade: null, // Null grade
+        );
 
-      await provider.addCourseFromSync(courseA);
-      await provider.addCourseFromSync(courseB);
-      await provider.addCourseFromSync(courseC);
+        await provider.addCourseFromSync(courseA);
+        await provider.addCourseFromSync(courseB);
+        await provider.addCourseFromSync(courseC);
 
-      expect(provider.totalCredits, 7.0);
+        expect(provider.totalCredits, 7.0);
 
-      // Weighted average: (3.5 * 92 + 1.5 * 80) / (3.5 + 1.5) = (322 + 120) / 5 = 442 / 5 = 88.4
-      expect(provider.averageGrade, closeTo(88.4, 0.001));
+        // Weighted average: (3.5 * 92 + 1.5 * 80) / (3.5 + 1.5) = (322 + 120) / 5 = 442 / 5 = 88.4
+        expect(provider.averageGrade, closeTo(88.4, 0.001));
 
-      // GPA conversion for 88.4 (>= 87) is 3.3
-      expect(provider.calculatedGpa, 3.3);
-    });
+        // GPA conversion for 88.4 (>= 87) is 3.3
+        expect(provider.calculatedGpa, 3.3);
+      },
+    );
 
     test('GPA conversion boundary test across all scale thresholds', () async {
       final thresholds = [
@@ -294,33 +351,45 @@ void main() {
 
       for (final (grade, expectedGpa) in thresholds) {
         final provider = CourseProvider('test_uid');
-        await provider.addCourseFromSync(Course(
-          id: 'test_$grade',
-          name: 'Test',
-          code: 'TST',
-          instructor: 'Prof',
-          color: Colors.blue,
-          credits: 3.0,
-          grade: grade,
-        ));
-        expect(provider.calculatedGpa, expectedGpa, reason: 'Grade $grade failed to match expected GPA $expectedGpa');
+        await provider.addCourseFromSync(
+          Course(
+            id: 'test_$grade',
+            name: 'Test',
+            code: 'TST',
+            instructor: 'Prof',
+            color: Colors.blue,
+            credits: 3.0,
+            grade: grade,
+          ),
+        );
+        expect(
+          provider.calculatedGpa,
+          expectedGpa,
+          reason: 'Grade $grade failed to match expected GPA $expectedGpa',
+        );
       }
     });
   });
 
   group('ICS Importer Adversarial & Resilience Tests', () {
-    test('Empty and whitespace-only string returns empty result without throwing', () {
-      final emptyResult = IcsImportService.parseIcsContent('');
-      expect(emptyResult.courses, isEmpty);
-      expect(emptyResult.events, isEmpty);
+    test(
+      'Empty and whitespace-only string returns empty result without throwing',
+      () {
+        final emptyResult = IcsImportService.parseIcsContent('');
+        expect(emptyResult.courses, isEmpty);
+        expect(emptyResult.events, isEmpty);
 
-      final whitespaceResult = IcsImportService.parseIcsContent("   \n\r\n\t   \n");
-      expect(whitespaceResult.courses, isEmpty);
-      expect(whitespaceResult.events, isEmpty);
-    });
+        final whitespaceResult = IcsImportService.parseIcsContent(
+          "   \n\r\n\t   \n",
+        );
+        expect(whitespaceResult.courses, isEmpty);
+        expect(whitespaceResult.events, isEmpty);
+      },
+    );
 
     test('Corrupted non-calendar text & SQL injection attempts do not throw', () {
-      const attackPayload = "'; DROP TABLE courses; DROP TABLE events; -- <script>alert('xss')</script>";
+      const attackPayload =
+          "'; DROP TABLE courses; DROP TABLE events; -- <script>alert('xss')</script>";
       final result = IcsImportService.parseIcsContent(attackPayload);
       expect(result.courses, isEmpty);
       expect(result.events, isEmpty);
@@ -380,8 +449,10 @@ END:VCALENDAR
       expect(event.duration, const Duration(hours: 1));
     });
 
-    test('Missing RRULE produces non-recurring event with empty daysOfWeek', () {
-      const missingRruleIcs = """
+    test(
+      'Missing RRULE produces non-recurring event with empty daysOfWeek',
+      () {
+        const missingRruleIcs = """
 BEGIN:VCALENDAR
 BEGIN:VEVENT
 SUMMARY:Single One-off Seminar
@@ -390,12 +461,13 @@ DTEND:20260910T160000
 END:VEVENT
 END:VCALENDAR
 """;
-      final result = IcsImportService.parseIcsContent(missingRruleIcs);
-      expect(result.events.length, 1);
-      final event = result.events.first;
-      expect(event.recurring, isFalse);
-      expect(event.daysOfWeek, isEmpty);
-    });
+        final result = IcsImportService.parseIcsContent(missingRruleIcs);
+        expect(result.events.length, 1);
+        final event = result.events.first;
+        expect(event.recurring, isFalse);
+        expect(event.daysOfWeek, isEmpty);
+      },
+    );
 
     test('Malformed RRULE without BYDAY falls back to start weekday', () {
       const weeklyNoByDayIcs = """
@@ -473,11 +545,14 @@ END:VCALENDAR
   });
 
   group('Local DB Cache & Uninitialized State Resilience', () {
-    test('LocalDbService.clearCache is idempotent and safe to call repeatedly', () async {
-      await expectLater(LocalDbService.clearCache(), completes);
-      await expectLater(LocalDbService.clearCache(), completes);
-      await expectLater(LocalDbService.clearCache(), completes);
-    });
+    test(
+      'LocalDbService.clearCache is idempotent and safe to call repeatedly',
+      () async {
+        await expectLater(LocalDbService.clearCache(), completes);
+        await expectLater(LocalDbService.clearCache(), completes);
+        await expectLater(LocalDbService.clearCache(), completes);
+      },
+    );
 
     test('LocalDbService sanitizes malicious and unusual user IDs', () async {
       final maliciousUsers = [
@@ -496,14 +571,16 @@ END:VCALENDAR
 
     test('CourseProvider clearLocalData cleans up memory safely', () async {
       final provider = CourseProvider('test_uid');
-      await provider.addCourseFromSync(Course(
-        id: 'c1',
-        name: 'Test',
-        code: 'T1',
-        instructor: 'Dr. T',
-        color: Colors.red,
-        credits: 3.0,
-      ));
+      await provider.addCourseFromSync(
+        Course(
+          id: 'c1',
+          name: 'Test',
+          code: 'T1',
+          instructor: 'Dr. T',
+          color: Colors.red,
+          credits: 3.0,
+        ),
+      );
       expect(provider.courses.length, 1);
 
       await provider.clearLocalData();
@@ -511,10 +588,13 @@ END:VCALENDAR
       expect(provider.events, isEmpty);
     });
 
-    test('CourseProvider getEventsByCourse with non-existent id returns empty list', () {
-      final provider = CourseProvider('test_uid');
-      expect(provider.getEventsByCourse('non_existent_course'), isEmpty);
-    });
+    test(
+      'CourseProvider getEventsByCourse with non-existent id returns empty list',
+      () {
+        final provider = CourseProvider('test_uid');
+        expect(provider.getEventsByCourse('non_existent_course'), isEmpty);
+      },
+    );
   });
 
   group('Multilingual Localization Coverage & Parity', () {
@@ -532,7 +612,8 @@ END:VCALENDAR
       expect(
         missingInHebrew,
         isEmpty,
-        reason: 'The following keys are defined in "en" but missing in "he": $missingInHebrew',
+        reason:
+            'The following keys are defined in "en" but missing in "he": $missingInHebrew',
       );
     });
 
@@ -550,68 +631,108 @@ END:VCALENDAR
       expect(
         missingInEnglish,
         isEmpty,
-        reason: 'The following keys are defined in "he" but missing in "en": $missingInEnglish',
+        reason:
+            'The following keys are defined in "he" but missing in "en": $missingInEnglish',
       );
     });
 
-    test('No localized values are empty or whitespace only in English or Hebrew', () {
-      final enMap = AppLocalizations.localizedValues['en']!;
-      final heMap = AppLocalizations.localizedValues['he']!;
+    test(
+      'No localized values are empty or whitespace only in English or Hebrew',
+      () {
+        final enMap = AppLocalizations.localizedValues['en']!;
+        final heMap = AppLocalizations.localizedValues['he']!;
 
-      for (final entry in enMap.entries) {
-        expect(entry.value.trim().isNotEmpty, isTrue, reason: 'Key "${entry.key}" in "en" is empty');
-      }
+        for (final entry in enMap.entries) {
+          expect(
+            entry.value.trim().isNotEmpty,
+            isTrue,
+            reason: 'Key "${entry.key}" in "en" is empty',
+          );
+        }
 
-      for (final entry in heMap.entries) {
-        expect(entry.value.trim().isNotEmpty, isTrue, reason: 'Key "${entry.key}" in "he" is empty');
-      }
-    });
+        for (final entry in heMap.entries) {
+          expect(
+            entry.value.trim().isNotEmpty,
+            isTrue,
+            reason: 'Key "${entry.key}" in "he" is empty',
+          );
+        }
+      },
+    );
 
-    test('Every translation key called in the entire UI codebase exists in en and he', () {
-      final libDir = Directory('lib');
-      final dartFiles = libDir
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.dart') && !f.path.contains('app_localizations.dart'));
+    test(
+      'Every translation key called in the entire UI codebase exists in en and he',
+      () {
+        final libDir = Directory('lib');
+        final dartFiles = libDir
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where(
+              (f) =>
+                  f.path.endsWith('.dart') &&
+                  !f.path.contains('app_localizations.dart'),
+            );
 
-      final translateRegex = RegExp(r"translate\(\s*['" '"' r"]([a-zA-Z0-9_\-]+)['" '"' r"]\s*\)");
-      final discoveredKeys = <String>{};
+        final translateRegex = RegExp(
+          r"translate\(\s*['"
+          '"'
+          r"]([a-zA-Z0-9_\-]+)['"
+          '"'
+          r"]\s*\)",
+        );
+        final discoveredKeys = <String>{};
 
-      for (final file in dartFiles) {
-        final content = file.readAsStringSync();
-        for (final match in translateRegex.allMatches(content)) {
-          final key = match.group(1);
-          if (key != null) {
-            discoveredKeys.add(key);
+        for (final file in dartFiles) {
+          final content = file.readAsStringSync();
+          for (final match in translateRegex.allMatches(content)) {
+            final key = match.group(1);
+            if (key != null) {
+              discoveredKeys.add(key);
+            }
           }
         }
-      }
 
-      expect(discoveredKeys.isNotEmpty, isTrue, reason: 'Discovered keys from UI should not be empty');
+        expect(
+          discoveredKeys.isNotEmpty,
+          isTrue,
+          reason: 'Discovered keys from UI should not be empty',
+        );
 
-      final enMap = AppLocalizations.localizedValues['en']!;
-      final heMap = AppLocalizations.localizedValues['he']!;
+        final enMap = AppLocalizations.localizedValues['en']!;
+        final heMap = AppLocalizations.localizedValues['he']!;
 
-      final missingInEn = <String>[];
-      final missingInHe = <String>[];
+        final missingInEn = <String>[];
+        final missingInHe = <String>[];
 
-      for (final key in discoveredKeys) {
-        if (!enMap.containsKey(key)) missingInEn.add(key);
-        if (!heMap.containsKey(key)) missingInHe.add(key);
-      }
+        for (final key in discoveredKeys) {
+          if (!enMap.containsKey(key)) missingInEn.add(key);
+          if (!heMap.containsKey(key)) missingInHe.add(key);
+        }
 
-      expect(missingInEn, isEmpty, reason: 'UI uses keys missing in "en": $missingInEn');
-      expect(missingInHe, isEmpty, reason: 'UI uses keys missing in "he": $missingInHe');
-    });
+        expect(
+          missingInEn,
+          isEmpty,
+          reason: 'UI uses keys missing in "en": $missingInEn',
+        );
+        expect(
+          missingInHe,
+          isEmpty,
+          reason: 'UI uses keys missing in "he": $missingInHe',
+        );
+      },
+    );
 
     test('AppLocalizations falls back to key if key is completely unknown', () {
       final l10n = AppLocalizations(const Locale('en'));
       expect(l10n.translate('non_existent_key_xyz'), 'non_existent_key_xyz');
     });
 
-    test('AppLocalizations falls back to English when a supported language lacks a specific key', () {
-      final l10nEs = AppLocalizations(const Locale('es'));
-      expect(l10nEs.translate('app_title'), 'ROCIs Schedule');
-    });
+    test(
+      'AppLocalizations falls back to English when a supported language lacks a specific key',
+      () {
+        final l10nEs = AppLocalizations(const Locale('es'));
+        expect(l10nEs.translate('app_title'), 'ROCIs Schedule');
+      },
+    );
   });
 }

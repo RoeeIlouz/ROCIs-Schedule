@@ -243,4 +243,57 @@ class IcsImportService {
     }
     return 'CRS';
   }
+
+  static String exportIcsContent(
+    List<Course> courses,
+    List<ScheduleEvent> events,
+  ) {
+    final buffer = StringBuffer();
+    buffer.writeln('BEGIN:VCALENDAR');
+    buffer.writeln('VERSION:2.0');
+    buffer.writeln('PRODID:-//ROCIs//ROCIs Schedule//EN');
+    buffer.writeln('CALSCALE:GREGORIAN');
+
+    final courseMap = {for (var c in courses) c.id: c};
+
+    String formatIcsDate(DateTime dt) {
+      final y = dt.year.toString().padLeft(4, '0');
+      final m = dt.month.toString().padLeft(2, '0');
+      final d = dt.day.toString().padLeft(2, '0');
+      final h = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      final s = dt.second.toString().padLeft(2, '0');
+      return '$y$m${d}T$h$min$s';
+    }
+
+    const dayCodes = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+
+    for (final event in events) {
+      final course = courseMap[event.courseId];
+      final title = course != null
+          ? '${course.name} - ${event.title}'
+          : event.title;
+      buffer.writeln('BEGIN:VEVENT');
+      buffer.writeln('UID:${event.id}@rocisschedule.app');
+      buffer.writeln('SUMMARY:$title');
+      if (event.location.isNotEmpty) {
+        buffer.writeln('LOCATION:${event.location}');
+      }
+      if (event.notes.isNotEmpty) {
+        buffer.writeln('DESCRIPTION:${event.notes}');
+      }
+      buffer.writeln('DTSTART:${formatIcsDate(event.startTime)}');
+      buffer.writeln('DTEND:${formatIcsDate(event.endTime)}');
+      if (event.recurring && event.daysOfWeek.isNotEmpty) {
+        final byDays = event.daysOfWeek
+            .map((d) => dayCodes[d.clamp(0, 6)])
+            .join(',');
+        buffer.writeln('RRULE:FREQ=WEEKLY;BYDAY=$byDays');
+      }
+      buffer.writeln('END:VEVENT');
+    }
+
+    buffer.writeln('END:VCALENDAR');
+    return buffer.toString();
+  }
 }

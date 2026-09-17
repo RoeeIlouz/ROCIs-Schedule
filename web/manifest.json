@@ -1,13 +1,60 @@
 {
+    "id": "/?source=pwa",
     "name": "ROCIs Schedule - Academic Timetable & Student Planner",
     "short_name": "ROCIs Schedule",
-    "start_url": ".",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#121212",
+    "orientation": "any",
+    "background_color": "#0F172A",
     "theme_color": "#1E88E5",
     "description": "Master your semester with weekly timetables, GPA tracker, exam countdowns, and assignment management.",
-    "orientation": "portrait-primary",
+    "lang": "en",
+    "dir": "auto",
+    "categories": [
+        "education",
+        "productivity",
+        "utilities"
+    ],
     "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "Schedule Timetable",
+            "short_name": "Schedule",
+            "description": "View weekly timetable and class schedule",
+            "url": "/schedule",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Add Event",
+            "short_name": "Add Event",
+            "description": "Quickly add a class, lab, or exam",
+            "url": "/schedule/add-event",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Assignments",
+            "short_name": "Assignments",
+            "description": "Check upcoming homework and deadlines",
+            "url": "/assignments",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

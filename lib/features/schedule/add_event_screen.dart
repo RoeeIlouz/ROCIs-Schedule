@@ -10,6 +10,7 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:rocis_schedule/shared/services/event_collision_service.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -23,6 +24,25 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _titleController = TextEditingController();
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
+
+  EventDomain _selectedDomain = EventDomain.academic;
+  Color? _customColor;
+
+  static const List<Color> _workColorPalette = [
+    Color(0xFF0284C7), // Sky Blue
+    Color(0xFF0D9488), // Teal
+    Color(0xFFD97706), // Amber
+    Color(0xFF475569), // Slate
+    Color(0xFF4F46E5), // Indigo
+  ];
+
+  static const List<Color> _personalColorPalette = [
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFF059669), // Emerald
+    Color(0xFFE11D48), // Rose
+    Color(0xFFEA580C), // Orange
+    Color(0xFF0891B2), // Cyan
+  ];
 
   String? _selectedCourseId;
   EventType _selectedType = EventType.classType;
@@ -102,12 +122,19 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   Future<void> _saveEvent() async {
     final l10n = AppLocalizations.of(context)!;
-    if (!_formKey.currentState!.validate() || _selectedCourseId == null) {
-      if (_selectedCourseId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.translate('select_course_error'))),
-        );
-      }
+    final courses = context.read<CourseProvider>().courses;
+    final isAcademic = _selectedDomain == EventDomain.academic;
+    final effectiveCourseId =
+        _selectedCourseId ?? (courses.isNotEmpty ? courses.first.id : null);
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (isAcademic && effectiveCourseId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.translate('select_course_error'))),
+      );
       return;
     }
 
@@ -135,14 +162,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
       final event = ScheduleEvent(
         id: const Uuid().v4(),
         title: _titleController.text.trim(),
-        courseId: _selectedCourseId!,
-        type: _selectedType,
+        courseId: isAcademic ? (effectiveCourseId ?? '') : '',
+        type: isAcademic ? _selectedType : EventType.other,
         startTime: startDateTime,
         endTime: endDateTime,
         location: _locationController.text.trim(),
         notes: _notesController.text.trim(),
         recurring: _recurring,
         daysOfWeek: _selectedDays,
+        domain: _selectedDomain,
+        color: isAcademic ? null : _customColor,
       );
 
       await context.read<CourseProvider>().addEvent(event);
@@ -175,9 +204,46 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final courses = context.watch<CourseProvider>().courses;
+    final courseProvider = context.watch<CourseProvider>();
+    final courses = courseProvider.courses;
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final initialCourseId =
+        (_selectedCourseId != null &&
+            courses.any((c) => c.id == _selectedCourseId))
+        ? _selectedCourseId
+        : (courses.isNotEmpty ? courses.first.id : null);
+
+    final coursesMap = {for (var c in courses) c.id: c};
+
+    // Construct candidate event for live collision detection
+    final candidateEvent = ScheduleEvent(
+      id: '',
+      title: _titleController.text.trim(),
+      courseId: _selectedDomain == EventDomain.academic
+          ? (initialCourseId ?? '')
+          : '',
+      type: _selectedDomain == EventDomain.academic
+          ? _selectedType
+          : EventType.other,
+      startTime: _buildDateTime(_eventDate, _startTimeOfDay),
+      endTime: _buildDateTime(_eventDate, _endTimeOfDay),
+      location: _locationController.text.trim(),
+      notes: _notesController.text.trim(),
+      recurring: _recurring,
+      daysOfWeek: _selectedDays,
+      domain: _selectedDomain,
+      color: _customColor,
+    );
+
+    final detectedConflicts = EventCollisionService.findConflicts(
+      candidate: candidateEvent,
+      existingEvents: courseProvider.events,
+    );
+    final hasWorkAcademic = EventCollisionService.hasWorkAcademicConflict(
+      candidate: candidateEvent,
+      existingEvents: courseProvider.events,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -193,62 +259,347 @@ class _AddEventScreenState extends State<AddEventScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Domain Segmented Button
+              SegmentedButton<EventDomain>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment<EventDomain>(
+                    value: EventDomain.academic,
+                    icon: const Icon(Icons.school_outlined, size: 16),
+                    label: Text(l10n.translate('domain_academic')),
+                  ),
+                  ButtonSegment<EventDomain>(
+                    value: EventDomain.work,
+                    icon: const Icon(Icons.work_outline_rounded, size: 16),
+                    label: Text(l10n.translate('domain_work')),
+                  ),
+                  ButtonSegment<EventDomain>(
+                    value: EventDomain.personal,
+                    icon: const Icon(Icons.person_outline_rounded, size: 16),
+                    label: Text(l10n.translate('domain_personal')),
+                  ),
+                ],
+                selected: {_selectedDomain},
+                onSelectionChanged: (newSelection) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _selectedDomain = newSelection.first;
+                    if (_selectedDomain == EventDomain.work) {
+                      _customColor ??= _workColorPalette.first;
+                    } else if (_selectedDomain == EventDomain.personal) {
+                      _customColor ??= _personalColorPalette.first;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Live Collision Detection Banner
+              if (detectedConflicts.isNotEmpty) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: (hasWorkAcademic ? Colors.red : Colors.orange)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: (hasWorkAcademic ? Colors.red : Colors.orange)
+                          .withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 20,
+                            color: hasWorkAcademic
+                                ? Colors.red
+                                : Colors.orange.shade800,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.translate('collision_warning'),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: hasWorkAcademic
+                                    ? Colors.red
+                                    : Colors.orange.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.translate('collision_warning_desc'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...detectedConflicts.take(3).map((c) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.circle,
+                                size: 6,
+                                color: hasWorkAcademic
+                                    ? Colors.red
+                                    : Colors.orange,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  EventCollisionService.formatConflictSummary(
+                                    c,
+                                    course: coursesMap[c.courseId],
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Academic Domain: Optional warning if no courses
+              if (_selectedDomain == EventDomain.academic && courses.isEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer.withValues(
+                      alpha: 0.25,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.error.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.school_outlined,
+                        size: 32,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.translate('no_courses_add_event_hint'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => context.push('/courses/add'),
+                        icon: const Icon(Icons.add_rounded),
+                        label: Text(l10n.translate('add_course_first')),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Title Field
               AppTextField(
                 label: l10n.translate('event_title'),
-                hint: 'e.g. Lecture, Midterm Exam',
+                hint: _selectedDomain == EventDomain.academic
+                    ? 'e.g. Lecture, Midterm Exam'
+                    : (_selectedDomain == EventDomain.work
+                          ? 'e.g. Morning Shift, Internship'
+                          : 'e.g. Doctor Appointment, Gym'),
                 controller: _titleController,
                 validator: (v) => (v != null && v.trim().isNotEmpty)
                     ? null
                     : l10n.translate('field_required'),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCourseId,
-                decoration: InputDecoration(
-                  labelText: l10n.translate('course'),
-                ),
-                items: courses.map((c) {
-                  return DropdownMenuItem(
-                    value: c.id,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 12,
-                          height: 12,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: c.color,
-                            shape: BoxShape.circle,
+
+              // Domain-specific fields
+              if (_selectedDomain == EventDomain.academic) ...[
+                DropdownButtonFormField<String>(
+                  initialValue: initialCourseId,
+                  decoration: InputDecoration(
+                    labelText: l10n.translate('course'),
+                  ),
+                  items: courses.map((c) {
+                    return DropdownMenuItem(
+                      value: c.id,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: c.color,
+                              shape: BoxShape.circle,
+                            ),
                           ),
+                          Text(c.name),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setState(() => _selectedCourseId = v),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<EventType>(
+                  initialValue: _selectedType,
+                  decoration: InputDecoration(
+                    labelText: l10n.translate('type'),
+                  ),
+                  items: EventType.values.map((v) {
+                    return DropdownMenuItem(
+                      value: v,
+                      child: Text(_getEventTypeName(v, l10n)),
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      setState(() {
+                        _selectedType = v;
+                        if (v == EventType.exam) {
+                          _recurring = false;
+                        }
+                      });
+                    }
+                  },
+                ),
+              ] else if (_selectedDomain == EventDomain.work) ...[
+                AppTextField(
+                  label: l10n.translate('workplace'),
+                  hint: l10n.translate('workplace_hint'),
+                  controller: _locationController,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.translate('event_color'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  children: _workColorPalette.map((color) {
+                    final isSelected = _customColor == color;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _customColor = color);
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(
+                                  color: theme.colorScheme.onSurface,
+                                  width: 2.5,
+                                )
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.35),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        Text(c.name),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (v) => setState(() => _selectedCourseId = v),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<EventType>(
-                initialValue: _selectedType,
-                decoration: InputDecoration(labelText: l10n.translate('type')),
-                items: EventType.values.map((v) {
-                  return DropdownMenuItem(
-                    value: v,
-                    child: Text(_getEventTypeName(v, l10n)),
-                  );
-                }).toList(),
-                onChanged: (v) {
-                  if (v != null) {
-                    setState(() {
-                      _selectedType = v;
-                      if (v == EventType.exam) {
-                        _recurring = false;
-                      }
-                    });
-                  }
-                },
-              ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check_rounded,
+                                size: 18,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ] else ...[
+                AppTextField(
+                  label: l10n.translate('location'),
+                  hint: 'e.g. Clinic, Gym, Central Library',
+                  controller: _locationController,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.translate('event_color'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  children: _personalColorPalette.map((color) {
+                    final isSelected = _customColor == color;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _customColor = color);
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(
+                                  color: theme.colorScheme.onSurface,
+                                  width: 2.5,
+                                )
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.35),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check_rounded,
+                                size: 18,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
               const SizedBox(height: 20),
               SwitchListTile(
                 title: Text(l10n.translate('recurring_event')),
@@ -377,9 +728,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   String _formatTimeOfDay(BuildContext context, TimeOfDay time) {
-    final themeProvider = context.read<ThemeProvider>();
+    bool use24 = false;
+    try {
+      use24 = Provider.of<ThemeProvider>(
+        context,
+        listen: false,
+      ).use24HourFormat;
+    } catch (_) {
+      use24 = MediaQuery.maybeOf(context)?.alwaysUse24HourFormat ?? false;
+    }
     final dt = DateTime(2026, 1, 1, time.hour, time.minute);
-    if (themeProvider.use24HourFormat) {
+    if (use24) {
       return DateFormat.Hm().format(dt);
     }
     return DateFormat.jm().format(dt);

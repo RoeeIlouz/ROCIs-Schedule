@@ -30,14 +30,14 @@ void main() {
           providers: [
             ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
             ChangeNotifierProvider<CourseProvider>.value(value: courseProvider),
-            ChangeNotifierProvider<AssignmentProvider>.value(value: assignmentProvider),
+            ChangeNotifierProvider<AssignmentProvider>.value(
+              value: assignmentProvider,
+            ),
           ],
           child: const MaterialApp(
             localizationsDelegates: [AppLocalizationsDelegate()],
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: CommandPaletteDialog(),
-            ),
+            home: Scaffold(body: CommandPaletteDialog()),
           ),
         ),
       );

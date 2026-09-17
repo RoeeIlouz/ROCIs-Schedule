@@ -12,6 +12,7 @@ import 'package:rocis_schedule/shared/router.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
+import 'package:rocis_schedule/features/tasks/synced_tasks_provider.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
 import 'package:rocis_schedule/shared/services/sync_service.dart';
@@ -84,6 +85,20 @@ class MyApp extends StatelessWidget {
             return AssignmentProvider(uid)..loadAssignments();
           },
         ),
+        ChangeNotifierProxyProvider<AuthService, SyncedTasksProvider>(
+          create: (context) {
+            final auth = context.read<AuthService>();
+            return SyncedTasksProvider(
+              email: auth.user?.email,
+              uid: auth.user?.uid,
+            )..loadTasks();
+          },
+          update: (_, auth, previous) {
+            final email = auth.user?.email;
+            final uid = auth.user?.uid;
+            return SyncedTasksProvider(email: email, uid: uid)..loadTasks();
+          },
+        ),
         ProxyProvider3<
           AuthService,
           CourseProvider,
@@ -109,12 +124,20 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return DynamicColorBuilder(
             builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-              final ColorScheme? lightScheme = themeProvider.useDynamicColor
+              final ColorScheme lightScheme =
+                  (themeProvider.useDynamicColor && lightDynamic != null)
                   ? lightDynamic
-                  : null;
-              final ColorScheme? darkScheme = themeProvider.useDynamicColor
+                  : ColorScheme.fromSeed(
+                      seedColor: themeProvider.customSeedColor,
+                      brightness: Brightness.light,
+                    );
+              final ColorScheme darkScheme =
+                  (themeProvider.useDynamicColor && darkDynamic != null)
                   ? darkDynamic
-                  : null;
+                  : ColorScheme.fromSeed(
+                      seedColor: themeProvider.customSeedColor,
+                      brightness: Brightness.dark,
+                    );
 
               return MaterialApp.router(
                 title: 'ROCIs Schedule',

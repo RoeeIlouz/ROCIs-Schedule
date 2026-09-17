@@ -7,28 +7,19 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null && request.auth.uid == userId;
       
-      // Courses subcollection - allow public read for cross-app integration
+      // Courses subcollection - private to owner
       match /courses/{courseId} {
-        // Allow read for anyone (cross-app integration)
-        // Write only for owner
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
-      // Events subcollection (schedule events) - allow public read for cross-app integration
+      // Events subcollection (schedule events) - private to owner
       match /events/{eventId} {
-        // Allow read for anyone (cross-app integration)
-        // Write only for owner
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
-      // Assignments subcollection - allow public read for cross-app integration
+      // Assignments subcollection - private to owner
       match /assignments/{assignmentId} {
-        // Allow read for anyone (cross-app integration)
-        // Write only for owner
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
       
       // Friends subcollection - private
@@ -38,19 +29,10 @@ service cloud.firestore {
       
       // Friend requests subcollection
       match /friend_requests/{requestId} {
-        // Allow reading own friend requests
         allow read: if request.auth != null && request.auth.uid == userId;
-        // Allow anyone authenticated to create a friend request to this user
         allow create: if request.auth != null;
-        // Allow the recipient to update/delete (accept/decline)
         allow update, delete: if request.auth != null && request.auth.uid == userId;
       }
-    }
-    
-    // Allow querying users by email for cross-app lookup
-    // This allows finding a user's document ID by their email
-    match /users/{userId} {
-      allow list: if true;
     }
   }
 }

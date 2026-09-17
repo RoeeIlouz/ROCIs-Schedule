@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/auth/login_screen.dart';
 import 'package:rocis_schedule/features/auth/register_screen.dart';
 import 'package:rocis_schedule/features/onboarding/onboarding_screen.dart';
@@ -7,7 +9,38 @@ import 'package:rocis_schedule/features/onboarding/profile_setup_screen.dart';
 import 'package:rocis_schedule/features/courses/add_course_screen.dart';
 import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
 import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart';
+import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkSession());
+  }
+
+  void _checkSession() {
+    if (!mounted) return;
+    final auth = context.read<AuthService>();
+    if (auth.hasActiveSession) {
+      context.go('/schedule');
+    } else {
+      context.go('/login');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+}
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -17,7 +50,7 @@ class AppRouter {
     initialLocation: '/',
     navigatorKey: _rootNavigatorKey,
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/', builder: (context, state) => const AuthGate()),
       GoRoute(
         path: '/login',
         parentNavigatorKey: _rootNavigatorKey,
@@ -70,6 +103,11 @@ class AppRouter {
         builder: (context, state) => const AddAssignmentScreen(),
       ),
       GoRoute(
+        path: '/schedule/add',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AddEventScreen(),
+      ),
+      GoRoute(
         path: '/events/add',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const AddEventScreen(),
@@ -77,7 +115,14 @@ class AppRouter {
       GoRoute(
         path: '/courses/add',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AddCourseScreen(),
+        builder: (context, state) =>
+            AddCourseScreen(courseToEdit: state.extra as Course?),
+      ),
+      GoRoute(
+        path: '/courses/edit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            AddCourseScreen(courseToEdit: state.extra as Course?),
       ),
       GoRoute(
         path: '/profile/edit',

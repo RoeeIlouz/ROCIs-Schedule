@@ -103,5 +103,68 @@ void main() {
         expect(prefs.containsKey('locale'), isFalse);
       },
     );
+
+    test(
+      'Toggling Beta Features and ROCIs Tasks Integration updates state and persists',
+      () async {
+        final provider = ThemeProvider();
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        // Initial defaults
+        expect(provider.betaFeaturesUnlocked, isFalse);
+        expect(provider.enableTasksIntegration, isFalse);
+
+        // Unlock Beta Features via Easter egg
+        await provider.setBetaFeaturesUnlocked(true);
+        expect(provider.betaFeaturesUnlocked, isTrue);
+
+        // Enable Tasks integration
+        await provider.setEnableTasksIntegration(true);
+        expect(provider.enableTasksIntegration, isTrue);
+
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getBool('beta_features_unlocked'), isTrue);
+        expect(prefs.getBool('beta_tasks_integration'), isTrue);
+
+        // Verify state is restored upon reload
+        final newProvider = ThemeProvider();
+        await Future.delayed(const Duration(milliseconds: 50));
+        expect(newProvider.betaFeaturesUnlocked, isTrue);
+        expect(newProvider.enableTasksIntegration, isTrue);
+      },
+    );
+
+    test(
+      'Applying curated theme presets updates customSeedColor and selectedPresetId',
+      () async {
+        final provider = ThemeProvider();
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        expect(ThemeProvider.presets, isNotEmpty);
+        expect(ThemeProvider.presets.length, equals(8));
+
+        final tealPreset = ThemeProvider.presets.firstWhere(
+          (p) => p.id == 'teal',
+        );
+        await provider.applyPreset(tealPreset);
+
+        expect(provider.selectedPresetId, 'teal');
+        expect(provider.customSeedColor, tealPreset.primaryColor);
+        expect(provider.useDynamicColor, isFalse);
+
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('selected_preset_id'), 'teal');
+        expect(
+          prefs.getInt('custom_seed_color'),
+          tealPreset.primaryColor.toARGB32(),
+        );
+        expect(prefs.getBool('use_dynamic_color'), isFalse);
+
+        // Custom color clears preset id
+        await provider.setCustomSeedColor(const Color(0xFFFF5722));
+        expect(provider.customSeedColor, const Color(0xFFFF5722));
+        expect(provider.selectedPresetId, isNull);
+      },
+    );
   });
 }

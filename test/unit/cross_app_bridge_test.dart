@@ -46,9 +46,59 @@ void main() {
       expect(uri.queryParameters['category'], 'Algorithms CS301');
     });
 
-    test('isRocisTasksInstalled returns boolean safely in test harness', () async {
-      final isInstalled = await CrossAppBridgeService.isRocisTasksInstalled();
-      expect(isInstalled, isA<bool>());
+    test('URI format construction for sendEventToTasks', () {
+      final event = ScheduleEvent(
+        id: 'e1',
+        title: 'Algorithms Final Exam',
+        courseId: 'c1',
+        type: EventType.exam,
+        startTime: DateTime(2026, 9, 20, 10, 0),
+        endTime: DateTime(2026, 9, 20, 13, 0),
+        location: 'Hall A 101',
+      );
+
+      final course = Course(
+        id: 'c1',
+        name: 'Algorithms CS301',
+        code: 'CS301',
+        instructor: 'Prof. Knuth',
+        color: Colors.blue,
+        credits: 4,
+      );
+
+      final notes = [
+        if (event.location.isNotEmpty) 'Location: ${event.location}',
+        if (course.instructor.isNotEmpty) 'Instructor: ${course.instructor}',
+        if (event.notes.isNotEmpty) event.notes,
+      ].join(' • ');
+
+      final uri = Uri(
+        scheme: 'rocistasks',
+        host: 'add_task',
+        queryParameters: {
+          'title': event.title,
+          'dueDate': event.startTime.toIso8601String(),
+          'priority': 'high',
+          if (notes.isNotEmpty) 'notes': notes,
+          'category': course.name,
+        },
+      );
+
+      expect(uri.scheme, 'rocistasks');
+      expect(uri.host, 'add_task');
+      expect(uri.queryParameters['title'], 'Algorithms Final Exam');
+      expect(uri.queryParameters['priority'], 'high');
+      expect(uri.queryParameters['notes'], contains('Hall A 101'));
+      expect(uri.queryParameters['notes'], contains('Prof. Knuth'));
+      expect(uri.queryParameters['category'], 'Algorithms CS301');
     });
+
+    test(
+      'isRocisTasksInstalled returns boolean safely in test harness',
+      () async {
+        final isInstalled = await CrossAppBridgeService.isRocisTasksInstalled();
+        expect(isInstalled, isA<bool>());
+      },
+    );
   });
 }

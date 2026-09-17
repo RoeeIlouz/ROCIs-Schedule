@@ -47,7 +47,9 @@ void main() {
         // Verify action routes
         expect(topLevelPaths, contains('/assignments/add'));
         expect(topLevelPaths, contains('/events/add'));
+        expect(topLevelPaths, contains('/schedule/add'));
         expect(topLevelPaths, contains('/courses/add'));
+        expect(topLevelPaths, contains('/courses/edit'));
         expect(topLevelPaths, contains('/profile/edit'));
       },
     );

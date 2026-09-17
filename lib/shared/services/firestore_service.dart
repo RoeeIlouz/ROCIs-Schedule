@@ -79,6 +79,47 @@ class FirestoreService {
     }
   }
 
+  // Sync Semesters
+  Future<void> uploadSemesters(String uid, List<Semester> semesters) async {
+    final db = _db;
+    if (db == null) return;
+    try {
+      final batch = db.batch();
+      for (var sem in semesters) {
+        final ref = db
+            .collection('users')
+            .doc(uid)
+            .collection('semesters')
+            .doc(sem.id);
+        batch.set(ref, sem.toMap());
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Firestore Error (Upload Semesters): $e');
+    }
+  }
+
+  Future<List<Semester>> downloadSemesters(String uid) async {
+    final db = _db;
+    if (db == null) return [];
+    try {
+      debugPrint('Firestore: Downloading semesters for $uid...');
+      final snapshot = await db
+          .collection('users')
+          .doc(uid)
+          .collection('semesters')
+          .get();
+      final semesters = snapshot.docs
+          .map((doc) => Semester.fromMap(doc.data()))
+          .toList();
+      debugPrint('Firestore: Downloaded ${semesters.length} semesters');
+      return semesters;
+    } catch (e) {
+      debugPrint('Firestore Error (Download Semesters): $e');
+      return [];
+    }
+  }
+
   // Assignments
   Future<void> updateAssignment(String uid, Assignment assignment) async {
     final db = _db;
