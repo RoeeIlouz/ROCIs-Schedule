@@ -106,6 +106,9 @@ class CourseProvider extends ChangeNotifier {
       if (_courses.isNotEmpty) {
         unawaited(_firestoreService.uploadCourses(userId, _courses));
       }
+      if (_semesters.isNotEmpty) {
+        unawaited(_firestoreService.uploadSemesters(userId, _semesters));
+      }
     } catch (e) {
       debugPrint('CourseProvider.loadData error: $e');
     } finally {
