@@ -96,6 +96,12 @@ class MyApp extends StatelessWidget {
           update: (_, auth, previous) {
             final email = auth.user?.email;
             final uid = auth.user?.uid;
+            // AuthService notifies often; only refetch when the user changes.
+            if (previous != null &&
+                previous.email == email &&
+                previous.uid == uid) {
+              return previous;
+            }
             return SyncedTasksProvider(email: email, uid: uid)..loadTasks();
           },
         ),

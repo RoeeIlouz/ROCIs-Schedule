@@ -4,7 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
 
+/// A snapshot of a user collection, flagged when served from the offline cache.
+typedef CloudSnapshot<T> = ({List<T> items, bool fromCache});
+
 class FirestoreService {
+  static const _maxBatchWrites = 500;
+
   final FirebaseFirestore? _customDb;
 
   FirestoreService({FirebaseFirestore? firestore}) : _customDb = firestore;
@@ -39,65 +44,114 @@ class FirestoreService {
     return await db.collection('users').doc(uid).get();
   }
 
-  // Sync Courses
-  Future<void> uploadCourses(String uid, List<Course> courses) async {
+  CollectionReference<Map<String, dynamic>> _userCollection(
+    FirebaseFirestore db,
+    String uid,
+    String collection,
+  ) => db.collection('users').doc(uid).collection(collection);
+
+  /// Writes documents in chunks of 500 (Firestore's per-batch limit).
+  Future<void> _uploadAll(
+    String uid,
+    String collection,
+    Iterable<MapEntry<String, Map<String, dynamic>>> docs,
+  ) async {
+    final db = _db;
+    if (db == null) return;
+    final entries = docs.toList();
+    if (entries.isEmpty) return;
+    try {
+      final commits = <Future<void>>[];
+      for (var i = 0; i < entries.length; i += _maxBatchWrites) {
+        final batch = db.batch();
+        final end = (i + _maxBatchWrites).clamp(0, entries.length);
+        for (final entry in entries.sublist(i, end)) {
+          batch.set(
+            _userCollection(db, uid, collection).doc(entry.key),
+            entry.value,
+          );
+        }
+        commits.add(batch.commit());
+      }
+      await Future.wait(commits);
+    } catch (e) {
+      debugPrint('Firestore Error (Upload $collection): $e');
+    }
+  }
+
+  Future<void> _saveDoc(
+    String uid,
+    String collection,
+    String id,
+    Map<String, dynamic> data,
+  ) async {
     final db = _db;
     if (db == null) return;
     try {
-      final batch = db.batch();
-      for (var course in courses) {
-        final ref = db
-            .collection('users')
-            .doc(uid)
-            .collection('courses')
-            .doc(course.id);
-        batch.set(ref, course.toMap());
-      }
-      await batch.commit();
+      await _userCollection(db, uid, collection).doc(id).set(data);
     } catch (e) {
-      debugPrint('Firestore Error (Upload Courses): $e');
+      debugPrint('Firestore Error (Save $collection/$id): $e');
     }
   }
+
+  /// Live stream of a user collection, mapped to models.
+  Stream<CloudSnapshot<T>> _watch<T>(
+    String uid,
+    String collection,
+    T Function(Map<String, dynamic>) fromMap,
+  ) {
+    final db = _db;
+    if (db == null) return const Stream.empty();
+    return _userCollection(db, uid, collection)
+        .snapshots(includeMetadataChanges: true)
+        .map(
+          (snapshot) => (
+            items: snapshot.docs.map((doc) => fromMap(doc.data())).toList(),
+            fromCache: snapshot.metadata.isFromCache,
+          ),
+        );
+  }
+
+  Stream<CloudSnapshot<Course>> watchCourses(String uid) =>
+      _watch(uid, 'courses', Course.fromMap);
+  Stream<CloudSnapshot<ScheduleEvent>> watchEvents(String uid) =>
+      _watch(uid, 'events', ScheduleEvent.fromMap);
+  Stream<CloudSnapshot<Semester>> watchSemesters(String uid) =>
+      _watch(uid, 'semesters', Semester.fromMap);
+  Stream<CloudSnapshot<Assignment>> watchAssignments(String uid) =>
+      _watch(uid, 'assignments', Assignment.fromMap);
+
+  // Sync Courses
+  Future<void> uploadCourses(String uid, List<Course> courses) =>
+      _uploadAll(uid, 'courses', courses.map((c) => MapEntry(c.id, c.toMap())));
+
+  Future<void> saveCourse(String uid, Course course) =>
+      _saveDoc(uid, 'courses', course.id, course.toMap());
 
   // Sync Events
-  Future<void> uploadEvents(String uid, List<ScheduleEvent> events) async {
-    final db = _db;
-    if (db == null) return;
-    try {
-      final batch = db.batch();
-      for (var event in events) {
-        final ref = db
-            .collection('users')
-            .doc(uid)
-            .collection('events')
-            .doc(event.id);
-        batch.set(ref, event.toMap());
-      }
-      await batch.commit();
-    } catch (e) {
-      debugPrint('Firestore Error (Upload Events): $e');
-    }
-  }
+  Future<void> uploadEvents(String uid, List<ScheduleEvent> events) =>
+      _uploadAll(uid, 'events', events.map((e) => MapEntry(e.id, e.toMap())));
+
+  Future<void> saveEvent(String uid, ScheduleEvent event) =>
+      _saveDoc(uid, 'events', event.id, event.toMap());
 
   // Sync Semesters
-  Future<void> uploadSemesters(String uid, List<Semester> semesters) async {
-    final db = _db;
-    if (db == null) return;
-    try {
-      final batch = db.batch();
-      for (var sem in semesters) {
-        final ref = db
-            .collection('users')
-            .doc(uid)
-            .collection('semesters')
-            .doc(sem.id);
-        batch.set(ref, sem.toMap());
-      }
-      await batch.commit();
-    } catch (e) {
-      debugPrint('Firestore Error (Upload Semesters): $e');
-    }
-  }
+  Future<void> uploadSemesters(String uid, List<Semester> semesters) =>
+      _uploadAll(
+        uid,
+        'semesters',
+        semesters.map((s) => MapEntry(s.id, s.toMap())),
+      );
+
+  Future<void> saveSemester(String uid, Semester semester) =>
+      _saveDoc(uid, 'semesters', semester.id, semester.toMap());
+
+  Future<void> uploadAssignments(String uid, List<Assignment> assignments) =>
+      _uploadAll(
+        uid,
+        'assignments',
+        assignments.map((a) => MapEntry(a.id, a.toMap())),
+      );
 
   Future<List<Semester>> downloadSemesters(String uid) async {
     final db = _db;

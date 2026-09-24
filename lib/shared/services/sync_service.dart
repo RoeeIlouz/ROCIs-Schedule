@@ -1,169 +1,225 @@
 import 'dart:async';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
+import 'package:rocis_schedule/shared/models/assignment_model.dart';
+import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
-import 'package:flutter/foundation.dart';
+import 'package:rocis_schedule/shared/services/mirror_reconciler.dart';
 
+/// Keeps the local SQLite cache a live mirror of the user's Firestore data.
+///
+/// Firestore is the source of truth (its SDK queues offline writes); every
+/// cloud snapshot is reconciled into the local cache with [planMirror], so
+/// edits and deletions made on any device appear here within seconds.
 class SyncService {
   final AuthService _authService;
   final CourseProvider _courseProvider;
   final AssignmentProvider? _assignmentProvider;
-  final FirestoreService _firestoreService = FirestoreService();
-  bool _isInitialSyncDone = false;
+  final FirestoreService _firestoreService;
+
+  final List<StreamSubscription<Object?>> _subscriptions = [];
+  final Map<String, Completer<void>> _firstServerSnapshot = {};
   bool _isSyncing = false;
   bool _isDisposed = false;
 
-  StreamSubscription? _connectivitySubscription;
+  static const _firstSnapshotTimeout = Duration(seconds: 10);
 
   SyncService(
     this._authService,
     this._courseProvider,
-    this._assignmentProvider,
-  ) {
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
-    ) {
-      final isOnline = results.any((r) => r != ConnectivityResult.none);
-      if (!_isDisposed && isOnline) {
-        syncData();
-      }
-    });
-  }
-
-  void dispose() {
-    _isDisposed = true;
-    _connectivitySubscription?.cancel();
-  }
+    this._assignmentProvider, {
+    FirestoreService? firestoreService,
+  }) : _firestoreService = firestoreService ?? FirestoreService();
 
   bool get isSyncing => _isSyncing;
 
-  /// Downloads user data from Firestore and saves to local database.
-  /// This should be called when a user logs in to ensure they have their cloud data.
-  Future<void> downloadUserData() async {
-    final user = _authService.user;
-    if (user == null || _isDisposed) return;
-
-    try {
-      debugPrint(
-        'SyncService: Downloading user data from Firestore for ${user.uid}...',
-      );
-
-      // Download and save courses
-      final remoteCourses = await _firestoreService.downloadCourses(user.uid);
-      for (var course in remoteCourses) {
-        if (_isDisposed) return;
-        await _courseProvider.addCourseFromSync(course);
-      }
-
-      // Download and save events
-      final remoteEvents = await _firestoreService.downloadEvents(user.uid);
-      for (var event in remoteEvents) {
-        if (_isDisposed) return;
-        await _courseProvider.addEventFromSync(event);
-      }
-
-      // Download and save assignments
-      final assignmentProvider = _assignmentProvider;
-      if (assignmentProvider != null) {
-        final remoteAssignments = await _firestoreService.downloadAssignments(
-          user.uid,
-        );
-        for (var assignment in remoteAssignments) {
-          if (_isDisposed) return;
-          await assignmentProvider.addAssignmentFromSync(assignment);
-        }
-      }
-
-      _isInitialSyncDone = true;
-      debugPrint('SyncService: Download completed successfully.');
-    } catch (e) {
-      debugPrint('SyncService Error (Download failed): $e');
-    }
+  void dispose() {
+    _isDisposed = true;
+    _cancelListeners();
   }
 
-  /// Performs initial sync: downloads from Firestore if local DB is empty,
-  /// otherwise uploads local data to Firestore.
+  /// Starts the live mirror and waits (bounded) for the first server snapshot
+  /// of each collection, so callers such as the login screen see cloud data.
   Future<void> performInitialSync() async {
-    final user = _authService.user;
-    if (user == null || _isInitialSyncDone || _isSyncing || _isDisposed) return;
-
-    _isSyncing = true;
-    try {
-      debugPrint('SyncService: Performing initial sync...');
-
-      final hasLocalCourses = _courseProvider.courses.isNotEmpty;
-      final hasLocalEvents = _courseProvider.events.isNotEmpty;
-      final hasLocalAssignments =
-          _assignmentProvider?.assignments.isNotEmpty ?? false;
-
-      if (!hasLocalCourses && !hasLocalEvents && !hasLocalAssignments) {
-        debugPrint(
-          'SyncService: Local DB empty, downloading from Firestore...',
-        );
-        await downloadUserData();
-      } else {
-        debugPrint('SyncService: Local DB has data, uploading to Firestore...');
-        await syncData();
-      }
-
-      _isInitialSyncDone = true;
-    } catch (e) {
-      debugPrint('SyncService Error (Initial sync failed): $e');
-    } finally {
-      _isSyncing = false;
-    }
+    if (_subscriptions.isNotEmpty || _isDisposed) return;
+    await _startLiveSync();
   }
 
-  /// Uploads local data to Firestore
-  Future<void> syncData() async {
-    final user = _authService.user;
-    if (user == null || _isSyncing || _isDisposed) return;
-
-    _isSyncing = true;
-    try {
-      debugPrint('SyncService: Syncing data to Firestore...');
-
-      // Upload local courses
-      await _firestoreService.uploadCourses(user.uid, _courseProvider.courses);
-
-      // Upload local events
-      await _firestoreService.uploadEvents(user.uid, _courseProvider.events);
-
-      // Upload local assignments
-      if (_assignmentProvider != null) {
-        for (var assignment in _assignmentProvider.assignments) {
-          if (_isDisposed) return;
-          await _firestoreService.updateAssignment(user.uid, assignment);
-        }
-      }
-
-      debugPrint('SyncService: Sync completed successfully.');
-    } catch (e) {
-      debugPrint('SyncService Error (Sync failed): $e');
-    } finally {
-      _isSyncing = false;
-    }
-  }
-
-  /// Full bidirectional sync: downloads from Firestore, merges with local, uploads back
+  /// Restarts the mirror, re-reading every collection from the server.
   Future<void> fullSync() async {
-    final user = _authService.user;
-    if (user == null || _isSyncing || _isDisposed) return;
+    if (_isDisposed) return;
+    _cancelListeners();
+    await _startLiveSync();
+  }
 
+  /// Uploads the whole local cache (kept for manual recovery flows).
+  Future<void> syncData() async {
+    final uid = _authService.user?.uid;
+    if (uid == null || _isDisposed) return;
+    await Future.wait([
+      _firestoreService.uploadCourses(uid, _courseProvider.courses),
+      _firestoreService.uploadEvents(uid, _courseProvider.events),
+      _firestoreService.uploadSemesters(uid, _courseProvider.semesters),
+      if (_assignmentProvider != null)
+        _firestoreService.uploadAssignments(
+          uid,
+          _assignmentProvider.assignments,
+        ),
+    ]);
+  }
+
+  Future<void> _startLiveSync() async {
+    final uid = _authService.user?.uid;
+    if (uid == null) return;
     _isSyncing = true;
+
+    _listen<Course>(
+      uid: uid,
+      collection: 'courses',
+      stream: _firestoreService.watchCourses(uid),
+      local: () => _courseProvider.courses,
+      idOf: (c) => c.id,
+      toMap: (c) => c.toMap(),
+      apply: _courseProvider.applyRemoteCourses,
+      upload: (items) => _firestoreService.uploadCourses(uid, items),
+    );
+    _listen<ScheduleEvent>(
+      uid: uid,
+      collection: 'events',
+      stream: _firestoreService.watchEvents(uid),
+      local: () => _courseProvider.events,
+      idOf: (e) => e.id,
+      toMap: (e) => e.toMap(),
+      apply: _courseProvider.applyRemoteEvents,
+      upload: (items) => _firestoreService.uploadEvents(uid, items),
+    );
+    _listen<Semester>(
+      uid: uid,
+      collection: 'semesters',
+      stream: _firestoreService.watchSemesters(uid),
+      local: () => _courseProvider.semesters,
+      idOf: (s) => s.id,
+      toMap: (s) => s.toMap(),
+      apply: _courseProvider.applyRemoteSemesters,
+      upload: (items) => _firestoreService.uploadSemesters(uid, items),
+    );
+    final assignmentProvider = _assignmentProvider;
+    if (assignmentProvider != null) {
+      _listen<Assignment>(
+        uid: uid,
+        collection: 'assignments',
+        stream: _firestoreService.watchAssignments(uid),
+        local: () => assignmentProvider.assignments,
+        idOf: (a) => a.id,
+        toMap: (a) => a.toMap(),
+        apply: assignmentProvider.applyRemoteAssignments,
+        upload: (items) => _firestoreService.uploadAssignments(uid, items),
+      );
+    }
+
     try {
-      debugPrint('SyncService: Performing full bidirectional sync...');
-
-      await downloadUserData();
-      await syncData();
-
-      debugPrint('SyncService: Full sync completed successfully.');
-    } catch (e) {
-      debugPrint('SyncService Error (Full sync failed): $e');
+      await Future.wait(
+        _firstServerSnapshot.values.map((c) => c.future),
+      ).timeout(_firstSnapshotTimeout);
+    } on TimeoutException {
+      debugPrint('SyncService: first server snapshot timed out (offline?)');
     } finally {
       _isSyncing = false;
     }
+  }
+
+  void _listen<T>({
+    required String uid,
+    required String collection,
+    required Stream<CloudSnapshot<T>> stream,
+    required List<T> Function() local,
+    required String Function(T) idOf,
+    required Map<String, dynamic> Function(T) toMap,
+    required Future<void> Function(List<T> upserts, List<String> deletedIds)
+    apply,
+    required Future<void> Function(List<T>) upload,
+  }) {
+    final firstSnapshot = Completer<void>();
+    _firstServerSnapshot[collection] = firstSnapshot;
+    // Snapshots are reconciled one at a time, in order.
+    var pending = Future<void>.value();
+
+    _subscriptions.add(
+      stream.listen(
+        (snapshot) {
+          pending = pending
+              .then((_) async {
+                if (_isDisposed) return;
+                await _reconcile(
+                  uid: uid,
+                  collection: collection,
+                  snapshot: snapshot,
+                  local: local(),
+                  idOf: idOf,
+                  toMap: toMap,
+                  apply: apply,
+                  upload: upload,
+                );
+                if (!snapshot.fromCache && !firstSnapshot.isCompleted) {
+                  firstSnapshot.complete();
+                }
+              })
+              .catchError((Object e) {
+                debugPrint('SyncService: reconcile $collection failed: $e');
+              });
+        },
+        onError: (Object e) {
+          debugPrint('SyncService: $collection listener error: $e');
+          if (!firstSnapshot.isCompleted) firstSnapshot.complete();
+        },
+      ),
+    );
+  }
+
+  Future<void> _reconcile<T>({
+    required String uid,
+    required String collection,
+    required CloudSnapshot<T> snapshot,
+    required List<T> local,
+    required String Function(T) idOf,
+    required Map<String, dynamic> Function(T) toMap,
+    required Future<void> Function(List<T>, List<String>) apply,
+    required Future<void> Function(List<T>) upload,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = confirmedIdsKey(uid, collection);
+    final plan = planMirror<T>(
+      remote: snapshot.items,
+      local: local,
+      idOf: idOf,
+      toMap: toMap,
+      confirmedIds: (prefs.getStringList(key) ?? const []).toSet(),
+      fromCache: snapshot.fromCache,
+    );
+
+    if (plan.changesLocal) {
+      await apply(plan.upsertLocal, plan.deleteLocal);
+    }
+    if (plan.uploadToCloud.isNotEmpty) {
+      unawaited(upload(plan.uploadToCloud));
+    }
+    final confirmed = plan.confirmedIds;
+    if (confirmed != null) {
+      await prefs.setStringList(key, confirmed.toList());
+    }
+  }
+
+  static String confirmedIdsKey(String uid, String collection) =>
+      'sync_confirmed_${collection}_$uid';
+
+  void _cancelListeners() {
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
+    _firstServerSnapshot.clear();
   }
 }

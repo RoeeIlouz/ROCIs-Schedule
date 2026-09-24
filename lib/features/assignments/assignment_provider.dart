@@ -77,6 +77,27 @@ class AssignmentProvider extends ChangeNotifier {
     _firestore.deleteAssignment(uid, id);
   }
 
+  /// Applies a batch of cloud changes with a single UI notification.
+  Future<void> applyRemoteAssignments(
+    List<Assignment> upserts,
+    List<String> deletedIds,
+  ) async {
+    for (final assignment in upserts) {
+      await _db.insertAssignment(assignment);
+      final index = _assignments.indexWhere((a) => a.id == assignment.id);
+      if (index >= 0) {
+        _assignments[index] = assignment;
+      } else {
+        _assignments.add(assignment);
+      }
+    }
+    for (final id in deletedIds) {
+      await _db.deleteAssignment(id);
+    }
+    _assignments.removeWhere((a) => deletedIds.contains(a.id));
+    notifyListeners();
+  }
+
   List<Assignment> getAssignmentsByCourse(String courseId) {
     return _assignments.where((a) => a.courseId == courseId).toList();
   }

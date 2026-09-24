@@ -7,6 +7,9 @@ class SyncedTasksProvider extends ChangeNotifier {
   final String? _email;
   final String? _uid;
 
+  String? get email => _email;
+  String? get uid => _uid;
+
   List<SyncedTask> _tasks = [];
   bool _isLoading = false;
   String? _errorMessage;
