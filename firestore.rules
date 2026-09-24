@@ -1,46 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // User profiles and data
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // User profiles and data are private to their owner. ROCIs Tasks reads a
+    // user's schedule while signed in to this project as that user.
     match /users/{userId} {
-      // Allow read for synergy across ROCIs apps (Tasks, Widget, Web); write strictly protected
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
-      
-      // Courses subcollection - read for ecosystem synergy
+      allow read, write: if isOwner(userId);
+
       match /courses/{courseId} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // Events subcollection (schedule events) - read for ecosystem synergy
+
       match /events/{eventId} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // Assignments subcollection - read for ecosystem synergy
+
       match /assignments/{assignmentId} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // Semesters subcollection - read for ecosystem synergy
+
       match /semesters/{semesterId} {
-        allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // Friends subcollection - private
+
       match /friends/{friendId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // Friend requests subcollection
+
       match /friend_requests/{requestId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId);
         allow create: if request.auth != null;
-        allow update, delete: if request.auth != null && request.auth.uid == userId;
+        allow update, delete: if isOwner(userId);
       }
     }
   }

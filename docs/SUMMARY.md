@@ -1,3 +1,17 @@
+## Security: Owner-Only Firestore Rules - 2026-09-24
+
+#### Problem
+* `firestore.rules` (deployed, committed in `f822430`) allowed `read: if true` on `users/{uid}` and its courses, events, assignments and semesters so ROCIs Tasks could read schedules via unauthenticated REST — anyone with the public web API key could read any user's profile (incl. email), classes and assignments, and look users up by email.
+
+#### Solution
+* ROCIs Tasks now signs in to this project (its rocis-todo OAuth client IDs were safelisted under Authentication → Google → external client IDs) and reads with the owner's ID token (Tasks Patch 13).
+* Rules restored to owner-only (`isOwner(userId)`) for the user doc and all subcollections; deployed and verified: anonymous event reads and email queries now return 403.
+
+#### Impact / Notes
+* ROCIs Tasks clients that haven't launched since Patch 13 lose schedule data until they open the app.
+* Schedule accounts created with email+password are no longer readable by ROCIs Tasks (it signs in with Google).
+* Rollback: `git show f822430:firestore.rules > firestore.rules && firebase deploy --only firestore:rules`.
+
 ## Live Cloud Sync, Semester-Bounded Export & v0.0.5+11 Internal Release - 2026-09-24
 
 #### Problems & Root Causes
