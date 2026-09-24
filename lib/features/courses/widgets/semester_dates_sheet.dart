@@ -15,6 +15,7 @@ class SemesterDatesSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: 580),
       builder: (_) => const SemesterDatesSheet(),
     );
   }

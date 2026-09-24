@@ -129,40 +129,46 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.colorScheme.surface,
+      constraints: const BoxConstraints(maxWidth: 480),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.calendar_month_rounded),
-                title: Text(l10n.translate('add_event')),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/schedule/add-event');
-                },
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.calendar_month_rounded),
+                    title: Text(l10n.translate('add_event')),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      context.push('/schedule/add-event');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.assignment_add),
+                    title: Text(l10n.translate('add_assignment')),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      context.push('/assignments/add');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.school_rounded),
+                    title: Text(l10n.translate('add_course')),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      context.push('/courses/add');
+                    },
+                  ),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.assignment_add),
-                title: Text(l10n.translate('add_assignment')),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/assignments/add');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.school_rounded),
-                title: Text(l10n.translate('add_course')),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/courses/add');
-                },
-              ),
-            ],
+            ),
           ),
         ),
       ),

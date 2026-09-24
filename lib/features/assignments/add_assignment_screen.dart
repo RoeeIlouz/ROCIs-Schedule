@@ -33,11 +33,19 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
     super.dispose();
   }
 
+  void _cancelOrClose() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/assignments');
+    }
+  }
+
   Future<void> _pickDate() async {
     final date = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (date != null) {
@@ -67,7 +75,13 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
       );
 
       await context.read<AssignmentProvider>().addAssignment(assignment);
-      if (mounted) context.pop();
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/assignments');
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -79,85 +93,355 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
     }
   }
 
+  Color _getPriorityColor(AssignmentPriority p) {
+    switch (p) {
+      case AssignmentPriority.low:
+        return const Color(0xFF10B981); // Emerald
+      case AssignmentPriority.medium:
+        return const Color(0xFFF59E0B); // Amber
+      case AssignmentPriority.high:
+        return const Color(0xFFEF4444); // Red
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final courses = context.watch<CourseProvider>().courses;
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isWide = MediaQuery.of(context).size.width >= 720;
+
+    final formContent = Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Title Field
+          AppTextField(
+            label: l10n.translate('title'),
+            hint: 'e.g. Research Proposal, Calculus Problem Set',
+            controller: _titleController,
+            validator: (v) => (v != null && v.trim().isNotEmpty)
+                ? null
+                : l10n.translate('field_required'),
+          ),
+          const SizedBox(height: 20),
+
+          // Course and Due Date
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedCourseId,
+                    decoration: InputDecoration(
+                      labelText: l10n.translate('course'),
+                      prefixIcon: const Icon(Icons.school_outlined, size: 20),
+                    ),
+                    items: courses.map((c) {
+                      return DropdownMenuItem(
+                        value: c.id,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: c.color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Text(c.name),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (v) => setState(() => _selectedCourseId = v),
+                    validator: (v) => v == null
+                        ? l10n.translate('select_course_error')
+                        : null,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: InkWell(
+                    onTap: _pickDate,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: l10n.translate('due_date'),
+                        prefixIcon: const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 20,
+                        ),
+                        suffixIcon: const Icon(Icons.arrow_drop_down, size: 22),
+                      ),
+                      child: Text(
+                        DateFormat.yMMMd().format(_selectedDate),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            DropdownButtonFormField<String>(
+              initialValue: _selectedCourseId,
+              decoration: InputDecoration(
+                labelText: l10n.translate('course'),
+                prefixIcon: const Icon(Icons.school_outlined, size: 20),
+              ),
+              items: courses.map((c) {
+                return DropdownMenuItem(
+                  value: c.id,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: c.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      Text(c.name),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (v) => setState(() => _selectedCourseId = v),
+              validator: (v) =>
+                  v == null ? l10n.translate('select_course_error') : null,
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: _pickDate,
+              borderRadius: BorderRadius.circular(12),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: l10n.translate('due_date'),
+                  prefixIcon: const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 20,
+                  ),
+                  suffixIcon: const Icon(Icons.arrow_drop_down, size: 22),
+                ),
+                child: Text(
+                  DateFormat.yMMMd().format(_selectedDate),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+
+          // Priority Section
+          Text(
+            l10n.translate('priority'),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<AssignmentPriority>(
+            segments: [
+              ButtonSegment(
+                value: AssignmentPriority.low,
+                icon: Icon(
+                  Icons.circle,
+                  size: 10,
+                  color: _getPriorityColor(AssignmentPriority.low),
+                ),
+                label: Text(l10n.translate('low')),
+              ),
+              ButtonSegment(
+                value: AssignmentPriority.medium,
+                icon: Icon(
+                  Icons.circle,
+                  size: 10,
+                  color: _getPriorityColor(AssignmentPriority.medium),
+                ),
+                label: Text(l10n.translate('medium')),
+              ),
+              ButtonSegment(
+                value: AssignmentPriority.high,
+                icon: Icon(
+                  Icons.circle,
+                  size: 10,
+                  color: _getPriorityColor(AssignmentPriority.high),
+                ),
+                label: Text(l10n.translate('high')),
+              ),
+            ],
+            selected: {_priority},
+            onSelectionChanged: (v) => setState(() => _priority = v.first),
+          ),
+          const SizedBox(height: 20),
+
+          // Description Field
+          AppTextField(
+            label: l10n.translate('description'),
+            hint: 'Add submission guidelines, references, notes...',
+            controller: _descriptionController,
+            maxLines: 4,
+          ),
+          const SizedBox(height: 32),
+
+          // Action Buttons
+          if (isWide)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: _cancelOrClose,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(l10n.translate('cancel')),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: _isLoading ? null : _saveAssignment,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check_rounded, size: 18),
+                  label: Text(l10n.translate('save_assignment')),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            AppButton(
+              text: l10n.translate('save_assignment'),
+              isLoading: _isLoading,
+              onPressed: _saveAssignment,
+            ),
+        ],
+      ),
+    );
+
+    if (isWide) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          backgroundColor: theme.colorScheme.surfaceContainerLowest,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: _cancelOrClose,
+          ),
+          title: Text(
+            l10n.translate('add_assignment'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Material(
+                color: theme.colorScheme.surface,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: BorderSide(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.assignment_add,
+                              color: theme.colorScheme.onPrimaryContainer,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.translate('add_assignment'),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Track coursework deadlines, problem sets, and projects',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(height: 1),
+                      const SizedBox(height: 24),
+                      formContent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.translate('add_assignment'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppTextField(
-                label: l10n.translate('title'),
-                hint: 'e.g. Final Project, Essay',
-                controller: _titleController,
-                validator: (v) => (v?.isNotEmpty ?? false) ? null : 'Required',
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCourseId,
-                decoration: InputDecoration(
-                  labelText: l10n.translate('course'),
-                ),
-                items: courses.map((c) {
-                  return DropdownMenuItem(value: c.id, child: Text(c.name));
-                }).toList(),
-                onChanged: (v) => setState(() => _selectedCourseId = v),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: Text(l10n.translate('due_date')),
-                subtitle: Text(DateFormat.yMMMd().format(_selectedDate)),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: _pickDate,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.translate('priority'),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              SegmentedButton<AssignmentPriority>(
-                segments: [
-                  ButtonSegment(
-                    value: AssignmentPriority.low,
-                    label: Text(l10n.translate('low')),
-                  ),
-                  ButtonSegment(
-                    value: AssignmentPriority.medium,
-                    label: Text(l10n.translate('medium')),
-                  ),
-                  ButtonSegment(
-                    value: AssignmentPriority.high,
-                    label: Text(l10n.translate('high')),
-                  ),
-                ],
-                selected: {_priority},
-                onSelectionChanged: (v) => setState(() => _priority = v.first),
-              ),
-              const SizedBox(height: 24),
-              AppTextField(
-                label: l10n.translate('description'),
-                hint: 'Add any details...',
-                controller: _descriptionController,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 48),
-              AppButton(
-                text: l10n.translate('save_assignment'),
-                isLoading: _isLoading,
-                onPressed: _saveAssignment,
-              ),
-            ],
-          ),
-        ),
+        child: formContent,
       ),
     );
   }

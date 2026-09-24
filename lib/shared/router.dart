@@ -108,6 +108,11 @@ class AppRouter {
         builder: (context, state) => const AddEventScreen(),
       ),
       GoRoute(
+        path: '/schedule/add-event',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AddEventScreen(),
+      ),
+      GoRoute(
         path: '/events/add',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const AddEventScreen(),

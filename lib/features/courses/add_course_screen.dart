@@ -69,6 +69,14 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     super.dispose();
   }
 
+  void _cancelOrClose() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/courses');
+    }
+  }
+
   String _getSemesterName(
     String id,
     String defaultName,
@@ -109,7 +117,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.translate('course_updated'))),
           );
-          context.pop();
+          _cancelOrClose();
         }
       } else {
         final course = Course(
@@ -122,7 +130,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           semester: _selectedSemester,
         );
         await context.read<CourseProvider>().addCourse(course);
-        if (mounted) context.pop();
+        if (mounted) _cancelOrClose();
       }
     } catch (e) {
       if (mounted) {
@@ -138,11 +146,376 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final isEditing = widget.courseToEdit != null;
+    final isWide = MediaQuery.of(context).size.width >= 720;
     final provider = context.watch<CourseProvider>();
     final semesters = provider.semesters.isNotEmpty
         ? provider.semesters
         : CourseProvider.defaultSemesters;
+
+    final formContent = Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Course Name & Code Row
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: AppTextField(
+                    label: l10n.translate('course_name'),
+                    hint: 'e.g. Computer Science 101',
+                    controller: _nameController,
+                    validator: (v) => (v != null && v.trim().isNotEmpty)
+                        ? null
+                        : l10n.translate('field_required'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: AppTextField(
+                    label: l10n.translate('course_code'),
+                    hint: 'e.g. CS101',
+                    controller: _codeController,
+                    validator: (v) => (v != null && v.trim().isNotEmpty)
+                        ? null
+                        : l10n.translate('field_required'),
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            AppTextField(
+              label: l10n.translate('course_name'),
+              hint: 'e.g. Computer Science 101',
+              controller: _nameController,
+              validator: (v) => (v != null && v.trim().isNotEmpty)
+                  ? null
+                  : l10n.translate('field_required'),
+            ),
+            const SizedBox(height: 16),
+            AppTextField(
+              label: l10n.translate('course_code'),
+              hint: 'e.g. CS101',
+              controller: _codeController,
+              validator: (v) => (v != null && v.trim().isNotEmpty)
+                  ? null
+                  : l10n.translate('field_required'),
+            ),
+          ],
+          const SizedBox(height: 16),
+
+          // Instructor & Credits Row
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: AppTextField(
+                    label: l10n.translate('instructor'),
+                    hint: 'Dr. Jane Doe',
+                    controller: _instructorController,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: AppTextField(
+                    label: l10n.translate('credits_label'),
+                    hint: '3.0',
+                    controller: _creditsController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return l10n.translate('field_required');
+                      }
+                      final parsed = double.tryParse(v.trim());
+                      if (parsed == null || parsed <= 0) {
+                        return l10n.translate('invalid_number');
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            AppTextField(
+              label: l10n.translate('instructor'),
+              hint: 'Dr. Jane Doe',
+              controller: _instructorController,
+            ),
+            const SizedBox(height: 16),
+            AppTextField(
+              label: l10n.translate('credits_label'),
+              hint: '3.0',
+              controller: _creditsController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return l10n.translate('field_required');
+                }
+                final parsed = double.tryParse(v.trim());
+                if (parsed == null || parsed <= 0) {
+                  return l10n.translate('invalid_number');
+                }
+                return null;
+              },
+            ),
+          ],
+          const SizedBox(height: 16),
+
+          // Semester Selector
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: semesters.any((s) => s.id == _selectedSemester)
+                      ? _selectedSemester
+                      : (semesters.isNotEmpty
+                            ? semesters.first.id
+                            : 'semester_1'),
+                  decoration: InputDecoration(
+                    labelText: l10n.translate('semester'),
+                    prefixIcon: const Icon(Icons.school_outlined, size: 20),
+                  ),
+                  items: semesters.map((s) {
+                    return DropdownMenuItem(
+                      value: s.id,
+                      child: Text(_getSemesterName(s.id, s.name, l10n)),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _selectedSemester = val);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.filledTonal(
+                tooltip: l10n.translate('semester_dates'),
+                icon: const Icon(Icons.calendar_month_rounded),
+                onPressed: () => SemesterDatesSheet.show(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Color Palette Section
+          Text(
+            l10n.translate('course_color'),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: _colors.map((color) {
+              final isSelected = _selectedColor == color;
+              return InkWell(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedColor = color);
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: isSelected
+                        ? Border.all(
+                            color: theme.colorScheme.onSurface,
+                            width: 2.5,
+                          )
+                        : null,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.35),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: isSelected
+                      ? const Icon(
+                          Icons.check_rounded,
+                          size: 20,
+                          color: Colors.white,
+                        )
+                      : null,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 36),
+
+          // Action Buttons
+          if (isWide)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: _cancelOrClose,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(l10n.translate('cancel')),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: _isLoading ? null : _saveCourse,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check_rounded, size: 18),
+                  label: Text(
+                    isEditing
+                        ? l10n.translate('save_course')
+                        : l10n.translate('save_course'),
+                  ),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            AppButton(
+              text: l10n.translate('save_course'),
+              isLoading: _isLoading,
+              onPressed: _saveCourse,
+            ),
+        ],
+      ),
+    );
+
+    if (isWide) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          backgroundColor: theme.colorScheme.surfaceContainerLowest,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: _cancelOrClose,
+          ),
+          title: Text(
+            isEditing
+                ? l10n.translate('edit_course')
+                : l10n.translate('add_course'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Material(
+                color: theme.colorScheme.surface,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: BorderSide(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.school_rounded,
+                              color: theme.colorScheme.onPrimaryContainer,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isEditing
+                                      ? l10n.translate('edit_course')
+                                      : l10n.translate('add_course'),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Set up course credentials, credit load, and calendar color',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(height: 1),
+                      const SizedBox(height: 24),
+                      formContent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -154,162 +527,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AppTextField(
-                label: l10n.translate('course_name'),
-                hint: 'e.g. Computer Science 101',
-                controller: _nameController,
-                validator: (v) => (v != null && v.trim().isNotEmpty)
-                    ? null
-                    : l10n.translate('field_required'),
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                label: l10n.translate('course_code'),
-                hint: 'e.g. CS101',
-                controller: _codeController,
-                validator: (v) => (v != null && v.trim().isNotEmpty)
-                    ? null
-                    : l10n.translate('field_required'),
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                label: l10n.translate('instructor'),
-                hint: 'Dr. Jane Doe',
-                controller: _instructorController,
-              ),
-              const SizedBox(height: 16),
-              AppTextField(
-                label: l10n.translate('credits_label'),
-                hint: '3.0',
-                controller: _creditsController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return l10n.translate('field_required');
-                  }
-                  final parsed = double.tryParse(v.trim());
-                  if (parsed == null || parsed <= 0) {
-                    return l10n.translate('invalid_number');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              // Semester Selector
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue:
-                          semesters.any((s) => s.id == _selectedSemester)
-                          ? _selectedSemester
-                          : (semesters.isNotEmpty
-                                ? semesters.first.id
-                                : 'semester_1'),
-                      decoration: InputDecoration(
-                        labelText: l10n.translate('semester'),
-                        prefixIcon: const Icon(Icons.school_outlined, size: 20),
-                      ),
-                      items: semesters.map((s) {
-                        return DropdownMenuItem(
-                          value: s.id,
-                          child: Text(_getSemesterName(s.id, s.name, l10n)),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => _selectedSemester = val);
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filledTonal(
-                    tooltip: l10n.translate('semester_dates'),
-                    icon: const Icon(Icons.calendar_month_rounded),
-                    onPressed: () => SemesterDatesSheet.show(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                l10n.translate('course_color'),
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 50,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _colors.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final color = _colors[index];
-                    final isSelected = _selectedColor == color;
-                    return InkWell(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() => _selectedColor = color);
-                      },
-                      borderRadius: BorderRadius.circular(25),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? Theme.of(context).colorScheme.onSurface
-                                : Colors.transparent,
-                            width: isSelected ? 2.5 : 1.0,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: color.withValues(alpha: 0.45),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: isSelected
-                            ? const Center(
-                                child: Icon(
-                                  Icons.check_rounded,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              )
-                            : null,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 48),
-              AppButton(
-                text: isEditing
-                    ? l10n.translate('save_changes')
-                    : l10n.translate('save_course'),
-                isLoading: _isLoading,
-                onPressed: _saveCourse,
-              ),
-            ],
-          ),
-        ),
+        child: formContent,
       ),
     );
   }
