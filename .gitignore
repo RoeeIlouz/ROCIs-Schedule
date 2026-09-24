@@ -53,3 +53,6 @@ ignored/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Local agent instructions
+CLAUDE.md
