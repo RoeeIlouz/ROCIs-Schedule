@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
@@ -80,11 +81,49 @@ class CourseProvider extends ChangeNotifier {
 
   Semester? getSemesterById(String? id) {
     if (id == null) return null;
-    try {
-      return _semesters.firstWhere((s) => s.id == id);
-    } catch (_) {
-      return null;
+    for (final s in _semesters) {
+      if (s.id == id) return s;
     }
+    return null;
+  }
+
+  /// Semester bounds as yyyymmdd ints, rebuilt only when semesters change.
+  /// Per-day checks run for every event on every visible day, and building
+  /// local DateTimes there costs a timezone lookup each.
+  Map<String, ({int? start, int? end})>? _semesterBoundsCache;
+
+  Map<String, ({int? start, int? end})> get _semesterBounds =>
+      _semesterBoundsCache ??= {
+        for (final s in _semesters)
+          s.id: (start: dayKeyOf(s.startDate), end: dayKeyOf(s.endDate)),
+      };
+
+  static int? dayKeyOf(DateTime? d) =>
+      d == null ? null : d.year * 10000 + d.month * 100 + d.day;
+
+  /// Whether [event] takes place on [date]: recurring classes on their
+  /// weekdays within their course's semester, one-off events on their date.
+  bool occursOn(
+    ScheduleEvent event,
+    DateTime date,
+    Map<String, Course> courses,
+  ) {
+    if (!event.recurring) return DateUtils.isSameDay(event.startTime, date);
+    if (!event.daysOfWeek.contains(date.weekday % 7)) return false;
+
+    final semesterId = courses[event.courseId]?.semester;
+    final bounds = semesterId == null ? null : _semesterBounds[semesterId];
+    if (bounds == null) return true;
+    final day = dayKeyOf(date)!;
+    if (bounds.start != null && day < bounds.start!) return false;
+    if (bounds.end != null && day > bounds.end!) return false;
+    return true;
+  }
+
+  @override
+  void notifyListeners() {
+    _semesterBoundsCache = null;
+    super.notifyListeners();
   }
 
   /// Loads the local cache for an instant first frame. Cloud changes arrive

@@ -61,38 +61,8 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
     return List.generate(7, (i) => sunday.add(Duration(days: i)));
   }
 
-  bool _isEventOnDay(ScheduleEvent event, DateTime date) {
-    if (event.recurring) {
-      final dayOfWeek = date.weekday % 7;
-      if (!event.daysOfWeek.contains(dayOfWeek)) return false;
-
-      final course = widget.courses[event.courseId];
-      if (course?.semester != null) {
-        final sem = widget.courseProvider.getSemesterById(course!.semester);
-        if (sem != null) {
-          final targetDay = DateTime(date.year, date.month, date.day);
-          if (sem.startDate != null) {
-            final start = DateTime(
-              sem.startDate!.year,
-              sem.startDate!.month,
-              sem.startDate!.day,
-            );
-            if (targetDay.isBefore(start)) return false;
-          }
-          if (sem.endDate != null) {
-            final end = DateTime(
-              sem.endDate!.year,
-              sem.endDate!.month,
-              sem.endDate!.day,
-            );
-            if (targetDay.isAfter(end)) return false;
-          }
-        }
-      }
-      return true;
-    }
-    return DateUtils.isSameDay(event.startTime, date);
-  }
+  bool _isEventOnDay(ScheduleEvent event, DateTime date) =>
+      widget.courseProvider.occursOn(event, date, widget.courses);
 
   @override
   Widget build(BuildContext context) {

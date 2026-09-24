@@ -29,38 +29,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     DateTime date,
     Map<String, Course> courses,
     CourseProvider courseProvider,
-  ) {
-    if (event.recurring) {
-      final dayOfWeek = date.weekday % 7;
-      if (!event.daysOfWeek.contains(dayOfWeek)) return false;
-
-      final course = courses[event.courseId];
-      if (course?.semester != null) {
-        final sem = courseProvider.getSemesterById(course!.semester);
-        if (sem != null) {
-          final targetDay = DateTime(date.year, date.month, date.day);
-          if (sem.startDate != null) {
-            final start = DateTime(
-              sem.startDate!.year,
-              sem.startDate!.month,
-              sem.startDate!.day,
-            );
-            if (targetDay.isBefore(start)) return false;
-          }
-          if (sem.endDate != null) {
-            final end = DateTime(
-              sem.endDate!.year,
-              sem.endDate!.month,
-              sem.endDate!.day,
-            );
-            if (targetDay.isAfter(end)) return false;
-          }
-        }
-      }
-      return true;
-    }
-    return DateUtils.isSameDay(event.startTime, date);
-  }
+  ) => courseProvider.occursOn(event, date, courses);
 
   @override
   Widget build(BuildContext context) {

@@ -174,4 +174,101 @@ void main() {
       expect(provider.events, isEmpty);
     });
   });
+
+  group('CourseProvider.occursOn', () {
+    const uid = 'occurs_on_user';
+    late CourseProvider provider;
+
+    setUpAll(() {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    });
+
+    setUp(() async {
+      await LocalDbService.clearCache();
+      final db = await LocalDbService(uid).database;
+      if (db != null) await db.delete('semesters');
+      provider = CourseProvider(uid);
+      await provider.loadData();
+    });
+
+    tearDown(LocalDbService.clearCache);
+
+    final courses = {
+      'c1': Course(
+        id: 'c1',
+        name: 'Algebra',
+        code: '',
+        instructor: '',
+        color: const Color(0xFF1E88E5),
+        credits: 3,
+        semester: 'semester_1',
+      ),
+    };
+    final sundayClass = ScheduleEvent(
+      id: 'e1',
+      title: 'Lecture',
+      courseId: 'c1',
+      type: EventType.classType,
+      startTime: DateTime(2026, 9, 20, 9),
+      endTime: DateTime(2026, 9, 20, 11),
+      location: '',
+      daysOfWeek: const [0],
+      recurring: true,
+      notes: '',
+    );
+
+    test('recurring classes stay within their semester dates', () async {
+      await provider.updateSemester(
+        Semester(
+          id: 'semester_1',
+          name: 'First',
+          startDate: DateTime(2026, 10, 25),
+          endDate: DateTime(2027, 2, 5),
+        ),
+      );
+
+      expect(
+        provider.occursOn(sundayClass, DateTime(2026, 9, 20), courses),
+        isFalse,
+      );
+      expect(
+        provider.occursOn(sundayClass, DateTime(2026, 10, 25), courses),
+        isTrue,
+      );
+      expect(
+        provider.occursOn(sundayClass, DateTime(2026, 10, 26), courses),
+        isFalse,
+      );
+      expect(
+        provider.occursOn(sundayClass, DateTime(2027, 2, 7), courses),
+        isFalse,
+      );
+    });
+
+    test('a semester without dates does not bound its classes', () {
+      expect(
+        provider.occursOn(sundayClass, DateTime(2026, 9, 20), courses),
+        isTrue,
+      );
+    });
+
+    test('one-off events occur only on their own date', () {
+      final exam = ScheduleEvent(
+        id: 'x1',
+        title: 'Exam',
+        courseId: 'c1',
+        type: EventType.exam,
+        startTime: DateTime(2027, 1, 20, 9),
+        endTime: DateTime(2027, 1, 20, 12),
+        location: '',
+        daysOfWeek: const [],
+        recurring: false,
+        notes: '',
+      );
+
+      expect(provider.occursOn(exam, DateTime(2027, 1, 20), courses), isTrue);
+      expect(provider.occursOn(exam, DateTime(2027, 1, 27), courses), isFalse);
+    });
+  });
 }
