@@ -1,3 +1,27 @@
+## Live Cloud Sync, Semester-Bounded Export & v0.0.5+11 Internal Release - 2026-09-24
+
+#### Problems & Root Causes
+* **Changes never reached other devices**: `SyncService.performInitialSync` downloaded only when the device was empty, then never again; the Settings full sync never uploaded (`syncData()` returned early because `fullSync` had already set `_isSyncing`).
+* **Semester dates lost/missing**: semesters were never downloaded but were re-uploaded on every `loadData`, so a fresh install's date-less defaults could overwrite dates set elsewhere; released builds never uploaded them at all (ROCIs Tasks had to hard-code Oct 25).
+* **Exported calendars started classes on their creation date** with unbounded weekly RRULEs; TEXT fields were unescaped (commas/newlines corrupted events).
+* **AddCourseScreen overflowed by 17px** on ~411dp phones (semester dropdown), hidden by tests that ran at the 1080dp wide layout.
+* Every edit reloaded and re-uploaded all courses/events/semesters; awaited Firestore commits could hang saves offline; per-day occurrence checks rebuilt local DateTimes and scanned semesters for every event on every visible day.
+
+#### Solutions Applied
+* **Live cloud mirror** (`sync_service.dart`, `mirror_reconciler.dart`): Firestore is the source of truth, SQLite an instant-start cache reconciled per snapshot (cloud wins; local records missing from the cloud are deleted if previously server-confirmed, uploaded otherwise; cache snapshots never delete). Semesters mirrored too.
+* Single-document, unawaited cloud writes; batched remote application (one notification); 500-write batch chunking; course deletion also removes its events locally; `SyncedTasksProvider` no longer recreated on every auth notification.
+* ICS export bounded by semester start/end with RFC 5545 escaping.
+* `CourseProvider.occursOn` with cached yyyymmdd semester bounds shared by the schedule screen and weekly grid.
+* `AppConfig.appVersion` (synced by `bump_version.py`) replaces the stale hard-coded `v0.0.3` label.
+* Committed the previously uncommitted Add Course/Assignment/Event redesign (`f822430`).
+
+#### Known Issue
+* `firestore.rules` allow public reads of user schedule data (for ROCIs Tasks' unauthenticated REST reads). To be closed after ROCIs Tasks authenticates to this project (its web secondary sign-in currently returns 400; likely an unsafelisted OAuth client ID).
+
+#### Deployment
+* `flutter analyze` 0 issues; 164/164 tests passing (16 new). `flutter build apk --debug` succeeds.
+* No Shorebird release existed for 0.0.4+10 (it was built with plain `flutter build appbundle`), so this ships as an internal release built with `shorebird release android` — future Dart-only fixes can be Shorebird patches.
+
 ## Semester System, Course Management & v0.0.3+8 Release - 2026-09-12
 
 #### Features & Architecture Implemented

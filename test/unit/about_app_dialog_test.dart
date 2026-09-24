@@ -1,3 +1,4 @@
+import 'package:rocis_schedule/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +32,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('ROCIs Schedule'), findsOneWidget);
-      expect(find.text('v0.0.3'), findsOneWidget);
+      expect(find.text('v${AppConfig.appVersion}'), findsOneWidget);
       expect(find.byIcon(Icons.language_rounded), findsOneWidget);
       expect(find.byIcon(Icons.code_rounded), findsOneWidget);
       expect(find.byIcon(Icons.mail_outline_rounded), findsOneWidget);
@@ -50,7 +51,7 @@ void main() {
         expect(themeProvider.betaFeaturesUnlocked, isFalse);
         expect(find.text('Beta Features'), findsNothing);
 
-        final versionFinder = find.text('v0.0.3');
+        final versionFinder = find.text('v${AppConfig.appVersion}');
         for (int i = 0; i < 5; i++) {
           await tester.tap(versionFinder);
           await tester.pump(const Duration(milliseconds: 50));

@@ -1,3 +1,4 @@
+import 'package:rocis_schedule/core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -110,7 +111,7 @@ class _AboutAppDialogState extends State<AboutAppDialog> {
                     }
                   },
                   child: Text(
-                    'v0.0.3',
+                    'v${AppConfig.appVersion}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontFamily: 'monospace',
