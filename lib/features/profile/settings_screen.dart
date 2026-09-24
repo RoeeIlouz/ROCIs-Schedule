@@ -445,6 +445,7 @@ class SettingsScreen extends StatelessWidget {
                   final icsData = IcsImportService.exportIcsContent(
                     courseProvider.courses,
                     courseProvider.events,
+                    semesters: courseProvider.semesters,
                   );
                   await Clipboard.setData(ClipboardData(text: icsData));
                   HapticFeedback.lightImpact();

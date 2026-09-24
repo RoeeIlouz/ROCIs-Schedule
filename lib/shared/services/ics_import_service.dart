@@ -244,10 +244,14 @@ class IcsImportService {
     return 'CRS';
   }
 
+  /// Exports events as iCalendar. Recurring classes are bounded by their
+  /// course's semester when [semesters] carry dates, instead of repeating
+  /// forever from the date the class was created.
   static String exportIcsContent(
     List<Course> courses,
-    List<ScheduleEvent> events,
-  ) {
+    List<ScheduleEvent> events, {
+    List<Semester> semesters = const [],
+  }) {
     final buffer = StringBuffer();
     buffer.writeln('BEGIN:VCALENDAR');
     buffer.writeln('VERSION:2.0');
@@ -255,6 +259,7 @@ class IcsImportService {
     buffer.writeln('CALSCALE:GREGORIAN');
 
     final courseMap = {for (var c in courses) c.id: c};
+    final semesterMap = {for (var s in semesters) s.id: s};
 
     String formatIcsDate(DateTime dt) {
       final y = dt.year.toString().padLeft(4, '0');
@@ -275,20 +280,34 @@ class IcsImportService {
           : event.title;
       buffer.writeln('BEGIN:VEVENT');
       buffer.writeln('UID:${event.id}@rocisschedule.app');
-      buffer.writeln('SUMMARY:$title');
+      buffer.writeln('SUMMARY:${escapeIcsText(title)}');
       if (event.location.isNotEmpty) {
-        buffer.writeln('LOCATION:${event.location}');
+        buffer.writeln('LOCATION:${escapeIcsText(event.location)}');
       }
       if (event.notes.isNotEmpty) {
-        buffer.writeln('DESCRIPTION:${event.notes}');
+        buffer.writeln('DESCRIPTION:${escapeIcsText(event.notes)}');
       }
-      buffer.writeln('DTSTART:${formatIcsDate(event.startTime)}');
-      buffer.writeln('DTEND:${formatIcsDate(event.endTime)}');
-      if (event.recurring && event.daysOfWeek.isNotEmpty) {
+
+      final isWeekly = event.recurring && event.daysOfWeek.isNotEmpty;
+      final semester = isWeekly
+          ? semesterMap[course?.semester ?? 'semester_1']
+          : null;
+      final start = isWeekly
+          ? firstOccurrenceFrom(event, semester?.startDate)
+          : event.startTime;
+      final end = start.add(event.endTime.difference(event.startTime));
+
+      buffer.writeln('DTSTART:${formatIcsDate(start)}');
+      buffer.writeln('DTEND:${formatIcsDate(end)}');
+      if (isWeekly) {
         final byDays = event.daysOfWeek
             .map((d) => dayCodes[d.clamp(0, 6)])
             .join(',');
-        buffer.writeln('RRULE:FREQ=WEEKLY;BYDAY=$byDays');
+        final semesterEnd = semester?.endDate;
+        final until = semesterEnd == null
+            ? ''
+            : ';UNTIL=${formatIcsDate(DateTime(semesterEnd.year, semesterEnd.month, semesterEnd.day, 23, 59, 59))}';
+        buffer.writeln('RRULE:FREQ=WEEKLY;BYDAY=$byDays$until');
       }
       buffer.writeln('END:VEVENT');
     }
@@ -296,4 +315,46 @@ class IcsImportService {
     buffer.writeln('END:VCALENDAR');
     return buffer.toString();
   }
+
+  /// First class of a weekly event on or after [semesterStart] (and never
+  /// before the event's own start), keeping the event's time of day.
+  static DateTime firstOccurrenceFrom(
+    ScheduleEvent event,
+    DateTime? semesterStart,
+  ) {
+    final base = event.startTime;
+    var day = DateTime(base.year, base.month, base.day);
+    if (semesterStart != null) {
+      final semDay = DateTime(
+        semesterStart.year,
+        semesterStart.month,
+        semesterStart.day,
+      );
+      if (semDay.isAfter(day)) day = semDay;
+    }
+    // Schedule weekdays: 0=Sun..6=Sat; Dart: 1=Mon..7=Sun.
+    for (var i = 0; i < 7; i++) {
+      final candidate = DateTime(day.year, day.month, day.day + i);
+      if (event.daysOfWeek.contains(candidate.weekday % 7)) {
+        day = candidate;
+        break;
+      }
+    }
+    return DateTime(
+      day.year,
+      day.month,
+      day.day,
+      base.hour,
+      base.minute,
+      base.second,
+    );
+  }
+
+  /// Escapes TEXT values per RFC 5545 (backslash, semicolon, comma, newline).
+  static String escapeIcsText(String value) => value
+      .replaceAll(r'\', r'\\')
+      .replaceAll(';', r'\;')
+      .replaceAll(',', r'\,')
+      .replaceAll('\r\n', r'\n')
+      .replaceAll('\n', r'\n');
 }
