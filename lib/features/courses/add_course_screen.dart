@@ -282,6 +282,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: semesters.any((s) => s.id == _selectedSemester)
                       ? _selectedSemester
                       : (semesters.isNotEmpty
@@ -294,7 +295,10 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                   items: semesters.map((s) {
                     return DropdownMenuItem(
                       value: s.id,
-                      child: Text(_getSemesterName(s.id, s.name, l10n)),
+                      child: Text(
+                        _getSemesterName(s.id, s.name, l10n),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {

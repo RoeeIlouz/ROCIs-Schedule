@@ -54,9 +54,11 @@ void main() {
     testWidgets(
       'AddCourseScreen validates empty fields and requires course name',
       (tester) async {
+        // Phone viewport (~411dp wide): below the 720dp wide-layout breakpoint.
         tester.view.physicalSize = const Size(1080, 2400);
-        tester.view.devicePixelRatio = 1.0;
+        tester.view.devicePixelRatio = 2.625;
         addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
         await tester.pumpWidget(createTestableWidget(const AddCourseScreen()));
         await tester.pumpAndSettle();
@@ -75,9 +77,11 @@ void main() {
     testWidgets(
       'AddAssignmentScreen displays form fields and dropdowns properly',
       (tester) async {
+        // Phone viewport (~411dp wide): below the 720dp wide-layout breakpoint.
         tester.view.physicalSize = const Size(1080, 2400);
-        tester.view.devicePixelRatio = 1.0;
+        tester.view.devicePixelRatio = 2.625;
         addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
         await tester.pumpWidget(
           createTestableWidget(const AddAssignmentScreen()),
