@@ -5,6 +5,7 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:http/http.dart' as http;
+import 'package:rocis_schedule/core/config/app_config.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
@@ -52,13 +53,20 @@ class GoogleCalendarSyncService extends ChangeNotifier {
     _ready;
   }
 
-  /// Calendar sync uses native Google Sign-In, available on Android only.
+  /// Calendar sync uses native Google Sign-In: Android builds from Google
+  /// Play only (GitHub builds have no verified Android OAuth client).
   static bool get isSupported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+      !kIsWeb &&
+      defaultTargetPlatform == TargetPlatform.android &&
+      !AppConfig.isGithubBuild;
 
   bool get enabled => _enabled;
   CalendarSyncStatus get status => _status;
   int get syncedCount => _syncedCount;
+
+  /// A short technical reason for the last failure, shown to help support.
+  String? get lastError => _lastError;
+  String? _lastError;
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -84,8 +92,12 @@ class GoogleCalendarSyncService extends ChangeNotifier {
   /// Returns false if the user declined.
   Future<bool> enable() async {
     await _ready;
+    _lastError = null;
     final headers = await _auth.googleCalendarHeaders(interactive: true);
-    if (headers == null) return false;
+    if (headers == null) {
+      _lastError = _auth.lastCalendarAuthError ?? 'cancelled';
+      return false;
+    }
     _enabled = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyEnabled, true);
@@ -140,11 +152,14 @@ class GoogleCalendarSyncService extends ChangeNotifier {
         _rerun = false;
         await _reconcile(courses);
       } while (_rerun && !_disposed);
+      _lastError = null;
       _setStatus(CalendarSyncStatus.synced);
     } on _NeedsAccess {
+      _lastError = _auth.lastCalendarAuthError ?? 'access not granted';
       _setStatus(CalendarSyncStatus.needsAccess);
     } catch (e) {
       debugPrint('Google Calendar sync failed: $e');
+      _lastError = e is _HttpFailure ? e.reason : e.toString();
       _setStatus(CalendarSyncStatus.error);
     } finally {
       _running = false;
@@ -372,6 +387,16 @@ class _HttpFailure implements Exception {
   final int statusCode;
   final String body;
   const _HttpFailure(this.statusCode, this.body);
+
+  /// Google's own error message, e.g. that the Calendar API is disabled.
+  String get reason {
+    try {
+      final error = (jsonDecode(body) as Map)['error'] as Map;
+      return 'HTTP $statusCode: ${error['message']}';
+    } catch (_) {
+      return 'HTTP $statusCode';
+    }
+  }
 
   @override
   String toString() => 'HTTP $statusCode: $body';

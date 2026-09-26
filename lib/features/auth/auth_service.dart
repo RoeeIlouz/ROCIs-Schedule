@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rocis_schedule/core/config/app_config.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
@@ -63,6 +64,13 @@ class AuthService extends ChangeNotifier {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       debugPrint('Starting Google Sign-In...');
+
+      if (AppConfig.isGithubBuild && !kIsWeb) {
+        // Browser-based Google sign-in through the web OAuth client.
+        final result = await _auth.signInWithProvider(GoogleAuthProvider());
+        await _setUser(result.user);
+        return result;
+      }
 
       if (kIsWeb) {
         final GoogleAuthProvider googleProvider = GoogleAuthProvider();
@@ -203,6 +211,9 @@ class AuthService extends ChangeNotifier {
     scopes: const ['email', 'profile', calendarScope],
   );
 
+  /// Why the last Calendar authorization failed (null if the user cancelled).
+  String? lastCalendarAuthError;
+
   /// Authorization headers for Google Calendar, or null if the user hasn't
   /// granted access. With [interactive] the user may pick an account and
   /// approve the calendar permission; otherwise nothing is shown.
@@ -210,6 +221,7 @@ class AuthService extends ChangeNotifier {
     required bool interactive,
     bool refresh = false,
   }) async {
+    lastCalendarAuthError = null;
     try {
       var account = await _calendarSignIn.signInSilently();
       if (account == null && interactive) {
@@ -220,6 +232,7 @@ class AuthService extends ChangeNotifier {
       return await account.authHeaders;
     } catch (e) {
       debugPrint('Google Calendar authorization failed: $e');
+      lastCalendarAuthError = e.toString();
       return null;
     }
   }
@@ -247,6 +260,8 @@ class AuthService extends ChangeNotifier {
       );
     } else if (kIsWeb) {
       await user.reauthenticateWithPopup(GoogleAuthProvider());
+    } else if (AppConfig.isGithubBuild) {
+      await user.reauthenticateWithProvider(GoogleAuthProvider());
     } else {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return false;

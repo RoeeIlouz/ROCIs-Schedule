@@ -53,10 +53,17 @@ class GoogleCalendarTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     final ok = await sync.enable();
+    final reason = sync.lastError;
+    final message = l10n.translate(
+      ok ? 'gcal_connected' : 'gcal_not_connected',
+    );
     messenger.showSnackBar(
       SnackBar(
+        duration: Duration(seconds: ok ? 4 : 10),
         content: Text(
-          l10n.translate(ok ? 'gcal_connected' : 'gcal_not_connected'),
+          ok || reason == null || reason == 'cancelled'
+              ? message
+              : '$message\n$reason',
         ),
       ),
     );

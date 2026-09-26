@@ -60,11 +60,28 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      # GitHub APKs are signed with the upload key: never publish an APK signed
+      # with the runner's throwaway debug key (Google sign-in can't work with
+      # it and it can't update an installed copy).
+      - name: Restore release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEY_PROPERTIES" ]; then
+            echo "::error::Signing secrets are missing; refusing to publish a debug-signed APK."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          echo "$KEY_PROPERTIES" > android/key.properties
+
+      # DISTRIBUTION=github switches Google sign-in to Firebase's browser flow
+      # (no Play-verified Android OAuth client exists for these builds).
       - name: Build Split Release APKs
-        run: flutter build apk --split-per-abi
+        run: flutter build apk --split-per-abi --dart-define=DISTRIBUTION=github
 
       - name: Build Universal Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=DISTRIBUTION=github
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
