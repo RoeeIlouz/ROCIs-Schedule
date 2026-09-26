@@ -10,7 +10,7 @@
   [![Tests](https://img.shields.io/badge/Tests-69%20Passing-10B981?style=for-the-badge&logo=githubactions&logoColor=white)]()
   [![Analysis](https://img.shields.io/badge/Flutter%20Analyze-0%20Issues-6366F1?style=for-the-badge)]()
   [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-F59E0B?style=for-the-badge)]()
-  [![License](https://img.shields.io/badge/License-MIT-blue.style=for-the-badge)]()
+  [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
   <br />
 
