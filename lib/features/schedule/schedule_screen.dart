@@ -7,10 +7,12 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/shared/services/cross_app_bridge_service.dart';
 import 'package:rocis_schedule/features/schedule/widgets/weekly_timetable_grid.dart';
+import 'package:rocis_schedule/features/schedule/widgets/schedule_empty_states.dart';
+import 'package:rocis_schedule/shared/widgets/account_button.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -82,9 +84,52 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 900;
+        // Match the navigation shell, which decides by window width; the side
+        // panel only fits when this screen itself is wide enough.
+        final isDesktop = MediaQuery.sizeOf(context).width >= 850;
+        final showSidePanel = constraints.maxWidth >= 900;
         final contentBottomPadding = isDesktop ? 24.0 : 100.0;
         final fabBottomPadding = isDesktop ? 16.0 : 84.0;
+
+        final isFirstRun =
+            courseProvider.courses.isEmpty && courseProvider.events.isEmpty;
+        final filtersActive =
+            _selectedFilter != null || _selectedDomainFilter != null;
+
+        Widget dayBody;
+        if (isFirstRun) {
+          dayBody = ScheduleWelcome(bottomPadding: contentBottomPadding);
+        } else if (dayEvents.isEmpty) {
+          final next = filtersActive
+              ? null
+              : _findNextEvent(courseProvider, courses);
+          dayBody = FreeDayState(
+            nextEvent: next?.event,
+            nextDate: next?.date,
+            nextCourse: courses[next?.event.courseId],
+            onJumpTo: (date) => setState(() => _selectedDate = date),
+            filtersActive: filtersActive,
+            onClearFilters: () => setState(() {
+              _selectedFilter = null;
+              _selectedDomainFilter = null;
+            }),
+          );
+        } else {
+          dayBody = ListView.builder(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 8,
+              bottom: contentBottomPadding,
+            ),
+            itemCount: dayEvents.length,
+            itemBuilder: (context, index) {
+              final event = dayEvents[index];
+              final course = courses[event.courseId];
+              return _buildEventCard(context, event, course);
+            },
+          );
+        }
 
         Widget mainTimetableContent = Column(
           children: [
@@ -92,51 +137,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               _buildUpcomingExamsBanner(upcomingExams, courses, l10n),
             _buildWeekStrip(courseProvider.events, courses, courseProvider),
             const SizedBox(height: 6),
-            _buildFilterChips(l10n),
-            const SizedBox(height: 8),
-            Expanded(
-              child: dayEvents.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.event_busy_outlined,
-                            size: 64,
-                            color: Theme.of(context).disabledColor,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.translate('no_events'),
-                            style: TextStyle(
-                              color: Theme.of(context).disabledColor,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: 16,
-                        top: 8,
-                        bottom: contentBottomPadding,
-                      ),
-                      itemCount: dayEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = dayEvents[index];
-                        final course = courses[event.courseId];
-                        return _buildEventCard(context, event, course);
-                      },
-                    ),
-            ),
+            if (!isFirstRun) ...[
+              _buildFilterChips(l10n),
+              const SizedBox(height: 8),
+            ],
+            Expanded(child: dayBody),
           ],
         );
 
         if (isDesktop) {
           final theme = Theme.of(context);
-          final centerWorkspace = _isTimetableGridView
+          final centerWorkspace = isFirstRun
+              ? ScheduleWelcome(bottomPadding: contentBottomPadding)
+              : _isTimetableGridView
               ? Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: WeeklyTimetableGrid(
@@ -157,10 +170,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         setState(() => _selectedDate = day),
                     onEventTap: (event, course) =>
                         _showEventDetailsDialog(context, event, course, l10n),
-                    onEmptySlotTap: (date, hour) {
-                      context.push('/schedule/add-event');
-                    },
+                    onEmptySlotTap: (date, hour) => context.push(
+                      '/schedule/add-event',
+                      extra: DateTime(date.year, date.month, date.day, hour),
+                    ),
                     courseProvider: courseProvider,
+                    use24HourFormat: context
+                        .watch<ThemeProvider>()
+                        .use24HourFormat,
                   ),
                 )
               : Center(
@@ -173,30 +190,37 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           return Scaffold(
             body: Column(
               children: [
-                _buildDesktopHeader(context, l10n, theme),
+                _buildDesktopHeader(
+                  context,
+                  l10n,
+                  theme,
+                  showFilters: !isFirstRun,
+                ),
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(child: centerWorkspace),
-                      VerticalDivider(
-                        width: 1,
-                        thickness: 1,
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.2,
+                      if (showSidePanel) ...[
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 1,
+                          color: theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
-                      ),
-                      SizedBox(
-                        width: 340,
-                        child: _buildDesktopSidePanel(
-                          context,
-                          upcomingExams,
-                          courses,
-                          courseProvider,
-                          dayEvents.length,
-                          l10n,
+                        SizedBox(
+                          width: 340,
+                          child: _buildDesktopSidePanel(
+                            context,
+                            upcomingExams,
+                            courses,
+                            courseProvider,
+                            dayEvents.length,
+                            l10n,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -207,37 +231,103 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              DateFormat('MMMM yyyy').format(_selectedDate),
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            title: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: _pickDate,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        DateFormat('MMMM yyyy').format(_selectedDate),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 22),
+                  ],
+                ),
+              ),
             ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.search_rounded),
-                tooltip: 'Command Palette (Ctrl+K)',
+                tooltip: l10n.translate('search'),
                 onPressed: () => CommandPaletteDialog.show(context),
               ),
-              IconButton(
-                icon: const Icon(Icons.today_rounded),
-                tooltip: l10n.translate('today'),
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedDate = DateTime.now());
-                },
-              ),
+              if (!DateUtils.isSameDay(_selectedDate, DateTime.now()))
+                IconButton(
+                  icon: const Icon(Icons.today_rounded),
+                  tooltip: l10n.translate('today'),
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedDate = DateTime.now());
+                  },
+                ),
+              const AccountButton(),
+              const SizedBox(width: 4),
             ],
           ),
           body: mainTimetableContent,
-          floatingActionButton: Padding(
-            padding: EdgeInsets.only(bottom: fabBottomPadding),
-            child: FloatingActionButton(
-              onPressed: () => context.push('/schedule/add-event'),
-              child: const Icon(Icons.add_rounded),
-            ),
-          ),
+          floatingActionButton: isFirstRun
+              ? null
+              : Padding(
+                  padding: EdgeInsets.only(bottom: fabBottomPadding),
+                  child: FloatingActionButton(
+                    tooltip: l10n.translate('add_event'),
+                    onPressed: () => context.push('/schedule/add-event'),
+                    child: const Icon(Icons.add_rounded),
+                  ),
+                ),
         );
       },
     );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && mounted) setState(() => _selectedDate = picked);
+  }
+
+  /// Moves the selection a week back or forward.
+  void _shiftWeek(int weeks) {
+    HapticFeedback.selectionClick();
+    setState(
+      () => _selectedDate = _selectedDate.add(Duration(days: 7 * weeks)),
+    );
+  }
+
+  /// The first event within a month after the selected day, for the free-day
+  /// hint.
+  ({ScheduleEvent event, DateTime date})? _findNextEvent(
+    CourseProvider courseProvider,
+    Map<String, Course> courses,
+  ) {
+    for (var offset = 1; offset <= 30; offset++) {
+      final date = DateUtils.dateOnly(
+        _selectedDate,
+      ).add(Duration(days: offset));
+      ScheduleEvent? earliest;
+      for (final event in courseProvider.events) {
+        if (!courseProvider.occursOn(event, date, courses)) continue;
+        final minutes = event.startTime.hour * 60 + event.startTime.minute;
+        if (earliest == null ||
+            minutes <
+                earliest.startTime.hour * 60 + earliest.startTime.minute) {
+          earliest = event;
+        }
+      }
+      if (earliest != null) return (event: earliest, date: date);
+    }
+    return null;
   }
 
   List<DateTime> _getWeekDays(DateTime reference) {
@@ -249,8 +339,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget _buildDesktopHeader(
     BuildContext context,
     AppLocalizations l10n,
-    ThemeData theme,
-  ) {
+    ThemeData theme, {
+    required bool showFilters,
+  }) {
     final isDark = theme.brightness == Brightness.dark;
     final weekDays = _getWeekDays(_selectedDate);
     final weekRangeText =
@@ -268,7 +359,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
       child: LayoutBuilder(
         builder: (context, headerConstraints) {
-          return SingleChildScrollView(
+          final toolbar = SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
@@ -281,7 +372,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.chevron_left_rounded),
-                        tooltip: 'Previous week',
+                        tooltip: l10n.translate('previous_week'),
                         onPressed: () {
                           HapticFeedback.selectionClick();
                           setState(
@@ -293,7 +384,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.chevron_right_rounded),
-                        tooltip: 'Next week',
+                        tooltip: l10n.translate('next_week'),
                         onPressed: () {
                           HapticFeedback.selectionClick();
                           setState(
@@ -352,7 +443,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                               Icons.view_agenda_outlined,
                               size: 16,
                             ),
-                            label: Text(l10n.translate('academic_overview')),
+                            label: Text(
+                              l10n.translate('academic_overview'),
+                              maxLines: 1,
+                              softWrap: false,
+                            ),
                           ),
                         ],
                         selected: {_isTimetableGridView},
@@ -369,8 +464,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildDesktopFilterChips(l10n),
-                      const SizedBox(width: 16),
                       FilledButton.icon(
                         icon: const Icon(Icons.add_rounded, size: 18),
                         label: Text(l10n.translate('add_event')),
@@ -390,6 +483,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 ],
               ),
             ),
+          );
+          if (!showFilters) return toolbar;
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              toolbar,
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: _buildDesktopFilterChips(l10n),
+              ),
+            ],
           );
         },
       ),
@@ -627,11 +733,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 event.title,
               );
               if (confirmed == true && context.mounted) {
-                context.read<CourseProvider>().deleteEvent(event.id);
+                final provider = context.read<CourseProvider>()
+                  ..deleteEvent(event.id);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.translate('event_deleted'))),
+                  SnackBar(
+                    content: Text(l10n.translate('event_deleted')),
+                    action: SnackBarAction(
+                      label: l10n.translate('undo'),
+                      onPressed: () => provider.addEvent(event),
+                    ),
+                  ),
                 );
               }
+            },
+          ),
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            label: Text(l10n.translate('edit')),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.push('/schedule/edit-event', extra: event);
             },
           ),
           FilledButton(
@@ -923,7 +1044,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Widget _buildFilterChips(AppLocalizations l10n) {
     return SizedBox(
-      height: 38,
+      height: 48,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1176,8 +1297,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       key: Key(event.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20.0),
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: 20.0),
         decoration: BoxDecoration(
           color: Colors.red.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(20),
@@ -1192,9 +1313,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         return await _showDeleteConfirmation(context, l10n, event.title);
       },
       onDismissed: (direction) {
-        context.read<CourseProvider>().deleteEvent(event.id);
+        final provider = context.read<CourseProvider>()..deleteEvent(event.id);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.translate('event_deleted'))),
+          SnackBar(
+            content: Text(l10n.translate('event_deleted')),
+            action: SnackBarAction(
+              label: l10n.translate('undo'),
+              onPressed: () => provider.addEvent(event),
+            ),
+          ),
         );
       },
       child: GlassContainer(
@@ -1207,157 +1334,160 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               : effectiveColor.withValues(alpha: 0.18),
           width: 1.0,
         ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        padding: EdgeInsets.zero,
+        child: InkWell(
+          onTap: () => _showEventDetailsDialog(context, event, course, l10n),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 3.5,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: effectiveColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 3.5,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: effectiveColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (event.domain != EventDomain.academic) ...[
-                            Icon(
-                              event.domain.icon,
-                              size: 14,
-                              color: effectiveColor,
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Expanded(
-                            child: Text(
-                              event.title,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              if (event.domain != EventDomain.academic) ...[
+                                Icon(
+                                  event.domain.icon,
+                                  size: 14,
+                                  color: effectiveColor,
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  event.title,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (course != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              course.name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: effectiveColor,
                               ),
                             ),
-                          ),
+                          ] else if (event.domain != EventDomain.academic) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              event.domain == EventDomain.work
+                                  ? l10n.translate('domain_work')
+                                  : l10n.translate('domain_personal'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: effectiveColor,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                      if (course != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          course.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: effectiveColor,
-                          ),
+                    ),
+                  ],
+                ),
+                if (event.location.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
                         ),
-                      ] else if (event.domain != EventDomain.academic) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          event.domain == EventDomain.work
-                              ? l10n.translate('domain_work')
-                              : l10n.translate('domain_personal'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: effectiveColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        event.location,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
                           ),
+                          fontSize: 13,
                         ),
-                      ],
+                      ),
                     ],
                   ),
-                ),
-                Icon(
-                  event.domain == EventDomain.academic
-                      ? _getEventIcon(event.type)
-                      : event.domain.icon,
-                  color: effectiveColor.withValues(alpha: 0.8),
-                  size: 22,
-                ),
-              ],
-            ),
-            if (event.location.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 14,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    event.location,
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      fontSize: 13,
-                    ),
-                  ),
                 ],
-              ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildChip(
-                  context,
-                  _formatTime(context, event.startTime),
-                  Icons.access_time_rounded,
-                  effectiveColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                  isDark ? Colors.white : Colors.black87,
-                ),
-                const SizedBox(width: 8),
-                _buildChip(
-                  context,
-                  _getEventTypeName(event.type, l10n),
-                  Icons.label_outline_rounded,
-                  theme.colorScheme.surfaceContainerHighest.withValues(
-                    alpha: 0.5,
-                  ),
-                  theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                ),
-                if (context.watch<ThemeProvider>().enableTasksIntegration) ...[
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(
-                      Icons.outbox_rounded,
-                      size: 18,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildChip(
+                      context,
+                      '${_formatTime(context, event.startTime)} – ${_formatTime(context, event.endTime)}',
+                      Icons.access_time_rounded,
+                      effectiveColor.withValues(alpha: isDark ? 0.2 : 0.12),
+                      isDark ? Colors.white : Colors.black87,
                     ),
-                    tooltip: l10n.translate('send_to_tasks'),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
+                    const SizedBox(width: 8),
+                    _buildChip(
+                      context,
+                      _getEventTypeName(event.type, l10n),
+                      Icons.label_outline_rounded,
+                      theme.colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
+                      theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
-                    onPressed: () async {
-                      HapticFeedback.selectionClick();
-                      final launched =
-                          await CrossAppBridgeService.sendEventToTasks(
-                            event: event,
-                            course: course,
-                          );
-                      if (context.mounted && launched) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(l10n.translate('exported_to_tasks')),
-                            duration: const Duration(seconds: 2),
+                    if (context
+                        .watch<ThemeProvider>()
+                        .enableTasksIntegration) ...[
+                      const Spacer(),
+                      IconButton(
+                        icon: Icon(
+                          Icons.outbox_rounded,
+                          size: 18,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
                           ),
-                        );
-                      }
-                    },
-                  ),
-                ],
+                        ),
+                        tooltip: l10n.translate('send_to_tasks'),
+                        onPressed: () async {
+                          HapticFeedback.selectionClick();
+                          final launched =
+                              await CrossAppBridgeService.sendEventToTasks(
+                                event: event,
+                                course: course,
+                              );
+                          if (context.mounted && launched) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  l10n.translate('exported_to_tasks'),
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1411,108 +1541,123 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       Duration(days: _selectedDate.weekday % 7),
     );
 
-    return SizedBox(
-      height: 88,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        itemCount: 7,
-        itemBuilder: (context, index) {
-          final date = startOfWeek.add(Duration(days: index));
-          final isSelected = DateUtils.isSameDay(date, _selectedDate);
-          final isToday = DateUtils.isSameDay(date, DateTime.now());
-          final dayEvents = allEvents
-              .where((e) => _isEventOnDate(e, date, courses, courseProvider))
-              .toList();
-          final hasExam = dayEvents.any((e) => e.type == EventType.exam);
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
 
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _selectedDate = date);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 52,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : (isToday
-                          ? theme.colorScheme.primary.withValues(
-                              alpha: isDark ? 0.2 : 0.1,
-                            )
-                          : Colors.transparent),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : (isToday
-                            ? theme.colorScheme.primary.withValues(alpha: 0.4)
-                            : theme.colorScheme.outlineVariant),
-                  width: isSelected ? 2 : 1,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.4,
-                          ),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
+    // Seven equal columns fit any phone width; swiping changes the week.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (velocity.abs() < 200) return;
+        final forward = isRtl ? velocity > 0 : velocity < 0;
+        _shiftWeek(forward ? 1 : -1);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          children: List.generate(7, (index) {
+            final date = startOfWeek.add(Duration(days: index));
+            final isSelected = DateUtils.isSameDay(date, _selectedDate);
+            final isToday = DateUtils.isSameDay(date, DateTime.now());
+            final dayEvents = allEvents
+                .where((e) => _isEventOnDate(e, date, courses, courseProvider))
+                .toList();
+            final hasExam = dayEvents.any((e) => e.type == EventType.exam);
+
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedDate = date);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 76,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : (isToday
+                              ? theme.colorScheme.primary.withValues(
+                                  alpha: isDark ? 0.2 : 0.1,
+                                )
+                              : Colors.transparent),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : (isToday
+                                ? theme.colorScheme.primary.withValues(
+                                    alpha: 0.4,
+                                  )
+                                : theme.colorScheme.outlineVariant),
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.4,
+                              ),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _getWeekdayName(date),
+                        style: TextStyle(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
+                          fontSize: 12,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
-                      ]
-                    : null,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _getWeekdayName(date),
-                    style: TextStyle(
-                      color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    date.day.toString(),
-                    style: TextStyle(
-                      color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurface,
-                      fontSize: 16,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  if (dayEvents.isNotEmpty)
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? theme.colorScheme.onPrimary
-                            : (hasExam
-                                  ? const Color(0xFFEF4444)
-                                  : theme.colorScheme.primary),
-                        shape: BoxShape.circle,
                       ),
-                    )
-                  else
-                    const SizedBox(height: 5),
-                ],
+                      const SizedBox(height: 4),
+                      Text(
+                        date.day.toString(),
+                        style: TextStyle(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.onSurface,
+                          fontSize: 16,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      if (dayEvents.isNotEmpty)
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? theme.colorScheme.onPrimary
+                                : (hasExam
+                                      ? const Color(0xFFEF4444)
+                                      : theme.colorScheme.primary),
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 5),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          );
-        },
+            );
+          }),
+        ),
       ),
     );
   }

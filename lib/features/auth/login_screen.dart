@@ -37,19 +37,18 @@ class _LoginScreenState extends State<LoginScreen> {
       await syncService.performInitialSync();
     }
 
-    if (mounted) {
-      if (profile != null && profile.exists) {
-        context.go('/schedule');
-      } else {
-        context.go('/onboarding');
-      }
+    if (!mounted) return;
+    if (profile != null && profile.exists) {
+      _close();
+    } else {
+      context.go('/profile-setup');
     }
   }
 
-  void _continueAsGuest() {
-    context.read<AuthService>().continueAsGuest();
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
+  /// Returns to wherever sign-in was opened from.
+  void _close() {
+    if (context.canPop()) {
+      context.pop();
     } else {
       context.go('/schedule');
     }
@@ -133,28 +132,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final canPop = Navigator.of(context).canPop();
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: canPop
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              )
-            : null,
-        actions: [
-          TextButton(
-            onPressed: _continueAsGuest,
-            child: Text(
-              l10n.translate('skip_for_now'),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          tooltip: l10n.translate('skip_for_now'),
+          onPressed: _close,
+        ),
       ),
       body: SafeArea(
         child: Center(
@@ -191,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    l10n.translate('login_subtitle'),
+                    l10n.translate('sign_in_sync_subtitle'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),

@@ -2,23 +2,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 
 class AuthService extends ChangeNotifier {
-  static const String _keyGuestSession = 'has_active_guest_session';
   final FirebaseAuth? _customAuth;
   final GoogleSignIn _googleSignIn;
 
   User? _user;
-  bool _hasGuestSession = false;
+  Future<void>? _migration;
 
   User? get user => _user;
   bool get isAuthenticated => _user != null && !_user!.isAnonymous;
   bool get isGuest => _user == null || _user!.isAnonymous;
-  bool get hasGuestSession => _hasGuestSession;
-  bool get hasActiveSession => isAuthenticated || _hasGuestSession;
-  String get effectiveUserId => _user?.uid ?? 'guest';
+  String get effectiveUserId => _user?.uid ?? GuestDataMigrator.guestUserId;
 
   AuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
     : _customAuth = auth,
@@ -39,42 +36,26 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _init() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      _hasGuestSession = prefs.getBool(_keyGuestSession) ?? false;
-      notifyListeners();
-    } catch (_) {}
-
-    try {
       if (_customAuth != null || Firebase.apps.isNotEmpty) {
         _user = _auth.currentUser;
-        _auth.authStateChanges().listen((User? user) {
-          _user = user;
-          if (user != null) {
-            _clearGuestSession();
-          }
-          notifyListeners();
-        });
+        _auth.authStateChanges().listen(_setUser);
       }
     } catch (e) {
       debugPrint('AuthService: Running in disconnected/test mode ($e)');
     }
   }
 
-  Future<void> _setGuestSession(bool value) async {
-    _hasGuestSession = value;
+  /// A guest signing in first has their local data moved into the account,
+  /// before the account's providers load. Sign-in and the auth stream both
+  /// land here, so they share one migration.
+  Future<void> _setUser(User? user) async {
+    if (user != null && !user.isAnonymous && isGuest) {
+      await (_migration ??= GuestDataMigrator.migrateInto(
+        user.uid,
+      ).whenComplete(() => _migration = null));
+    }
+    _user = user;
     notifyListeners();
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_keyGuestSession, value);
-    } catch (_) {}
-  }
-
-  Future<void> _clearGuestSession() async {
-    _hasGuestSession = false;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_keyGuestSession);
-    } catch (_) {}
   }
 
   Future<UserCredential?> signInWithGoogle() async {
@@ -86,8 +67,7 @@ class AuthService extends ChangeNotifier {
         final UserCredential result = await _auth.signInWithPopup(
           googleProvider,
         );
-        _user = result.user;
-        notifyListeners();
+        await _setUser(result.user);
         debugPrint(
           'Firebase Web Sign-In successful for: ${result.user?.email}',
         );
@@ -124,8 +104,7 @@ class AuthService extends ChangeNotifier {
       );
 
       final result = await _auth.signInWithCredential(credential);
-      _user = result.user;
-      notifyListeners();
+      await _setUser(result.user);
       debugPrint('Firebase Sign-In successful for: ${result.user?.email}');
       return result;
     } catch (e) {
@@ -144,8 +123,7 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      _user = result.user;
-      notifyListeners();
+      await _setUser(result.user);
       return result;
     } catch (e) {
       debugPrint('Error signing in with email: $e');
@@ -163,8 +141,7 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
-      _user = result.user;
-      notifyListeners();
+      await _setUser(result.user);
       return result;
     } catch (e) {
       debugPrint('Error registering with email: $e');
@@ -182,20 +159,12 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> continueAsGuest() async {
-    debugPrint('Continuing as guest session');
-    _user = null;
-    await _setGuestSession(true);
-  }
-
   Future<void> signOut() async {
     debugPrint('Signing out user...');
 
     // Clear local database cache to prevent data leakage between users
     await LocalDbService.clearCache();
     debugPrint('Local database cache cleared');
-
-    await _clearGuestSession();
 
     if (!kIsWeb) {
       try {

@@ -231,34 +231,19 @@ void main() {
     );
   });
 
-  group('AuthService Active Session Persistence Suite', () {
-    test('Initial state without session has hasActiveSession false', () {
+  group('AuthService guest-first defaults', () {
+    test('A fresh install is a guest with local-only data', () {
       final auth = AuthService();
       expect(auth.isAuthenticated, isFalse);
-      expect(auth.hasGuestSession, isFalse);
-      expect(auth.hasActiveSession, isFalse);
+      expect(auth.isGuest, isTrue);
+      expect(auth.effectiveUserId, 'guest');
     });
 
-    test(
-      'continueAsGuest sets hasGuestSession and hasActiveSession to true',
-      () async {
-        final auth = AuthService();
-        await auth.continueAsGuest();
-
-        expect(auth.hasGuestSession, isTrue);
-        expect(auth.hasActiveSession, isTrue);
-        expect(auth.effectiveUserId, 'guest');
-      },
-    );
-
-    test('signOut clears guest session and active session', () async {
+    test('signOut returns to the guest profile', () async {
       final auth = AuthService();
-      await auth.continueAsGuest();
-      expect(auth.hasActiveSession, isTrue);
-
       await auth.signOut();
-      expect(auth.hasGuestSession, isFalse);
-      expect(auth.hasActiveSession, isFalse);
+      expect(auth.isGuest, isTrue);
+      expect(auth.effectiveUserId, 'guest');
     });
   });
 }

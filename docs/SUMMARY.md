@@ -1,3 +1,35 @@
+## Guest Cloud Isolation & Web Verification - v0.0.5+11 Patch 2 - 2026-09-26
+
+#### Problems & Root Causes
+* Guests (`effectiveUserId == 'guest'`) sent every edit to Firestore at `users/guest/...`; owner-only rules rejected them (`permission-denied`), but the writes should never have left the device.
+* Desktop/web first run showed an empty week grid (the welcome card was phone-only); the desktop header's filter chips overflowed at 1280px.
+* Web hosting had not been deployed since 2026-09-17.
+
+#### Solutions Applied
+* `FirestoreService._dbFor(uid)` returns null for the guest id, so all 14 read/write/listen paths no-op for guests.
+* Desktop schedule shows `ScheduleWelcome` on first run; header split into a toolbar row and a filter row.
+* Verified the web build in headless Chromium at 1280px and 400px: add course → reload → persisted, all tabs, sign-in page, no console errors.
+
+## Guest-First Launch, Guest Data Migration & UX Overhaul - v0.0.5+11 Patch 1 - 2026-09-26
+
+#### Problems & Root Causes
+* **Login wall**: `AuthGate` sent every new user to `/login` before they could see the app.
+* **Guest data lost on sign-in**: guests write to a separate `guest` SQLite DB; signing in switched providers to the account DB, orphaning everything made before. A first provider-level fix raced on the assignments→courses foreign key.
+* **Phone schedule**: 7-day strip was 444px (clipped on phones), no way to change weeks, event cards not tappable, first-run screen was a grey "No events" and the + led to a red "no courses" error.
+* **No editing** of events/assignments; adding an assignment with no courses dead-ended.
+* **Desktop grid**: dropped events outside 08:00–20:00, drew overlaps on top of each other, ignored the 12/24h setting, slot taps ignored date/time. Screens chose phone/desktop by their own width while the shell used window width, so 850–1110px windows showed phone layouts in the desktop shell.
+
+#### Solutions Applied
+* Router opens `/schedule`; guest-session flag removed; sign-in via app-bar `AccountButton`, welcome card and settings; sign-out returns to guest mode.
+* `GuestDataMigrator` (called from `AuthService._setUser` before the user switches) copies semesters → courses → events → assignments into the account DB, keeps the account's version on id clashes, uploads new records, deletes the guest DB.
+* `ScheduleWelcome` / `FreeDayState`, equal-width swipeable week strip (RTL-aware), month-title date picker, tappable event cards with time range, undo on deletes.
+* Edit routes `/schedule/edit-event`, `/assignments/edit`; `AddAssignmentScreen` shows an add-course prompt without courses.
+* Grid: dynamic hour range, `layoutEventLanes` side-by-side overlaps, 12/24h labels, slot tap pre-fills the new event. Pages use the shell's window-width breakpoint.
+* Shared ICS import dialog (paste button, localized, disposes its controller), Rubik fallback for Hebrew, glass tint capped at 18%, 44–48px touch targets, RTL swipe backgrounds, theme colors for course stats, 33 new strings × 8 languages.
+
+#### Impact / Notes
+* 174 tests pass (new: guest migration, lane layout, edit modes, FAB position, welcome state).
+
 ## Security: Owner-Only Firestore Rules - 2026-09-24
 
 #### Problem

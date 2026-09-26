@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/auth/login_screen.dart';
 import 'package:rocis_schedule/features/auth/register_screen.dart';
 import 'package:rocis_schedule/features/onboarding/onboarding_screen.dart';
@@ -9,48 +7,21 @@ import 'package:rocis_schedule/features/onboarding/profile_setup_screen.dart';
 import 'package:rocis_schedule/features/courses/add_course_screen.dart';
 import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
 import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart';
+import 'package:rocis_schedule/shared/models/assignment_model.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/widgets/main_navigation_wrapper.dart';
-
-class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
-
-  @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkSession());
-  }
-
-  void _checkSession() {
-    if (!mounted) return;
-    final auth = context.read<AuthService>();
-    if (auth.hasActiveSession) {
-      context.go('/schedule');
-    } else {
-      context.go('/login');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
-  }
-}
 
 class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
   static final router = GoRouter(
-    initialLocation: '/',
+    // The app opens straight into the schedule; signing in is optional and
+    // only needed to sync across devices.
+    initialLocation: '/schedule',
     navigatorKey: _rootNavigatorKey,
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const AuthGate()),
+      GoRoute(path: '/', redirect: (context, state) => '/schedule'),
       GoRoute(
         path: '/login',
         parentNavigatorKey: _rootNavigatorKey,
@@ -110,7 +81,20 @@ class AppRouter {
       GoRoute(
         path: '/schedule/add-event',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AddEventScreen(),
+        builder: (context, state) =>
+            AddEventScreen(initialStart: state.extra as DateTime?),
+      ),
+      GoRoute(
+        path: '/schedule/edit-event',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            AddEventScreen(eventToEdit: state.extra as ScheduleEvent?),
+      ),
+      GoRoute(
+        path: '/assignments/edit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            AddAssignmentScreen(assignmentToEdit: state.extra as Assignment?),
       ),
       GoRoute(
         path: '/events/add',

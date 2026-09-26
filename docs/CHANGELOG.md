@@ -5,6 +5,16 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5+11] - 2026-09-26 (Patch 2)
+
+### Fixed
+- Guest data now stays entirely on your device until you sign in (no cloud requests as a guest). Desktop and web: new users see the welcome card, and the schedule filters get their own row so nothing is cut off.
+
+## [0.0.5+11] - 2026-09-26 (Patch 1)
+
+### Changed
+- No login wall: the app opens on your schedule and signing in is optional. Anything you add before signing in moves into your account. New welcome screen, swipeable week strip, tap-to-open events, edit events and assignments, undo deletes, and a smarter desktop timetable (overlaps, all hours, 12/24h).
+
 ## [0.0.5+11] - 2026-09-24
 
 ### Fixed

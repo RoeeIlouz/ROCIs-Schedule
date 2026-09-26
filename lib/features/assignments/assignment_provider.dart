@@ -30,9 +30,15 @@ class AssignmentProvider extends ChangeNotifier {
     }
   }
 
+  /// Adds [assignment], or replaces the one with the same id (editing).
   Future<void> addAssignment(Assignment assignment) async {
     await _db.insertAssignment(assignment);
-    _assignments.add(assignment);
+    final index = _assignments.indexWhere((a) => a.id == assignment.id);
+    if (index >= 0) {
+      _assignments[index] = assignment;
+    } else {
+      _assignments.add(assignment);
+    }
     notifyListeners();
 
     // Background sync

@@ -8,7 +8,7 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
-import 'package:rocis_schedule/shared/services/ics_import_service.dart';
+import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
@@ -59,7 +59,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 850;
+        // Match the navigation shell, which decides by window width.
+        final isDesktop = MediaQuery.sizeOf(context).width >= 850;
         final contentBottomPadding = isDesktop ? 24.0 : 110.0;
         final fabBottomPadding = isDesktop ? 16.0 : 84.0;
 
@@ -94,11 +95,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                       ElevatedButton.icon(
                         onPressed: () => context.push('/courses/add'),
                         icon: const Icon(Icons.add),
-                        label: Text(l10n.translate('add_first_course')),
+                        label: Text(l10n.translate('add_course')),
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
-                        onPressed: () => _showIcsImportDialog(context, l10n),
+                        onPressed: () => showIcsImportDialog(context),
                         icon: const Icon(Icons.file_download_outlined),
                         label: Text(l10n.translate('import_ics')),
                       ),
@@ -258,13 +259,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.search_rounded),
-                    tooltip: 'Command Palette (Ctrl+K)',
+                    tooltip: l10n.translate('search'),
                     onPressed: () => CommandPaletteDialog.show(context),
                   ),
                   IconButton(
                     icon: const Icon(Icons.file_download_outlined),
                     tooltip: l10n.translate('import_ics'),
-                    onPressed: () => _showIcsImportDialog(context, l10n),
+                    onPressed: () => showIcsImportDialog(context),
                   ),
                 ],
               ),
@@ -343,7 +344,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: () => _showIcsImportDialog(context, l10n),
+            onPressed: () => showIcsImportDialog(context),
           ),
           const SizedBox(width: 10),
           FilledButton.icon(
@@ -479,7 +480,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 child: _buildMetricPill(
                   title: l10n.translate('gpa'),
                   value: gpa != null ? gpa.toStringAsFixed(2) : '--',
-                  accentColor: Colors.tealAccent.shade700,
+                  accentColor: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -489,7 +490,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   value: avgGrade != null
                       ? '${avgGrade.toStringAsFixed(1)}%'
                       : '--',
-                  accentColor: Colors.orangeAccent.shade700,
+                  accentColor: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             ],
@@ -547,8 +548,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
       key: Key(course.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20.0),
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: 20.0),
         decoration: BoxDecoration(
           color: Colors.red.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(20),
@@ -689,22 +690,22 @@ class _CourseListScreenState extends State<CourseListScreen> {
                             ),
                             margin: const EdgeInsets.only(right: 6),
                             decoration: BoxDecoration(
-                              color: Colors.teal.withValues(alpha: 0.2),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.tertiary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               '${course.grade!.toStringAsFixed(0)}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.tealAccent,
+                                color: Theme.of(context).colorScheme.tertiary,
                               ),
                             ),
                           ),
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert_rounded, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
                           onSelected: (value) async {
                             if (value == 'edit') {
                               context.push('/courses/edit', extra: course);
@@ -1022,64 +1023,6 @@ class _CourseListScreenState extends State<CourseListScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showIcsImportDialog(BuildContext context, AppLocalizations l10n) {
-    final icsController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.translate('import_ics')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.translate('import_ics_desc'),
-              style: const TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: icsController,
-              maxLines: 6,
-              decoration: InputDecoration(
-                hintText: 'BEGIN:VCALENDAR\nBEGIN:VEVENT\n...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.translate('cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final text = icsController.text.trim();
-              if (text.isNotEmpty) {
-                final result = IcsImportService.parseIcsContent(text);
-                await context.read<CourseProvider>().importIcsTimetable(result);
-                if (dialogContext.mounted) {
-                  Navigator.of(dialogContext).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Imported ${result.courses.length} courses and ${result.events.length} events!',
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(l10n.translate('import')),
-          ),
-        ],
       ),
     );
   }

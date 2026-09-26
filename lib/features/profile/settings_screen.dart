@@ -6,12 +6,13 @@ import 'package:provider/provider.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
-import 'package:rocis_schedule/features/auth/login_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/services/sync_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
 import 'package:rocis_schedule/shared/services/cross_app_bridge_service.dart';
 import 'package:rocis_schedule/shared/services/ics_import_service.dart';
+import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/app_color_picker_sheet.dart';
 import 'package:rocis_schedule/features/profile/widgets/about_app_dialog.dart';
@@ -30,7 +31,8 @@ class SettingsScreen extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 850;
+        // Match the navigation shell, which decides by window width.
+        final isDesktop = MediaQuery.sizeOf(context).width >= 850;
         final bottomPadding = isDesktop ? 24.0 : 120.0;
 
         Widget content = ListView(
@@ -84,13 +86,7 @@ class SettingsScreen extends StatelessWidget {
                         width: double.infinity,
                         child: FilledButton.tonalIcon(
                           icon: const Icon(Icons.login_rounded, size: 18),
-                          onPressed: () {
-                            Navigator.of(context, rootNavigator: true).push(
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: () => context.push('/login'),
                           label: Text(l10n.translate('sign_in_or_register')),
                         ),
                       ),
@@ -123,7 +119,7 @@ class SettingsScreen extends StatelessWidget {
                   title: Text(
                     (user.displayName != null && user.displayName!.isNotEmpty)
                         ? user.displayName!
-                        : 'User',
+                        : l10n.translate('profile'),
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Column(
@@ -195,20 +191,8 @@ class SettingsScreen extends StatelessWidget {
                     l10n.translate('sign_out'),
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
-                  onTap: () async {
-                    await context.read<AuthService>().signOut();
-                    if (context.mounted) {
-                      Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      ).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    }
-                  },
+                  // Signing out drops back to guest mode, not a login wall.
+                  onTap: () => context.read<AuthService>().signOut(),
                 ),
               ],
             ]),
@@ -467,7 +451,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 title: Text(l10n.translate('import_timetable')),
                 trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => _showIcsImportDialog(context, l10n),
+                onTap: () => showIcsImportDialog(context),
               ),
               ListTile(
                 leading: _buildLeadingIcon(
@@ -1019,64 +1003,6 @@ class SettingsScreen extends StatelessWidget {
         provider.setLocale(locale);
         Navigator.pop(context);
       },
-    );
-  }
-
-  void _showIcsImportDialog(BuildContext context, AppLocalizations l10n) {
-    final icsController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.translate('import_timetable')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.translate('import_ics_desc'),
-              style: const TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: icsController,
-              maxLines: 6,
-              decoration: InputDecoration(
-                hintText: 'BEGIN:VCALENDAR\nBEGIN:VEVENT\n...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.translate('cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final text = icsController.text.trim();
-              if (text.isNotEmpty) {
-                final result = IcsImportService.parseIcsContent(text);
-                await context.read<CourseProvider>().importIcsTimetable(result);
-                if (dialogContext.mounted) {
-                  Navigator.of(dialogContext).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Imported ${result.courses.length} courses and ${result.events.length} events!',
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(l10n.translate('import')),
-          ),
-        ],
-      ),
     );
   }
 

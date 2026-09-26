@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
+import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 
 /// A snapshot of a user collection, flagged when served from the offline cache.
 typedef CloudSnapshot<T> = ({List<T> items, bool fromCache});
@@ -24,9 +25,14 @@ class FirestoreService {
     }
   }
 
+  /// Guests keep their data on the device only; nothing is read from or
+  /// written to the cloud until they sign in (see GuestDataMigrator).
+  FirebaseFirestore? _dbFor(String uid) =>
+      uid == GuestDataMigrator.guestUserId ? null : _db;
+
   // User Profile
   Future<void> updateProfile(String uid, Map<String, dynamic> data) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       debugPrint('Firestore: Starting profile update for $uid...');
@@ -39,7 +45,7 @@ class FirestoreService {
   }
 
   Future<DocumentSnapshot?> getProfile(String uid) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return null;
     return await db.collection('users').doc(uid).get();
   }
@@ -56,7 +62,7 @@ class FirestoreService {
     String collection,
     Iterable<MapEntry<String, Map<String, dynamic>>> docs,
   ) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     final entries = docs.toList();
     if (entries.isEmpty) return;
@@ -85,7 +91,7 @@ class FirestoreService {
     String id,
     Map<String, dynamic> data,
   ) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       await _userCollection(db, uid, collection).doc(id).set(data);
@@ -100,7 +106,7 @@ class FirestoreService {
     String collection,
     T Function(Map<String, dynamic>) fromMap,
   ) {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return const Stream.empty();
     return _userCollection(db, uid, collection)
         .snapshots(includeMetadataChanges: true)
@@ -154,7 +160,7 @@ class FirestoreService {
       );
 
   Future<List<Semester>> downloadSemesters(String uid) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading semesters for $uid...');
@@ -176,7 +182,7 @@ class FirestoreService {
 
   // Assignments
   Future<void> updateAssignment(String uid, Assignment assignment) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       await db
@@ -191,7 +197,7 @@ class FirestoreService {
   }
 
   Future<void> deleteAssignment(String uid, String id) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       await db
@@ -207,7 +213,7 @@ class FirestoreService {
 
   // Download Methods for User Data Sync
   Future<List<Course>> downloadCourses(String uid) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading courses for $uid...');
@@ -228,7 +234,7 @@ class FirestoreService {
   }
 
   Future<List<ScheduleEvent>> downloadEvents(String uid) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading events for $uid...');
@@ -249,7 +255,7 @@ class FirestoreService {
   }
 
   Future<List<Assignment>> downloadAssignments(String uid) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return [];
     try {
       debugPrint('Firestore: Downloading assignments for $uid...');
@@ -271,7 +277,7 @@ class FirestoreService {
 
   // Delete Course and associated data
   Future<void> deleteCourse(String uid, String courseId) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       debugPrint('Firestore: Deleting course $courseId and its contents...');
@@ -310,7 +316,7 @@ class FirestoreService {
 
   // Delete specific Event
   Future<void> deleteEvent(String uid, String eventId) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       await db
@@ -327,7 +333,7 @@ class FirestoreService {
 
   // Delete all user data from Firestore collections (for cleanup)
   Future<void> deleteAllUserData(String uid) async {
-    final db = _db;
+    final db = _dbFor(uid);
     if (db == null) return;
     try {
       debugPrint('Firestore: Deleting all data for $uid...');

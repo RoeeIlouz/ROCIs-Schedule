@@ -67,7 +67,7 @@ class GlassContainer extends StatelessWidget {
                           ? (kIsWeb
                                 ? const Color(0xFF27272A)
                                 : effectiveTint.withValues(
-                                    alpha: useGlass ? 0.24 : 0.18,
+                                    alpha: useGlass ? 0.18 : 0.14,
                                   ))
                           : (kIsWeb
                                 ? const Color(0xFFE4E4E7)
@@ -110,7 +110,7 @@ class GlassContainer extends StatelessWidget {
                 Color.lerp(
                   baseSurface,
                   effectiveTint,
-                  isDark ? 0.22 : 0.14,
+                  isDark ? 0.18 : 0.14,
                 )!.withValues(alpha: effectiveOpacity + 0.05),
                 Color.lerp(
                   baseSurface,

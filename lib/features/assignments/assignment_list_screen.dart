@@ -86,7 +86,8 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 850;
+        // Match the navigation shell, which decides by window width.
+        final isDesktop = MediaQuery.sizeOf(context).width >= 850;
 
         if (isDesktop) {
           return Scaffold(
@@ -172,7 +173,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.search_rounded),
-                tooltip: 'Command Palette (Ctrl+K)',
+                tooltip: l10n.translate('search'),
                 onPressed: () => CommandPaletteDialog.show(context),
               ),
               PopupMenuButton<String>(
@@ -266,8 +267,10 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                             key: Key(assignment.id),
                             direction: DismissDirection.endToStart,
                             background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
+                              alignment: AlignmentDirectional.centerEnd,
+                              padding: const EdgeInsetsDirectional.only(
+                                end: 20,
+                              ),
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.red.withValues(alpha: 0.8),
@@ -288,10 +291,11 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                               assignmentProvider.deleteAssignment(
                                 assignment.id,
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.translate('delete')),
-                                ),
+                              _showDeletedSnackBar(
+                                context,
+                                l10n,
+                                assignmentProvider,
+                                assignment,
                               );
                             },
                             child: _buildAssignmentItem(
@@ -471,7 +475,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
           const SizedBox(width: 10),
           IconButton.outlined(
             icon: const Icon(Icons.search_rounded, size: 18),
-            tooltip: 'Command Palette (Ctrl+K)',
+            tooltip: l10n.translate('search'),
             style: IconButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -677,7 +681,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
 
     return GlassContainer(
       margin: EdgeInsets.symmetric(vertical: isDesktop ? 0 : 6),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.zero,
       tintColor: courseColor,
       border: Border.all(
         color: theme.brightness == Brightness.dark
@@ -685,143 +689,160 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
             : courseColor.withValues(alpha: 0.18),
         width: 1.0,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 3.5,
-            height: 38,
-            decoration: BoxDecoration(
-              color: courseColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 8),
-          BouncyCheckbox(
-            isChecked: assignment.isCompleted,
-            activeColor: courseColor,
-            onTap: () {
-              assignmentProvider.toggleAssignmentCompletion(assignment.id);
-            },
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  assignment.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    decoration: assignment.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
-                    color: assignment.isCompleted
-                        ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-                        : theme.colorScheme.onSurface,
-                  ),
+      child: InkWell(
+        onTap: () => context.push('/assignments/edit', extra: assignment),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 3.5,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: courseColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 4),
-                Row(
+              ),
+              const SizedBox(width: 8),
+              BouncyCheckbox(
+                isChecked: assignment.isCompleted,
+                activeColor: courseColor,
+                onTap: () {
+                  assignmentProvider.toggleAssignmentCompletion(assignment.id);
+                },
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (course != null) ...[
-                      Flexible(
-                        child: Text(
-                          course.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                    Text(
+                      assignment.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        decoration: assignment.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: assignment.isCompleted
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (course != null) ...[
+                          Flexible(
+                            child: Text(
+                              course.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: courseColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '•',
+                            style: TextStyle(color: theme.disabledColor),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Icon(
+                          isOverdue
+                              ? Icons.warning_amber_rounded
+                              : Icons.event_outlined,
+                          size: 13,
+                          color: isOverdue
+                              ? Colors.red
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat.MMMd().format(assignment.dueDate),
                           style: TextStyle(
-                            color: courseColor,
                             fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: isOverdue
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            color: isOverdue
+                                ? Colors.red
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text('•', style: TextStyle(color: theme.disabledColor)),
-                      const SizedBox(width: 6),
-                    ],
-                    Icon(
-                      isOverdue
-                          ? Icons.warning_amber_rounded
-                          : Icons.event_outlined,
-                      size: 13,
-                      color: isOverdue
-                          ? Colors.red
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      DateFormat.MMMd().format(assignment.dueDate),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isOverdue
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                        color: isOverdue
-                            ? Colors.red
-                            : theme.colorScheme.onSurface.withValues(
-                                alpha: 0.6,
-                              ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 4),
+              if (themeProvider.enableTasksIntegration)
+                IconButton(
+                  icon: Icon(
+                    Icons.outbox_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                  tooltip: l10n.translate('send_to_tasks'),
+                  onPressed: () async {
+                    HapticFeedback.selectionClick();
+                    final launched =
+                        await CrossAppBridgeService.sendAssignmentToTasks(
+                          assignment: assignment,
+                          course: course,
+                        );
+                    if (context.mounted && launched) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.translate('exported_to_tasks')),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              _buildPriorityBadge(context, assignment.priority),
+              if (isDesktop) ...[
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                  ),
+                  tooltip: l10n.translate('delete'),
+                  onPressed: () async {
+                    final confirm = await _showDeleteConfirmDialog(
+                      context,
+                      l10n,
+                    );
+                    if (confirm == true) {
+                      assignmentProvider.deleteAssignment(assignment.id);
+                      if (context.mounted) {
+                        _showDeletedSnackBar(
+                          context,
+                          l10n,
+                          assignmentProvider,
+                          assignment,
+                        );
+                      }
+                    }
+                  },
+                ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(width: 4),
-          if (themeProvider.enableTasksIntegration)
-            IconButton(
-              icon: Icon(
-                Icons.outbox_rounded,
-                size: 18,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-              tooltip: l10n.translate('send_to_tasks'),
-              onPressed: () async {
-                HapticFeedback.selectionClick();
-                final launched =
-                    await CrossAppBridgeService.sendAssignmentToTasks(
-                      assignment: assignment,
-                      course: course,
-                    );
-                if (context.mounted && launched) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.translate('exported_to_tasks')),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-            ),
-          _buildPriorityBadge(context, assignment.priority),
-          if (isDesktop) ...[
-            const SizedBox(width: 4),
-            IconButton(
-              icon: Icon(
-                Icons.delete_outline_rounded,
-                size: 18,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
-              ),
-              tooltip: l10n.translate('delete'),
-              onPressed: () async {
-                final confirm = await _showDeleteConfirmDialog(context, l10n);
-                if (confirm == true) {
-                  assignmentProvider.deleteAssignment(assignment.id);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.translate('delete'))),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -860,6 +881,8 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
+          constraints: const BoxConstraints(minHeight: 44),
+          alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
@@ -929,6 +952,23 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  void _showDeletedSnackBar(
+    BuildContext context,
+    AppLocalizations l10n,
+    AssignmentProvider provider,
+    Assignment assignment,
+  ) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.translate('assignment_deleted')),
+        action: SnackBarAction(
+          label: l10n.translate('undo'),
+          onPressed: () => provider.addAssignment(assignment),
         ),
       ),
     );

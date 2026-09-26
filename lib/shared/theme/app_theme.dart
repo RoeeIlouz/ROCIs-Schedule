@@ -76,6 +76,24 @@ class AppTheme {
   static const Color slateDarkCard = Color(0xFF1E293B);
   static const Color textLight = Color(0xFFF8FAFC);
 
+  /// Outfit has no Hebrew glyphs; Rubik (a close match with Hebrew support)
+  /// renders them at the same weight instead of an unrelated system font.
+  static List<String> _hebrewFallback([FontWeight? fontWeight]) => [
+    GoogleFonts.rubik(fontWeight: fontWeight).fontFamily!,
+  ];
+
+  static TextStyle _outfit({
+    double? fontSize,
+    FontWeight? fontWeight,
+    Color? color,
+    double? letterSpacing,
+  }) => GoogleFonts.outfit(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    letterSpacing: letterSpacing,
+  ).copyWith(fontFamilyFallback: _hebrewFallback(fontWeight));
+
   // Typography Scale Generator using Outfit
   static TextTheme _buildTextTheme(
     Brightness brightness,
@@ -86,86 +104,88 @@ class AppTheme {
         ? ThemeData.light().textTheme
         : ThemeData.dark().textTheme;
 
-    return GoogleFonts.outfitTextTheme(baseTheme).copyWith(
-      displayLarge: GoogleFonts.outfit(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.8,
-        color: textColor,
-      ),
-      displayMedium: GoogleFonts.outfit(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.6,
-        color: textColor,
-      ),
-      headlineMedium: GoogleFonts.outfit(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.4,
-        color: textColor,
-      ),
-      headlineSmall: GoogleFonts.outfit(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.3,
-        color: textColor,
-      ),
-      titleLarge: GoogleFonts.outfit(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.3,
-        color: textColor,
-      ),
-      titleMedium: GoogleFonts.outfit(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.2,
-        color: textColor,
-      ),
-      titleSmall: GoogleFonts.outfit(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.1,
-        color: variantColor,
-      ),
-      bodyLarge: GoogleFonts.outfit(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
-        color: textColor,
-      ),
-      bodyMedium: GoogleFonts.outfit(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
-        color: textColor,
-      ),
-      bodySmall: GoogleFonts.outfit(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.1,
-        color: variantColor,
-      ),
-      labelLarge: GoogleFonts.outfit(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.1,
-        color: textColor,
-      ),
-      labelMedium: GoogleFonts.outfit(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.2,
-        color: variantColor,
-      ),
-      labelSmall: GoogleFonts.outfit(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.3,
-        color: variantColor,
-      ),
-    );
+    return GoogleFonts.outfitTextTheme(baseTheme)
+        .apply(fontFamilyFallback: _hebrewFallback())
+        .copyWith(
+          displayLarge: _outfit(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.8,
+            color: textColor,
+          ),
+          displayMedium: _outfit(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.6,
+            color: textColor,
+          ),
+          headlineMedium: _outfit(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.4,
+            color: textColor,
+          ),
+          headlineSmall: _outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
+            color: textColor,
+          ),
+          titleLarge: _outfit(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+            color: textColor,
+          ),
+          titleMedium: _outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+            color: textColor,
+          ),
+          titleSmall: _outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+            color: variantColor,
+          ),
+          bodyLarge: _outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0,
+            color: textColor,
+          ),
+          bodyMedium: _outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0,
+            color: textColor,
+          ),
+          bodySmall: _outfit(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.1,
+            color: variantColor,
+          ),
+          labelLarge: _outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+            color: textColor,
+          ),
+          labelMedium: _outfit(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+            color: variantColor,
+          ),
+          labelSmall: _outfit(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+            color: variantColor,
+          ),
+        );
   }
 
   static ThemeData lightTheme(ColorScheme? dynamicColorScheme) {
@@ -239,7 +259,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: _outfit(
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -268,10 +288,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -280,10 +297,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -293,10 +307,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -304,10 +315,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -334,13 +342,13 @@ class AppTheme {
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.outfit(
+            return _outfit(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: colorScheme.primary,
             );
           }
-          return GoogleFonts.outfit(
+          return _outfit(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: colorScheme.onSurfaceVariant,
@@ -353,12 +361,12 @@ class AppTheme {
         selectedColor: colorScheme.primary.withValues(alpha: 0.14),
         side: BorderSide(color: colorScheme.outlineVariant),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelStyle: GoogleFonts.outfit(
+        labelStyle: _outfit(
           color: colorScheme.onSurface,
           fontWeight: FontWeight.w500,
           fontSize: 13,
         ),
-        secondaryLabelStyle: GoogleFonts.outfit(
+        secondaryLabelStyle: _outfit(
           color: colorScheme.primary,
           fontWeight: FontWeight.w600,
           fontSize: 13,
@@ -373,11 +381,11 @@ class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
-        hintStyle: GoogleFonts.outfit(
+        hintStyle: _outfit(
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           fontSize: 14,
         ),
-        labelStyle: GoogleFonts.outfit(
+        labelStyle: _outfit(
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -407,12 +415,12 @@ class AppTheme {
         backgroundColor: colorScheme.surfaceContainerLowest,
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: _outfit(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: colorScheme.onSurface,
         ),
-        contentTextStyle: GoogleFonts.outfit(
+        contentTextStyle: _outfit(
           fontSize: 14,
           color: colorScheme.onSurfaceVariant,
         ),
@@ -431,7 +439,7 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: GoogleFonts.outfit(
+        contentTextStyle: _outfit(
           color: colorScheme.onInverseSurface,
           fontWeight: FontWeight.w500,
           fontSize: 14,
@@ -445,12 +453,12 @@ class AppTheme {
         minLeadingWidth: 24,
         iconColor: colorScheme.onSurfaceVariant,
         textColor: colorScheme.onSurface,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: _outfit(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           color: colorScheme.onSurface,
         ),
-        subtitleTextStyle: GoogleFonts.outfit(
+        subtitleTextStyle: _outfit(
           fontSize: 13,
           color: colorScheme.onSurfaceVariant,
         ),
@@ -464,7 +472,7 @@ class AppTheme {
             color: colorScheme.outlineVariant.withValues(alpha: 0.7),
           ),
         ),
-        textStyle: GoogleFonts.outfit(
+        textStyle: _outfit(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: colorScheme.onSurface,
@@ -583,7 +591,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: colorScheme.onSurface),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: _outfit(
           color: colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -610,10 +618,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -622,10 +627,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -635,10 +637,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -646,10 +645,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.outfit(
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
+          textStyle: _outfit(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -677,13 +673,13 @@ class AppTheme {
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.outfit(
+            return _outfit(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: colorScheme.primary,
             );
           }
-          return GoogleFonts.outfit(
+          return _outfit(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: colorScheme.onSurfaceVariant,
@@ -696,12 +692,12 @@ class AppTheme {
         selectedColor: colorScheme.primary.withValues(alpha: 0.25),
         side: BorderSide(color: outlineVariantColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelStyle: GoogleFonts.outfit(
+        labelStyle: _outfit(
           color: textLight,
           fontWeight: FontWeight.w500,
           fontSize: 13,
         ),
-        secondaryLabelStyle: GoogleFonts.outfit(
+        secondaryLabelStyle: _outfit(
           color: colorScheme.primary,
           fontWeight: FontWeight.w600,
           fontSize: 13,
@@ -716,11 +712,11 @@ class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
-        hintStyle: GoogleFonts.outfit(
+        hintStyle: _outfit(
           color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
           fontSize: 14,
         ),
-        labelStyle: GoogleFonts.outfit(
+        labelStyle: _outfit(
           color: colorScheme.onSurfaceVariant,
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -750,12 +746,12 @@ class AppTheme {
         backgroundColor: surfaceCont,
         elevation: 6,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: _outfit(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: colorScheme.onSurface,
         ),
-        contentTextStyle: GoogleFonts.outfit(
+        contentTextStyle: _outfit(
           fontSize: 14,
           color: colorScheme.onSurfaceVariant,
         ),
@@ -774,7 +770,7 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: colorScheme.surfaceContainerHigh,
-        contentTextStyle: GoogleFonts.outfit(
+        contentTextStyle: _outfit(
           color: colorScheme.onSurface,
           fontWeight: FontWeight.w500,
           fontSize: 14,
@@ -788,12 +784,12 @@ class AppTheme {
         minLeadingWidth: 24,
         iconColor: colorScheme.onSurfaceVariant,
         textColor: colorScheme.onSurface,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: _outfit(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           color: colorScheme.onSurface,
         ),
-        subtitleTextStyle: GoogleFonts.outfit(
+        subtitleTextStyle: _outfit(
           fontSize: 13,
           color: colorScheme.onSurfaceVariant,
         ),
@@ -805,7 +801,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: outlineVariantColor),
         ),
-        textStyle: GoogleFonts.outfit(
+        textStyle: _outfit(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: colorScheme.onSurface,

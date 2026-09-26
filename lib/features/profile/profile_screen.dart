@@ -180,7 +180,7 @@ class ProfileScreen extends StatelessWidget {
                 title: l10n.translate('sign_out'),
                 onTap: () async {
                   await authService.signOut();
-                  if (context.mounted) context.go('/login');
+                  if (context.mounted) context.go('/schedule');
                 },
                 textColor: theme.colorScheme.error,
               ),

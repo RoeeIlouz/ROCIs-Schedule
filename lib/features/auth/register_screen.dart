@@ -43,7 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (profile != null && profile.exists) {
         context.go('/schedule');
       } else {
-        context.go('/onboarding');
+        context.go('/profile-setup');
       }
     }
   }
@@ -72,9 +72,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) {
@@ -127,7 +127,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty || !value.contains('@')) {
+                    if (value == null ||
+                        value.isEmpty ||
+                        !value.contains('@')) {
                       return l10n.translate('invalid_email');
                     }
                     return null;

@@ -19,9 +19,7 @@ Widget createTestApp(Widget child) {
       Provider<SyncService?>(create: (_) => null),
     ],
     child: MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizationsDelegate(),
-      ],
+      localizationsDelegates: const [AppLocalizationsDelegate()],
       supportedLocales: const [Locale('en'), Locale('he')],
       home: child,
     ),
@@ -39,21 +37,32 @@ void main() {
       expect(auth.effectiveUserId, 'guest');
     });
 
-    testWidgets('LoginScreen renders email, password, Google button and Skip button', (tester) async {
-      await tester.pumpWidget(createTestApp(const LoginScreen()));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'LoginScreen renders email, password, Google button and close button',
+      (tester) async {
+        await tester.pumpWidget(createTestApp(const LoginScreen()));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(TextFormField), findsNWidgets(2)); // Email & Password
-      expect(find.text('Skip for now'), findsOneWidget);
-      expect(find.text('Sign In'), findsOneWidget);
-      expect(find.text('Continue with Google'), findsOneWidget);
-    });
+        expect(
+          find.byType(TextFormField),
+          findsNWidgets(2),
+        ); // Email & Password
+        expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+        expect(find.text('Sign In'), findsOneWidget);
+        expect(find.text('Continue with Google'), findsOneWidget);
+      },
+    );
 
-    testWidgets('RegisterScreen validates empty email and password', (tester) async {
+    testWidgets('RegisterScreen validates empty email and password', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestApp(const RegisterScreen()));
       await tester.pumpAndSettle();
 
-      expect(find.byType(TextFormField), findsNWidgets(3)); // Email, Password, Confirm
+      expect(
+        find.byType(TextFormField),
+        findsNWidgets(3),
+      ); // Email, Password, Confirm
       expect(find.text('Create Account'), findsWidgets);
 
       // Tap create without filling fields
@@ -63,12 +72,15 @@ void main() {
       expect(find.text('Please enter a valid email'), findsOneWidget);
     });
 
-    testWidgets('ProfileScreen renders Guest Mode state gracefully when user is not logged in', (tester) async {
-      await tester.pumpWidget(createTestApp(const ProfileScreen()));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'ProfileScreen renders Guest Mode state gracefully when user is not logged in',
+      (tester) async {
+        await tester.pumpWidget(createTestApp(const ProfileScreen()));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Guest Mode'), findsOneWidget);
-      expect(find.text('Sign In'), findsOneWidget);
-    });
+        expect(find.text('Guest Mode'), findsOneWidget);
+        expect(find.text('Sign In'), findsOneWidget);
+      },
+    );
   });
 }

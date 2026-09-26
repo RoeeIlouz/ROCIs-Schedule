@@ -50,6 +50,21 @@ class LocalDbService {
     );
   }
 
+  /// Deletes [userId]'s database file (used once guest data has moved into a
+  /// signed-in account).
+  static Future<void> deleteDatabaseFor(String userId) async {
+    try {
+      if (_currentUserId == userId) await clearCache();
+      final safeUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+      final dbName = 'rocis_schedule_$safeUserId.db';
+      await deleteDatabase(
+        kIsWeb ? dbName : join(await getDatabasesPath(), dbName),
+      );
+    } catch (e) {
+      debugPrint('LocalDbService: Error deleting $userId database: $e');
+    }
+  }
+
   static Future<void> clearCache() async {
     if (_database != null) {
       if (_database!.isOpen) {

@@ -13,7 +13,13 @@ import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
 
 class AddEventScreen extends StatefulWidget {
-  const AddEventScreen({super.key});
+  /// The event to edit; null to create a new one.
+  final ScheduleEvent? eventToEdit;
+
+  /// Pre-fills a new event's date and start hour (e.g. a tapped grid slot).
+  final DateTime? initialStart;
+
+  const AddEventScreen({super.key, this.eventToEdit, this.initialStart});
 
   @override
   State<AddEventScreen> createState() => _AddEventScreenState();
@@ -55,9 +61,35 @@ class _AddEventScreenState extends State<AddEventScreen> {
   bool _recurring = true;
   bool _isLoading = false;
 
+  bool get _isEditing => widget.eventToEdit != null;
+
   @override
   void initState() {
     super.initState();
+    final event = widget.eventToEdit;
+    if (event != null) {
+      _titleController.text = event.title;
+      _locationController.text = event.location;
+      _notesController.text = event.notes;
+      _selectedDomain = event.domain;
+      _customColor = event.color;
+      _selectedCourseId = event.courseId.isEmpty ? null : event.courseId;
+      _selectedType = event.type;
+      _eventDate = event.startTime;
+      _startTimeOfDay = TimeOfDay.fromDateTime(event.startTime);
+      _endTimeOfDay = TimeOfDay.fromDateTime(event.endTime);
+      _selectedDays.addAll(event.daysOfWeek);
+      _recurring = event.recurring;
+      return;
+    }
+    final start = widget.initialStart;
+    if (start != null) {
+      _eventDate = start;
+      _startTimeOfDay = TimeOfDay.fromDateTime(start);
+      _endTimeOfDay = TimeOfDay(hour: (start.hour + 1) % 24, minute: 0);
+      _selectedDays.add(start.weekday % 7);
+      return;
+    }
     final now = DateTime.now();
     _startTimeOfDay = TimeOfDay(
       hour: now.hour,
@@ -100,7 +132,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
     final picked = await showDatePicker(
       context: context,
       initialDate: _eventDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      // Editing an old event must not start before the picker's range.
+      firstDate: _eventDate.isBefore(DateTime(DateTime.now().year - 1))
+          ? _eventDate
+          : DateTime(DateTime.now().year - 1),
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
     if (picked != null) {
@@ -170,7 +205,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     HapticFeedback.lightImpact();
     try {
       final event = ScheduleEvent(
-        id: const Uuid().v4(),
+        id: widget.eventToEdit?.id ?? const Uuid().v4(),
         title: _titleController.text.trim(),
         courseId: isAcademic ? (effectiveCourseId ?? '') : '',
         type: isAcademic ? _selectedType : EventType.other,
@@ -277,13 +312,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
       color: _customColor,
     );
 
+    final otherEvents = courseProvider.events
+        .where((e) => e.id != widget.eventToEdit?.id)
+        .toList();
     final detectedConflicts = EventCollisionService.findConflicts(
       candidate: candidateEvent,
-      existingEvents: courseProvider.events,
+      existingEvents: otherEvents,
     );
     final hasWorkAcademic = EventCollisionService.hasWorkAcademicConflict(
       candidate: candidateEvent,
-      existingEvents: courseProvider.events,
+      existingEvents: otherEvents,
     );
 
     final formContent = Form(
@@ -417,10 +455,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
               margin: const EdgeInsets.only(bottom: 20),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withValues(alpha: 0.25),
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: theme.colorScheme.error.withValues(alpha: 0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.18),
                 ),
               ),
               child: Column(
@@ -428,7 +466,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   Icon(
                     Icons.school_outlined,
                     size: 32,
-                    color: theme.colorScheme.error,
+                    color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -453,10 +491,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
           AppTextField(
             label: l10n.translate('event_title'),
             hint: _selectedDomain == EventDomain.academic
-                ? 'e.g. Lecture, Midterm Exam'
+                ? l10n.translate('hint_event_academic')
                 : (_selectedDomain == EventDomain.work
-                      ? 'e.g. Morning Shift, Internship'
-                      : 'e.g. Doctor Appointment, Gym'),
+                      ? l10n.translate('hint_event_work')
+                      : l10n.translate('hint_event_personal')),
             controller: _titleController,
             validator: (v) => (v != null && v.trim().isNotEmpty)
                 ? null
@@ -507,7 +545,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       initialValue: _selectedType,
                       decoration: InputDecoration(
                         labelText: l10n.translate('type'),
-                        prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                        prefixIcon: const Icon(
+                          Icons.category_outlined,
+                          size: 20,
+                        ),
                       ),
                       items: EventType.values.map((v) {
                         return DropdownMenuItem(
@@ -705,7 +746,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     flex: 3,
                     child: AppTextField(
                       label: l10n.translate('location'),
-                      hint: 'e.g. Clinic, Gym, Central Library',
+                      hint: l10n.translate('hint_place'),
                       controller: _locationController,
                     ),
                   ),
@@ -771,7 +812,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             else ...[
               AppTextField(
                 label: l10n.translate('location'),
-                hint: 'e.g. Clinic, Gym, Central Library',
+                hint: l10n.translate('hint_place'),
                 controller: _locationController,
               ),
               const SizedBox(height: 16),
@@ -842,205 +883,237 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    l10n.translate('recurring_event'),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      l10n.translate('recurring_event'),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    value: _recurring,
+                    onChanged: (v) => setState(() => _recurring = v),
                   ),
-                  value: _recurring,
-                  onChanged: (v) => setState(() => _recurring = v),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // If one-time event vs recurring
-                if (!_recurring) ...[
-                  if (isWide)
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 4,
-                          child: InkWell(
-                            onTap: _pickDate,
-                            borderRadius: BorderRadius.circular(12),
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: l10n.translate('date'),
-                                prefixIcon: const Icon(Icons.calendar_today_rounded, size: 20),
-                              ),
-                              child: Text(
-                                DateFormat.yMMMd().format(_eventDate),
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                  // If one-time event vs recurring
+                  if (!_recurring) ...[
+                    if (isWide)
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: InkWell(
+                              onTap: _pickDate,
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: l10n.translate('date'),
+                                  prefixIcon: const Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 20,
+                                  ),
+                                ),
+                                child: Text(
+                                  DateFormat.yMMMd().format(_eventDate),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 3,
+                            child: InkWell(
+                              onTap: () => _pickTime(true),
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: l10n.translate('start_time'),
+                                  prefixIcon: const Icon(
+                                    Icons.schedule_rounded,
+                                    size: 20,
+                                  ),
+                                ),
+                                child: Text(
+                                  _formatTimeOfDay(context, _startTimeOfDay),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 3,
+                            child: InkWell(
+                              onTap: () => _pickTime(false),
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: l10n.translate('end_time'),
+                                  prefixIcon: const Icon(
+                                    Icons.timer_off_outlined,
+                                    size: 20,
+                                  ),
+                                ),
+                                child: Text(
+                                  _formatTimeOfDay(context, _endTimeOfDay),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else ...[
+                      ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 12),
+                        tileColor: theme.colorScheme.surface,
+                        leading: Icon(
+                          Icons.calendar_today_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
+                        title: Text(l10n.translate('date')),
+                        subtitle: Text(
+                          DateFormat.yMMMMEEEEd().format(_eventDate),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        trailing: const Icon(Icons.edit_calendar_rounded),
+                        onTap: _pickDate,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              tileColor: theme.colorScheme.surface,
+                              leading: Icon(
+                                Icons.schedule_rounded,
+                                color: theme.colorScheme.primary,
+                              ),
+                              title: Text(l10n.translate('start_time')),
+                              subtitle: Text(
+                                _formatTimeOfDay(context, _startTimeOfDay),
+                              ),
+                              onTap: () => _pickTime(true),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ListTile(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              tileColor: theme.colorScheme.surface,
+                              leading: Icon(
+                                Icons.timer_off_outlined,
+                                color: theme.colorScheme.primary,
+                              ),
+                              title: Text(l10n.translate('end_time')),
+                              subtitle: Text(
+                                _formatTimeOfDay(context, _endTimeOfDay),
+                              ),
+                              onTap: () => _pickTime(false),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ] else ...[
+                    // Recurring: Start & End time
+                    Row(
+                      children: [
                         Expanded(
-                          flex: 3,
                           child: InkWell(
                             onTap: () => _pickTime(true),
                             borderRadius: BorderRadius.circular(12),
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: l10n.translate('start_time'),
-                                prefixIcon: const Icon(Icons.schedule_rounded, size: 20),
+                                prefixIcon: const Icon(
+                                  Icons.schedule_rounded,
+                                  size: 20,
+                                ),
                               ),
                               child: Text(
                                 _formatTimeOfDay(context, _startTimeOfDay),
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          flex: 3,
                           child: InkWell(
                             onTap: () => _pickTime(false),
                             borderRadius: BorderRadius.circular(12),
                             child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: l10n.translate('end_time'),
-                                prefixIcon: const Icon(Icons.timer_off_outlined, size: 20),
+                                prefixIcon: const Icon(
+                                  Icons.timer_off_outlined,
+                                  size: 20,
+                                ),
                               ),
                               child: Text(
                                 _formatTimeOfDay(context, _endTimeOfDay),
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ],
-                    )
-                  else ...[
-                    ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.translate('days_of_week'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
-                      tileColor: theme.colorScheme.surface,
-                      leading: Icon(
-                        Icons.calendar_today_rounded,
-                        color: theme.colorScheme.primary,
-                      ),
-                      title: Text(l10n.translate('date')),
-                      subtitle: Text(
-                        DateFormat.yMMMMEEEEd().format(_eventDate),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      trailing: const Icon(Icons.edit_calendar_rounded),
-                      onTap: _pickDate,
                     ),
                     const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            tileColor: theme.colorScheme.surface,
-                            leading: Icon(
-                              Icons.schedule_rounded,
-                              color: theme.colorScheme.primary,
-                            ),
-                            title: Text(l10n.translate('start_time')),
-                            subtitle: Text(_formatTimeOfDay(context, _startTimeOfDay)),
-                            onTap: () => _pickTime(true),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(7, (index) {
+                        final isSelected = _selectedDays.contains(index);
+                        return FilterChip(
+                          label: Text(_getWeekdayName(index)),
+                          selected: isSelected,
+                          selectedColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.2,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ListTile(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            tileColor: theme.colorScheme.surface,
-                            leading: Icon(
-                              Icons.timer_off_outlined,
-                              color: theme.colorScheme.primary,
-                            ),
-                            title: Text(l10n.translate('end_time')),
-                            subtitle: Text(_formatTimeOfDay(context, _endTimeOfDay)),
-                            onTap: () => _pickTime(false),
-                          ),
-                        ),
-                      ],
+                          checkmarkColor: theme.colorScheme.primary,
+                          onSelected: (selected) {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              if (selected) {
+                                _selectedDays.add(index);
+                              } else {
+                                _selectedDays.remove(index);
+                              }
+                            });
+                          },
+                        );
+                      }),
                     ),
                   ],
-                ] else ...[
-                  // Recurring: Start & End time
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _pickTime(true),
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: l10n.translate('start_time'),
-                              prefixIcon: const Icon(Icons.schedule_rounded, size: 20),
-                            ),
-                            child: Text(
-                              _formatTimeOfDay(context, _startTimeOfDay),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _pickTime(false),
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: l10n.translate('end_time'),
-                              prefixIcon: const Icon(Icons.timer_off_outlined, size: 20),
-                            ),
-                            child: Text(
-                              _formatTimeOfDay(context, _endTimeOfDay),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.translate('days_of_week'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: List.generate(7, (index) {
-                      final isSelected = _selectedDays.contains(index);
-                      return FilterChip(
-                        label: Text(_getWeekdayName(index)),
-                        selected: isSelected,
-                        selectedColor: theme.colorScheme.primary.withValues(
-                          alpha: 0.2,
-                        ),
-                        checkmarkColor: theme.colorScheme.primary,
-                        onSelected: (selected) {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            if (selected) {
-                              _selectedDays.add(index);
-                            } else {
-                              _selectedDays.remove(index);
-                            }
-                          });
-                        },
-                      );
-                    }),
-                  ),
                 ],
-              ],
+              ),
             ),
-          ),
           ),
           const SizedBox(height: 20),
 
@@ -1048,7 +1121,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           if (_selectedDomain == EventDomain.academic) ...[
             AppTextField(
               label: l10n.translate('location'),
-              hint: 'Building, Room number, or Zoom link',
+              hint: l10n.translate('hint_location'),
               controller: _locationController,
               prefixIcon: Icons.location_on_outlined,
             ),
@@ -1058,7 +1131,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           // Notes Field
           AppTextField(
             label: l10n.translate('notes'),
-            hint: 'Add preparation materials, links, or notes...',
+            hint: l10n.translate('hint_event_notes'),
             controller: _notesController,
             maxLines: 3,
           ),
@@ -1072,7 +1145,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 OutlinedButton(
                   onPressed: _cancelOrClose,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -1111,7 +1187,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
             onPressed: _cancelOrClose,
           ),
           title: Text(
-            l10n.translate('add_event'),
+            l10n.translate(_isEditing ? 'edit_event' : 'add_event'),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
@@ -1126,7 +1202,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                   side: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                 ),
                 child: Padding(
@@ -1155,7 +1233,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  l10n.translate('add_event'),
+                                  l10n.translate(
+                                    _isEditing ? 'edit_event' : 'add_event',
+                                  ),
                                   style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
@@ -1192,7 +1272,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          l10n.translate('add_event'),
+          l10n.translate(_isEditing ? 'edit_event' : 'add_event'),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

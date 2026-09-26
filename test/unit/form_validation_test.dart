@@ -12,6 +12,9 @@ import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/app_button.dart';
+import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
+import 'package:rocis_schedule/shared/models/assignment_model.dart';
+import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Widget createTestableWidget(
@@ -45,6 +48,21 @@ Widget createTestableWidget(
       home: child,
     ),
   );
+}
+
+Future<CourseProvider> _providerWithCourse() async {
+  final provider = CourseProvider('test_guest');
+  await provider.addCourse(
+    Course(
+      id: 'c1',
+      name: 'Algorithms',
+      code: 'CS201',
+      instructor: 'Dr. Turing',
+      color: Colors.teal,
+      credits: 4,
+    ),
+  );
+  return provider;
 }
 
 void main() {
@@ -84,7 +102,10 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
 
         await tester.pumpWidget(
-          createTestableWidget(const AddAssignmentScreen()),
+          createTestableWidget(
+            const AddAssignmentScreen(),
+            courseProvider: await _providerWithCourse(),
+          ),
         );
         await tester.pumpAndSettle();
 
@@ -92,6 +113,78 @@ void main() {
         expect(find.byType(ElevatedButton), findsWidgets);
       },
     );
+
+    testWidgets(
+      'AddAssignmentScreen without courses asks for a course instead of a form',
+      (tester) async {
+        await tester.pumpWidget(
+          createTestableWidget(const AddAssignmentScreen()),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(TextFormField), findsNothing);
+        expect(find.text('Add a course first'), findsOneWidget);
+      },
+    );
+
+    testWidgets('AddAssignmentScreen in edit mode pre-fills the assignment', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        createTestableWidget(
+          AddAssignmentScreen(
+            assignmentToEdit: Assignment(
+              courseId: 'c1',
+              title: 'Problem set 3',
+              dueDate: DateTime(2026, 10, 10),
+            ),
+          ),
+          courseProvider: await _providerWithCourse(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Assignment'), findsOneWidget);
+      expect(find.text('Problem set 3'), findsOneWidget);
+    });
+
+    testWidgets('AddEventScreen in edit mode pre-fills the event', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        createTestableWidget(
+          AddEventScreen(
+            eventToEdit: ScheduleEvent(
+              id: 'e1',
+              courseId: 'c1',
+              title: 'Algorithms Lecture',
+              type: EventType.classType,
+              startTime: DateTime(2026, 10, 4, 10),
+              endTime: DateTime(2026, 10, 4, 12),
+              location: 'Hall B',
+              daysOfWeek: const [0],
+              recurring: true,
+            ),
+          ),
+          courseProvider: await _providerWithCourse(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Event'), findsOneWidget);
+      expect(find.text('Algorithms Lecture'), findsOneWidget);
+      expect(find.text('Hall B'), findsOneWidget);
+    });
 
     testWidgets('LoginScreen validates email and password input', (
       tester,

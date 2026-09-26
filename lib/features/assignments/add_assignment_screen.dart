@@ -10,7 +10,10 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 class AddAssignmentScreen extends StatefulWidget {
-  const AddAssignmentScreen({super.key});
+  /// The assignment to edit; null to create a new one.
+  final Assignment? assignmentToEdit;
+
+  const AddAssignmentScreen({super.key, this.assignmentToEdit});
 
   @override
   State<AddAssignmentScreen> createState() => _AddAssignmentScreenState();
@@ -25,6 +28,21 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
   AssignmentPriority _priority = AssignmentPriority.medium;
   bool _isLoading = false;
+
+  bool get _isEditing => widget.assignmentToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final assignment = widget.assignmentToEdit;
+    if (assignment != null) {
+      _titleController.text = assignment.title;
+      _descriptionController.text = assignment.description;
+      _selectedCourseId = assignment.courseId;
+      _selectedDate = assignment.dueDate;
+      _priority = assignment.priority;
+    }
+  }
 
   @override
   void dispose() {
@@ -45,13 +63,19 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
     final date = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      // Editing an old assignment must not start before the picker's range.
+      firstDate: _earliest(
+        _selectedDate,
+        DateTime.now().subtract(const Duration(days: 30)),
+      ),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (date != null) {
       setState(() => _selectedDate = date);
     }
   }
+
+  static DateTime _earliest(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
 
   Future<void> _saveAssignment() async {
     final l10n = AppLocalizations.of(context)!;
@@ -67,6 +91,8 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
     setState(() => _isLoading = true);
     try {
       final assignment = Assignment(
+        id: widget.assignmentToEdit?.id,
+        isCompleted: widget.assignmentToEdit?.isCompleted ?? false,
         courseId: _selectedCourseId!,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -110,6 +136,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isWide = MediaQuery.of(context).size.width >= 720;
+    if (courses.isEmpty) return _buildNeedsCourse(l10n, theme);
 
     final formContent = Form(
       key: _formKey,
@@ -120,7 +147,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
           // Title Field
           AppTextField(
             label: l10n.translate('title'),
-            hint: 'e.g. Research Proposal, Calculus Problem Set',
+            hint: l10n.translate('hint_assignment_title'),
             controller: _titleController,
             validator: (v) => (v != null && v.trim().isNotEmpty)
                 ? null
@@ -286,7 +313,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
           // Description Field
           AppTextField(
             label: l10n.translate('description'),
-            hint: 'Add submission guidelines, references, notes...',
+            hint: l10n.translate('hint_assignment_notes'),
             controller: _descriptionController,
             maxLines: 4,
           ),
@@ -357,7 +384,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
             onPressed: _cancelOrClose,
           ),
           title: Text(
-            l10n.translate('add_assignment'),
+            l10n.translate(_title),
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
@@ -403,7 +430,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  l10n.translate('add_assignment'),
+                                  l10n.translate(_title),
                                   style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
@@ -412,7 +439,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Track coursework deadlines, problem sets, and projects',
+                                  l10n.translate('assignment_form_subtitle'),
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: theme.colorScheme.onSurfaceVariant,
@@ -438,10 +465,46 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.translate('add_assignment'))),
+      appBar: AppBar(title: Text(l10n.translate(_title))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: formContent,
+      ),
+    );
+  }
+
+  String get _title => _isEditing ? 'edit_assignment' : 'add_assignment';
+
+  /// Assignments belong to a course, so without one the form can't be saved.
+  Widget _buildNeedsCourse(AppLocalizations l10n, ThemeData theme) {
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.translate(_title))),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.school_outlined,
+                size: 48,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.translate('no_courses_assignment_hint'),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => context.push('/courses/add'),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(l10n.translate('add_course_first')),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

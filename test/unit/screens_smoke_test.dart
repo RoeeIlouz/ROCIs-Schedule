@@ -52,14 +52,18 @@ void main() {
   }
 
   group('ROCIs-Schedule Full UI & Screen Tests', () {
-    testWidgets('ScheduleScreen renders empty state gracefully', (
+    testWidgets('ScheduleScreen greets a new user with setup actions', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createTestWidget(child: const ScheduleScreen()));
       await tester.pumpAndSettle();
 
       expect(find.byType(ScheduleScreen), findsOneWidget);
-      expect(find.text('No events for this day'), findsOneWidget);
+      expect(find.text("Let's build your week"), findsOneWidget);
+      expect(find.text('Add your first course'), findsOneWidget);
+      expect(find.text('Have an account? Sign in'), findsOneWidget);
+      // No add-event button until there's a course to attach events to.
+      expect(find.byType(FloatingActionButton), findsNothing);
     });
 
     testWidgets(

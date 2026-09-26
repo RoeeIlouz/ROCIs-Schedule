@@ -63,6 +63,43 @@ void main() {
 
   group('Production Readiness: Responsive UX / UI Layouts', () {
     testWidgets(
+      'Mobile (400x800): schedule add button sits just above the floating nav bar',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        final courses = CourseProvider('test_uid');
+        await courses.addCourse(
+          Course(
+            id: 'c1',
+            name: 'Algorithms',
+            code: 'CS201',
+            instructor: 'Dr. Turing',
+            color: Colors.teal,
+            credits: 4,
+          ),
+        );
+
+        await tester.pumpWidget(
+          buildTestApp(
+            courseProvider: courses,
+            child: const MainNavigationWrapper(
+              child: Scaffold(body: SizedBox.shrink()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final fab = tester.getRect(find.byType(FloatingActionButton));
+        final navBar = tester.getRect(find.byType(NavigationBar));
+        final gap = navBar.top - fab.bottom;
+        expect(gap, greaterThanOrEqualTo(0), reason: 'FAB overlaps the nav');
+        expect(gap, lessThanOrEqualTo(32), reason: 'FAB floats too high');
+      },
+    );
+
+    testWidgets(
       'Desktop resolution (1200x800) renders desktop sidebar with quick action and search',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 800);

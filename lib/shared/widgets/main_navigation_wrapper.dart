@@ -107,15 +107,11 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   }
 
   int _getTodayEventsCount(CourseProvider courseProvider) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekday = now.weekday % 7;
-    return courseProvider.events.where((e) {
-      if (e.recurring) {
-        return e.daysOfWeek.contains(weekday);
-      }
-      return DateUtils.isSameDay(e.startTime, today);
-    }).length;
+    final today = DateUtils.dateOnly(DateTime.now());
+    final courses = {for (final c in courseProvider.courses) c.id: c};
+    return courseProvider.events
+        .where((e) => courseProvider.occursOn(e, today, courses))
+        .length;
   }
 
   int _getPendingAssignmentsCount(AssignmentProvider assignmentProvider) {
@@ -416,7 +412,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
           // Quick Create Action Button (Dropdown)
           PopupMenuButton<String>(
-            tooltip: 'Quick Action',
+            tooltip: l10n.translate('quick_add'),
             position: PopupMenuPosition.under,
             offset: const Offset(0, 8),
             shape: RoundedRectangleBorder(
@@ -637,7 +633,8 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
             child: InkWell(
               mouseCursor: SystemMouseCursors.click,
               borderRadius: BorderRadius.circular(16),
-              onTap: () => _onDestinationSelected(3),
+              onTap: () =>
+                  isGuest ? context.push('/login') : _onDestinationSelected(3),
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -685,13 +682,11 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                           ),
                           Text(
                             isGuest
-                                ? l10n.translate('cloud_sync')
+                                ? l10n.translate('sign_in_to_sync')
                                 : l10n.translate('active'),
                             style: TextStyle(
                               fontSize: 10,
-                              color: isGuest
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.primary,
+                              color: theme.colorScheme.primary,
                             ),
                           ),
                         ],
