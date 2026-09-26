@@ -1,3 +1,14 @@
+## Google Calendar Sync & Account Deletion - v0.0.6+12 Internal Release - 2026-09-26
+
+#### Added
+* **Google Calendar sync (Android)**: Settings > Google Calendar mirrors the schedule into a dedicated "ROCIs Schedule" calendar using the narrow `calendar.app.created` scope. `GoogleCalendarEventBuilder` formats each event (title "Course · Session", room as location, course/code, instructor, type, credits, semester, notes, nearest Google colour, popup reminder from settings, weekly RRULE bounded by the semester, device IANA time zone via `flutter_timezone`). `GoogleCalendarSyncService` reconciles the whole calendar with content hashes and hex-encoded stable event ids (idempotent; only changed events are written).
+* Calendar-scoped Google Sign-In client: Android tokens only carry the scopes a client was configured with, so `requestScopes` alone never yields a usable Calendar token.
+* In-app account deletion and privacy policy link (previously held for Patch 3).
+
+#### Notes
+* Released with `shorebird release` (not `auto_cycle.py`, which builds with plain Flutter and runs `git add .`), so 0.0.6+12 can receive Shorebird patches.
+* Needs `calendar.app.created` on the OAuth consent screen before public use.
+
 ## Guest Cloud Isolation & Web Verification - v0.0.5+11 Patch 2 - 2026-09-26
 
 #### Problems & Root Causes

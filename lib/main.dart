@@ -14,6 +14,7 @@ import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
 import 'package:rocis_schedule/features/tasks/synced_tasks_provider.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
+import 'package:rocis_schedule/shared/services/google_calendar_sync_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
 import 'package:rocis_schedule/shared/services/sync_service.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
@@ -104,6 +105,15 @@ class MyApp extends StatelessWidget {
             }
             return SyncedTasksProvider(email: email, uid: uid)..loadTasks();
           },
+        ),
+        ChangeNotifierProxyProvider2<
+          CourseProvider,
+          ThemeProvider,
+          GoogleCalendarSyncService
+        >(
+          create: (context) =>
+              GoogleCalendarSyncService(context.read<AuthService>()),
+          update: (_, courses, theme, sync) => sync!..attach(courses, theme),
         ),
         ProxyProvider3<
           AuthService,

@@ -17,6 +17,8 @@ import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/app_color_picker_sheet.dart';
 import 'package:rocis_schedule/features/profile/widgets/about_app_dialog.dart';
 import 'package:rocis_schedule/features/profile/widgets/delete_account_dialog.dart';
+import 'package:rocis_schedule/features/profile/widgets/google_calendar_tile.dart';
+import 'package:rocis_schedule/shared/services/google_calendar_sync_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -424,6 +426,20 @@ class SettingsScreen extends StatelessWidget {
                       }
                     }
                   },
+                ),
+              ]),
+            ],
+
+            // GOOGLE CALENDAR SECTION (Android: needs native Google Sign-In)
+            if (GoogleCalendarSyncService.isSupported) ...[
+              _buildSectionHeader(context, 'Google Calendar'),
+              _buildSectionCard(context, [
+                GoogleCalendarTile(
+                  leading: _buildLeadingIcon(
+                    context,
+                    Icons.calendar_month_rounded,
+                    Colors.blue,
+                  ),
                 ),
               ]),
             ],

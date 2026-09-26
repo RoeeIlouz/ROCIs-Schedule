@@ -7,6 +7,8 @@ import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 
 class AuthService extends ChangeNotifier {
+  static const _serverClientId =
+      '318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com';
   final FirebaseAuth? _customAuth;
   final GoogleSignIn _googleSignIn;
 
@@ -23,8 +25,7 @@ class AuthService extends ChangeNotifier {
       _googleSignIn =
           googleSignIn ??
           GoogleSignIn(
-            serverClientId:
-                '318456267857-u9mr5ssmdd76944000ggf34vv7pkqufc.apps.googleusercontent.com',
+            serverClientId: _serverClientId,
             scopes: ['email', 'profile'],
           ) {
     _init();
@@ -186,6 +187,41 @@ class AuthService extends ChangeNotifier {
     _user = null;
     notifyListeners();
     debugPrint('Sign out complete');
+  }
+
+  /// Lets the app create its own calendars and manage only their events.
+  static const calendarScope =
+      'https://www.googleapis.com/auth/calendar.app.created';
+
+  /// Google Sign-In for Calendar. On Android, access tokens only carry the
+  /// scopes a client was configured with (`requestScopes` grants consent but
+  /// never adds the scope to later tokens), so Calendar needs its own client.
+  /// The native client is shared, so it keeps the same server client ID and
+  /// sign-in keeps producing Firebase ID tokens.
+  late final GoogleSignIn _calendarSignIn = GoogleSignIn(
+    serverClientId: _serverClientId,
+    scopes: const ['email', 'profile', calendarScope],
+  );
+
+  /// Authorization headers for Google Calendar, or null if the user hasn't
+  /// granted access. With [interactive] the user may pick an account and
+  /// approve the calendar permission; otherwise nothing is shown.
+  Future<Map<String, String>?> googleCalendarHeaders({
+    required bool interactive,
+    bool refresh = false,
+  }) async {
+    try {
+      var account = await _calendarSignIn.signInSilently();
+      if (account == null && interactive) {
+        account = await _calendarSignIn.signIn();
+      }
+      if (account == null) return null;
+      if (refresh) await account.clearAuthCache();
+      return await account.authHeaders;
+    } catch (e) {
+      debugPrint('Google Calendar authorization failed: $e');
+      return null;
+    }
   }
 
   /// Whether the account signs in with a password (so deleting it needs one).

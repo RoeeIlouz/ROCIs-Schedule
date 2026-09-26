@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6+12] - 2026-09-26
+
+### Added
+- Google Calendar sync (classes with room, instructor and course details in a dedicated ROCIs Schedule calendar), in-app account deletion, privacy policy link
+
 ## [0.0.5+11] - 2026-09-26 (Patch 2)
 
 ### Fixed

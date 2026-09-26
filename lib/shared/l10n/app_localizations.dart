@@ -22,6 +22,23 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'gcal_sync_title': 'Sync to Google Calendar',
+      'gcal_sync_desc':
+          'Show your classes and events in Google Calendar on all your devices',
+      'gcal_syncing': 'Syncing…',
+      'gcal_synced': 'Synced · {count} events',
+      'gcal_needs_access': 'Access expired — tap to reconnect',
+      'gcal_error': "Couldn't sync — tap to retry",
+      'gcal_connected': 'Your schedule is now in Google Calendar',
+      'gcal_not_connected': "Google Calendar wasn't connected",
+      'gcal_remove_title': 'Remove the calendar from Google?',
+      'gcal_remove_body':
+          'Also delete the "ROCIs Schedule" calendar and its events from your Google Calendar?',
+      'gcal_keep': 'Keep it',
+      'gcal_remove': 'Remove',
+      'gcal_calendar_desc': 'Classes and events synced from ROCIs Schedule.',
+      'gcal_category': 'Category',
+      'gcal_footer': 'Synced from ROCIs Schedule',
       'privacy_policy': 'Privacy Policy',
       'delete_account': 'Delete account',
       'delete_account_desc': 'Permanently delete your account and all its data',
@@ -335,6 +352,23 @@ class AppLocalizations {
           'You need to create at least one course before scheduling events.',
     },
     'he': {
+      'gcal_sync_title': 'סנכרון ל-Google Calendar',
+      'gcal_sync_desc':
+          'הצגת השיעורים והאירועים שלכם ב-Google Calendar בכל המכשירים',
+      'gcal_syncing': 'מסנכרן…',
+      'gcal_synced': 'מסונכרן · {count} אירועים',
+      'gcal_needs_access': 'פג תוקף הגישה — הקישו להתחברות מחדש',
+      'gcal_error': 'הסנכרון נכשל — הקישו לניסיון נוסף',
+      'gcal_connected': 'המערכת שלכם מופיעה עכשיו ב-Google Calendar',
+      'gcal_not_connected': 'Google Calendar לא חובר',
+      'gcal_remove_title': 'להסיר את היומן מ-Google?',
+      'gcal_remove_body':
+          'למחוק גם את היומן "ROCIs Schedule" ואת האירועים שלו מ-Google Calendar?',
+      'gcal_keep': 'להשאיר',
+      'gcal_remove': 'להסיר',
+      'gcal_calendar_desc': 'שיעורים ואירועים שסונכרנו מ-ROCIs Schedule.',
+      'gcal_category': 'קטגוריה',
+      'gcal_footer': 'סונכרן מ-ROCIs Schedule',
       'privacy_policy': 'מדיניות פרטיות',
       'delete_account': 'מחיקת חשבון',
       'delete_account_desc': 'מחיקה לצמיתות של החשבון וכל הנתונים שלו',
@@ -642,6 +676,24 @@ class AppLocalizations {
           'יש ליצור לפחות קורס אחד לפני הוספת אירועים למערכת.',
     },
     'es': {
+      'gcal_sync_title': 'Sincronizar con Google Calendar',
+      'gcal_sync_desc':
+          'Muestra tus clases y eventos en Google Calendar en todos tus dispositivos',
+      'gcal_syncing': 'Sincronizando…',
+      'gcal_synced': 'Sincronizado · {count} eventos',
+      'gcal_needs_access': 'Acceso caducado: toca para volver a conectar',
+      'gcal_error': 'No se pudo sincronizar: toca para reintentar',
+      'gcal_connected': 'Tu horario ya está en Google Calendar',
+      'gcal_not_connected': 'No se conectó Google Calendar',
+      'gcal_remove_title': '¿Quitar el calendario de Google?',
+      'gcal_remove_body':
+          '¿Eliminar también el calendario "ROCIs Schedule" y sus eventos de tu Google Calendar?',
+      'gcal_keep': 'Conservar',
+      'gcal_remove': 'Quitar',
+      'gcal_calendar_desc':
+          'Clases y eventos sincronizados desde ROCIs Schedule.',
+      'gcal_category': 'Categoría',
+      'gcal_footer': 'Sincronizado desde ROCIs Schedule',
       'privacy_policy': 'Política de privacidad',
       'delete_account': 'Eliminar cuenta',
       'delete_account_desc':
@@ -961,6 +1013,24 @@ class AppLocalizations {
       'visit_website': 'Visitar sitio web',
     },
     'de': {
+      'gcal_sync_title': 'Mit Google Kalender synchronisieren',
+      'gcal_sync_desc':
+          'Zeige Kurse und Termine auf all deinen Geräten in Google Kalender',
+      'gcal_syncing': 'Wird synchronisiert…',
+      'gcal_synced': 'Synchronisiert · {count} Termine',
+      'gcal_needs_access': 'Zugriff abgelaufen – tippe zum erneuten Verbinden',
+      'gcal_error': 'Synchronisierung fehlgeschlagen – tippe zum Wiederholen',
+      'gcal_connected': 'Dein Stundenplan ist jetzt in Google Kalender',
+      'gcal_not_connected': 'Google Kalender wurde nicht verbunden',
+      'gcal_remove_title': 'Kalender aus Google entfernen?',
+      'gcal_remove_body':
+          'Auch den Kalender "ROCIs Schedule" und seine Termine aus deinem Google Kalender löschen?',
+      'gcal_keep': 'Behalten',
+      'gcal_remove': 'Entfernen',
+      'gcal_calendar_desc':
+          'Kurse und Termine, synchronisiert aus ROCIs Schedule.',
+      'gcal_category': 'Kategorie',
+      'gcal_footer': 'Synchronisiert aus ROCIs Schedule',
       'privacy_policy': 'Datenschutzerklärung',
       'delete_account': 'Konto löschen',
       'delete_account_desc': 'Konto und alle Daten dauerhaft löschen',
@@ -1278,6 +1348,25 @@ class AppLocalizations {
       'visit_website': 'Webseite besuchen',
     },
     'fr': {
+      'gcal_sync_title': 'Synchroniser avec Google Agenda',
+      'gcal_sync_desc':
+          'Affichez vos cours et événements dans Google Agenda sur tous vos appareils',
+      'gcal_syncing': 'Synchronisation…',
+      'gcal_synced': 'Synchronisé · {count} événements',
+      'gcal_needs_access': 'Accès expiré — touchez pour vous reconnecter',
+      'gcal_error': 'Échec de la synchronisation — touchez pour réessayer',
+      'gcal_connected':
+          'Votre emploi du temps est maintenant dans Google Agenda',
+      'gcal_not_connected': "Google Agenda n'a pas été connecté",
+      'gcal_remove_title': "Retirer l'agenda de Google ?",
+      'gcal_remove_body':
+          "Supprimer aussi l'agenda \"ROCIs Schedule\" et ses événements de votre Google Agenda ?",
+      'gcal_keep': 'Le garder',
+      'gcal_remove': 'Retirer',
+      'gcal_calendar_desc':
+          'Cours et événements synchronisés depuis ROCIs Schedule.',
+      'gcal_category': 'Catégorie',
+      'gcal_footer': 'Synchronisé depuis ROCIs Schedule',
       'privacy_policy': 'Politique de confidentialité',
       'delete_account': 'Supprimer le compte',
       'delete_account_desc':
@@ -1598,6 +1687,22 @@ class AppLocalizations {
       'visit_website': 'Visiter le site web',
     },
     'ar': {
+      'gcal_sync_title': 'المزامنة مع تقويم Google',
+      'gcal_sync_desc': 'اعرض محاضراتك وأحداثك في تقويم Google على جميع أجهزتك',
+      'gcal_syncing': 'جارٍ المزامنة…',
+      'gcal_synced': 'تمت المزامنة · {count} حدثًا',
+      'gcal_needs_access': 'انتهت صلاحية الوصول — اضغط لإعادة الاتصال',
+      'gcal_error': 'تعذرت المزامنة — اضغط لإعادة المحاولة',
+      'gcal_connected': 'جدولك موجود الآن في تقويم Google',
+      'gcal_not_connected': 'لم يتم ربط تقويم Google',
+      'gcal_remove_title': 'إزالة التقويم من Google؟',
+      'gcal_remove_body':
+          'هل تريد أيضًا حذف تقويم "ROCIs Schedule" وأحداثه من تقويم Google؟',
+      'gcal_keep': 'الإبقاء عليه',
+      'gcal_remove': 'إزالة',
+      'gcal_calendar_desc': 'محاضرات وأحداث تمت مزامنتها من ROCIs Schedule.',
+      'gcal_category': 'الفئة',
+      'gcal_footer': 'تمت المزامنة من ROCIs Schedule',
       'privacy_policy': 'سياسة الخصوصية',
       'delete_account': 'حذف الحساب',
       'delete_account_desc': 'حذف حسابك وجميع بياناته نهائيًا',
@@ -1906,6 +2011,23 @@ class AppLocalizations {
       'visit_website': 'زيارة الموقع',
     },
     'hi': {
+      'gcal_sync_title': 'Google कैलेंडर से सिंक करें',
+      'gcal_sync_desc':
+          'अपनी कक्षाएं और इवेंट सभी डिवाइस पर Google कैलेंडर में देखें',
+      'gcal_syncing': 'सिंक हो रहा है…',
+      'gcal_synced': 'सिंक हुआ · {count} इवेंट',
+      'gcal_needs_access': 'एक्सेस समाप्त — फिर से जोड़ने के लिए टैप करें',
+      'gcal_error': 'सिंक नहीं हो सका — फिर से कोशिश करने के लिए टैप करें',
+      'gcal_connected': 'आपका शेड्यूल अब Google कैलेंडर में है',
+      'gcal_not_connected': 'Google कैलेंडर नहीं जुड़ा',
+      'gcal_remove_title': 'Google से कैलेंडर हटाएं?',
+      'gcal_remove_body':
+          'क्या अपने Google कैलेंडर से "ROCIs Schedule" कैलेंडर और उसके इवेंट भी हटाने हैं?',
+      'gcal_keep': 'रखें',
+      'gcal_remove': 'हटाएं',
+      'gcal_calendar_desc': 'ROCIs Schedule से सिंक की गई कक्षाएं और इवेंट।',
+      'gcal_category': 'श्रेणी',
+      'gcal_footer': 'ROCIs Schedule से सिंक किया गया',
       'privacy_policy': 'गोपनीयता नीति',
       'delete_account': 'खाता हटाएं',
       'delete_account_desc': 'अपना खाता और उसका सारा डेटा स्थायी रूप से हटाएं',
@@ -2220,6 +2342,24 @@ class AppLocalizations {
       'visit_website': 'वेबसाइट देखें',
     },
     'sv': {
+      'gcal_sync_title': 'Synka till Google Kalender',
+      'gcal_sync_desc':
+          'Visa dina lektioner och händelser i Google Kalender på alla dina enheter',
+      'gcal_syncing': 'Synkar…',
+      'gcal_synced': 'Synkat · {count} händelser',
+      'gcal_needs_access': 'Åtkomsten har gått ut – tryck för att ansluta igen',
+      'gcal_error': 'Kunde inte synka – tryck för att försöka igen',
+      'gcal_connected': 'Ditt schema finns nu i Google Kalender',
+      'gcal_not_connected': 'Google Kalender anslöts inte',
+      'gcal_remove_title': 'Ta bort kalendern från Google?',
+      'gcal_remove_body':
+          'Vill du även radera kalendern "ROCIs Schedule" och dess händelser från din Google Kalender?',
+      'gcal_keep': 'Behåll den',
+      'gcal_remove': 'Ta bort',
+      'gcal_calendar_desc':
+          'Lektioner och händelser synkade från ROCIs Schedule.',
+      'gcal_category': 'Kategori',
+      'gcal_footer': 'Synkat från ROCIs Schedule',
       'privacy_policy': 'Integritetspolicy',
       'delete_account': 'Radera konto',
       'delete_account_desc': 'Radera ditt konto och all dess data permanent',
