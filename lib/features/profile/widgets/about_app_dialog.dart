@@ -24,8 +24,7 @@ class _AboutAppDialogState extends State<AboutAppDialog> {
   int _tapCount = 0;
 
   static const String _websiteUrl = 'https://rocisapps.com';
-  static const String _privacyUrl =
-      'https://rocisapps.com/schedule-privacy.html';
+  static const String _privacyUrl = 'https://rocisapps.com/privacy.html';
   static const String _githubUrl =
       'https://github.com/RoeeIlouz/ROCIs-Schedule';
   static const String _supportEmail = 'support@rocisapps.com';
