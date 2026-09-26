@@ -10,6 +10,7 @@ import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
+import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/google_calendar_event_builder.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,9 +30,11 @@ class GoogleCalendarSyncService extends ChangeNotifier {
   static const _keyEnabled = 'gcal_sync_enabled';
   static const _keyCalendarId = 'gcal_calendar_id';
   static const _debounce = Duration(seconds: 3);
+  static const _profileField = 'googleCalendarId';
 
   final AuthService _auth;
   final http.Client _http;
+  final FirestoreService _firestore;
   CourseProvider? _courses;
   ThemeProvider? _theme;
 
@@ -48,8 +51,12 @@ class GoogleCalendarSyncService extends ChangeNotifier {
   /// overwrite a choice the user just made.
   late final Future<void> _ready = _load();
 
-  GoogleCalendarSyncService(this._auth, {http.Client? client})
-    : _http = client ?? http.Client() {
+  GoogleCalendarSyncService(
+    this._auth, {
+    http.Client? client,
+    FirestoreService? firestore,
+  }) : _http = client ?? http.Client(),
+       _firestore = firestore ?? FirestoreService() {
     _ready;
   }
 
@@ -117,11 +124,20 @@ class GoogleCalendarSyncService extends ChangeNotifier {
     if (removeCalendar && id != null) {
       try {
         await _send('DELETE', '/calendars/${Uri.encodeComponent(id)}');
+        await _forgetCalendar();
+      } on _HttpFailure catch (e) {
+        if (e.statusCode == 404 || e.statusCode == 410) {
+          await _forgetCalendar();
+        } else {
+          // Keep the id: forgetting it would leave the calendar behind and
+          // make the next sync create a duplicate.
+          _lastError = e.reason;
+          debugPrint('Calendar removal failed: $e');
+        }
       } catch (e) {
+        _lastError = e.toString();
         debugPrint('Calendar removal failed: $e');
       }
-      _calendarId = null;
-      await prefs.remove(_keyCalendarId);
     }
     _setStatus(CalendarSyncStatus.off);
   }
@@ -178,9 +194,9 @@ class GoogleCalendarSyncService extends ChangeNotifier {
     final desired = <String, Map<String, dynamic>>{};
     for (final event in provider.events) {
       final course = courses[event.courseId];
-      final semester = course == null
-          ? null
-          : provider.getSemesterById(course.semester ?? 'semester_1');
+      // Same bounds as the schedule screen (CourseProvider.occursOn): a
+      // course without a semester repeats without an end date.
+      final semester = provider.getSemesterById(course?.semester);
       desired[GoogleCalendarEventBuilder.googleEventId(
         event.id,
       )] = GoogleCalendarEventBuilder.build(
@@ -246,13 +262,14 @@ class GoogleCalendarSyncService extends ChangeNotifier {
     _syncedCount = desired.length;
   }
 
-  /// The stored calendar, or a new one if it was deleted in Google Calendar.
+  /// The app's calendar: the one remembered on this device or in the user's
+  /// profile, or a new one if it no longer exists. The Calendar scope can't
+  /// list calendars, so remembering the id is what prevents duplicates.
   Future<String> _ensureCalendar(String timeZone) async {
-    final prefs = await SharedPreferences.getInstance();
-    final id = _calendarId;
-    if (id != null) {
+    for (final id in {?_calendarId, ?await _profileCalendarId()}) {
       try {
         await _send('GET', '/calendars/${Uri.encodeComponent(id)}');
+        await _rememberCalendar(id);
         return id;
       } on _HttpFailure catch (e) {
         if (e.statusCode != 404 && e.statusCode != 410) rethrow;
@@ -268,9 +285,50 @@ class GoogleCalendarSyncService extends ChangeNotifier {
       },
     );
     final newId = created['id'] as String;
-    _calendarId = newId;
-    await prefs.setString(_keyCalendarId, newId);
+    await _rememberCalendar(newId);
     return newId;
+  }
+
+  Future<String?> _profileCalendarId() async {
+    final uid = _auth.user?.uid;
+    if (uid == null) return null;
+    try {
+      final profile = await _firestore.getProfile(uid);
+      final data = profile?.data() as Map<String, dynamic>?;
+      return data?[_profileField] as String?;
+    } catch (e) {
+      debugPrint('Reading calendar id from profile failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _rememberCalendar(String id) async {
+    final changed = _calendarId != id;
+    _calendarId = id;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCalendarId, id);
+    final uid = _auth.user?.uid;
+    if (changed && uid != null) {
+      unawaited(
+        _firestore
+            .updateProfile(uid, {_profileField: id})
+            .catchError((Object e) => debugPrint('Saving calendar id: $e')),
+      );
+    }
+  }
+
+  Future<void> _forgetCalendar() async {
+    _calendarId = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyCalendarId);
+    final uid = _auth.user?.uid;
+    if (uid != null) {
+      unawaited(
+        _firestore
+            .updateProfile(uid, {_profileField: null})
+            .catchError((Object e) => debugPrint('Clearing calendar id: $e')),
+      );
+    }
   }
 
   Future<String> _deviceTimeZone() async {

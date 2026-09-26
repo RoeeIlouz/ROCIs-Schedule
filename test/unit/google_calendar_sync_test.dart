@@ -30,14 +30,27 @@ class _FakeCalendar {
   final events = <String, Map<String, dynamic>>{};
   final writes = <String>[];
   bool calendarExists = false;
+  bool failCalendarDelete = false;
+  int calendarsCreated = 0;
 
   MockClient get client => MockClient((request) async {
     final path = request.url.path.replaceFirst('/calendar/v3', '');
     final body = request.body.isEmpty ? null : jsonDecode(request.body);
     if (path == '/calendars' && request.method == 'POST') {
       calendarExists = true;
+      calendarsCreated++;
       writes.add('create-calendar');
       return _json({'id': 'cal1'});
+    }
+    if (path == '/calendars/cal1' && request.method == 'DELETE') {
+      if (failCalendarDelete) {
+        return _json({
+          'error': {'message': 'Backend Error'},
+        }, 500);
+      }
+      calendarExists = false;
+      events.clear();
+      return http.Response('', 204);
     }
     if (path == '/calendars/cal1' && request.method == 'GET') {
       return http.Response(
@@ -152,6 +165,37 @@ void main() {
     expect(google.writes, hasLength(1));
     expect(google.writes.single, startsWith('delete'));
     expect(google.events, hasLength(1));
+  });
+
+  test('off (keep) then on reuses the same calendar', () async {
+    await sync.enable();
+    await sync.disable(removeCalendar: false);
+    await sync.enable();
+    expect(google.calendarsCreated, 1);
+  });
+
+  test('a failed calendar removal does not lead to a duplicate', () async {
+    await sync.enable();
+    google.failCalendarDelete = true;
+    await sync.disable(removeCalendar: true);
+    expect(sync.lastError, contains('Backend Error'));
+    await sync.enable();
+    expect(google.calendarsCreated, 1);
+  });
+
+  test('off (remove) then on creates exactly one new calendar', () async {
+    await sync.enable();
+    await sync.disable(removeCalendar: true);
+    await sync.enable();
+    expect(google.calendarsCreated, 2);
+    expect(google.events, hasLength(2));
+  });
+
+  test('a course without a semester repeats with no end date', () async {
+    await sync.enable();
+    for (final event in google.events.values) {
+      expect(event['recurrence'], ['RRULE:FREQ=WEEKLY;BYDAY=MO']);
+    }
   });
 
   test('turning sync off can remove the calendar', () async {
