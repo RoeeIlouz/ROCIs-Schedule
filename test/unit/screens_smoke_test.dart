@@ -182,6 +182,19 @@ void main() {
       expect(find.text('Instructor: Prof. Codd'), findsOneWidget);
     });
 
+    testWidgets(
+      'SettingsScreen offers sign-in, not account deletion, to guests',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          createTestWidget(child: const SettingsScreen()),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Sign In or Register'), findsOneWidget);
+        expect(find.text('Delete account'), findsNothing);
+      },
+    );
+
     testWidgets('SettingsScreen toggles glassmorphism and preferences', (
       WidgetTester tester,
     ) async {

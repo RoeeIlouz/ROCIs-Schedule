@@ -332,44 +332,29 @@ class FirestoreService {
   }
 
   // Delete all user data from Firestore collections (for cleanup)
+  /// Permanently deletes the user's profile and every collection under it.
+  /// Errors propagate so account deletion never reports false success.
   Future<void> deleteAllUserData(String uid) async {
     final db = _dbFor(uid);
     if (db == null) return;
-    try {
-      debugPrint('Firestore: Deleting all data for $uid...');
-      final batch = db.batch();
-
-      final coursesSnapshot = await db
-          .collection('users')
-          .doc(uid)
-          .collection('courses')
-          .get();
-      for (var doc in coursesSnapshot.docs) {
-        batch.delete(doc.reference);
+    final userDoc = db.collection('users').doc(uid);
+    for (final collection in const [
+      'courses',
+      'events',
+      'assignments',
+      'semesters',
+      'friends',
+      'friend_requests',
+    ]) {
+      final docs = (await userDoc.collection(collection).get()).docs;
+      for (var i = 0; i < docs.length; i += _maxBatchWrites) {
+        final batch = db.batch();
+        for (final doc in docs.skip(i).take(_maxBatchWrites)) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
       }
-
-      final eventsSnapshot = await db
-          .collection('users')
-          .doc(uid)
-          .collection('events')
-          .get();
-      for (var doc in eventsSnapshot.docs) {
-        batch.delete(doc.reference);
-      }
-
-      final assignmentsSnapshot = await db
-          .collection('users')
-          .doc(uid)
-          .collection('assignments')
-          .get();
-      for (var doc in assignmentsSnapshot.docs) {
-        batch.delete(doc.reference);
-      }
-
-      await batch.commit();
-      debugPrint('Firestore: All user data deleted');
-    } catch (e) {
-      debugPrint('Firestore Error (Delete All User Data): $e');
     }
+    await userDoc.delete();
   }
 }

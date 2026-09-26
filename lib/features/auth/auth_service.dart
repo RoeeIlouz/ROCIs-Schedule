@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 
@@ -185,5 +186,56 @@ class AuthService extends ChangeNotifier {
     _user = null;
     notifyListeners();
     debugPrint('Sign out complete');
+  }
+
+  /// Whether the account signs in with a password (so deleting it needs one).
+  bool get usesPassword =>
+      _user?.providerData.any((p) => p.providerId == 'password') ?? false;
+
+  /// Permanently deletes the signed-in account: its cloud data, the sign-in
+  /// record and this device's copy. Firebase only deletes accounts after a
+  /// recent sign-in, so the user confirms their identity first — with
+  /// [password] for email accounts, otherwise through Google.
+  ///
+  /// Returns false if the user cancelled the Google confirmation.
+  Future<bool> deleteAccount(
+    FirestoreService firestore, {
+    String? password,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    if (usesPassword) {
+      await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: user.email!, password: password!),
+      );
+    } else if (kIsWeb) {
+      await user.reauthenticateWithPopup(GoogleAuthProvider());
+    } else {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return false;
+      final googleAuth = await googleUser.authentication;
+      await user.reauthenticateWithCredential(
+        GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        ),
+      );
+    }
+
+    // Data first: once the auth record is gone, security rules deny access.
+    final uid = user.uid;
+    await firestore.deleteAllUserData(uid);
+    await user.delete();
+
+    await LocalDbService.deleteDatabaseFor(uid);
+    if (!kIsWeb) {
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+    }
+    _user = null;
+    notifyListeners();
+    return true;
   }
 }

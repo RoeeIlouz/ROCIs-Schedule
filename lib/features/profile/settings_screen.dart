@@ -16,6 +16,7 @@ import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/app_color_picker_sheet.dart';
 import 'package:rocis_schedule/features/profile/widgets/about_app_dialog.dart';
+import 'package:rocis_schedule/features/profile/widgets/delete_account_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -193,6 +194,19 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   // Signing out drops back to guest mode, not a login wall.
                   onTap: () => context.read<AuthService>().signOut(),
+                ),
+                ListTile(
+                  leading: _buildLeadingIcon(
+                    context,
+                    Icons.delete_outline_rounded,
+                    theme.colorScheme.error,
+                  ),
+                  title: Text(
+                    l10n.translate('delete_account'),
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  subtitle: Text(l10n.translate('delete_account_desc')),
+                  onTap: () => showDeleteAccountDialog(context),
                 ),
               ],
             ]),

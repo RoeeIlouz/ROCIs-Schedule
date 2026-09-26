@@ -22,6 +22,16 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'privacy_policy': 'Privacy Policy',
+      'delete_account': 'Delete account',
+      'delete_account_desc': 'Permanently delete your account and all its data',
+      'delete_account_confirm':
+          "This permanently deletes your account and everything in it — courses, events, assignments and profile — from the cloud and this device. This can't be undone.",
+      'delete_account_password': 'Enter your password to confirm',
+      'delete_account_wrong_password': 'That password is incorrect. Try again.',
+      'delete_account_failed':
+          "Couldn't delete your account. Check your connection and try again.",
+      'account_deleted': 'Your account has been deleted',
       'edit_event': 'Edit Event',
       'edit_assignment': 'Edit Assignment',
       'edit': 'Edit',
@@ -325,6 +335,16 @@ class AppLocalizations {
           'You need to create at least one course before scheduling events.',
     },
     'he': {
+      'privacy_policy': 'מדיניות פרטיות',
+      'delete_account': 'מחיקת חשבון',
+      'delete_account_desc': 'מחיקה לצמיתות של החשבון וכל הנתונים שלו',
+      'delete_account_confirm':
+          'פעולה זו מוחקת לצמיתות את החשבון שלכם ואת כל מה שבו — קורסים, אירועים, מטלות ופרופיל — מהענן וממכשיר זה. לא ניתן לבטל את הפעולה.',
+      'delete_account_password': 'הזינו את הסיסמה לאישור',
+      'delete_account_wrong_password': 'הסיסמה שגויה. נסו שוב.',
+      'delete_account_failed':
+          'לא ניתן היה למחוק את החשבון. בדקו את החיבור ונסו שוב.',
+      'account_deleted': 'החשבון שלכם נמחק',
       'edit_event': 'עריכת אירוע',
       'edit_assignment': 'עריכת מטלה',
       'edit': 'עריכה',
@@ -622,6 +642,18 @@ class AppLocalizations {
           'יש ליצור לפחות קורס אחד לפני הוספת אירועים למערכת.',
     },
     'es': {
+      'privacy_policy': 'Política de privacidad',
+      'delete_account': 'Eliminar cuenta',
+      'delete_account_desc':
+          'Elimina tu cuenta y todos sus datos de forma permanente',
+      'delete_account_confirm':
+          'Esto elimina de forma permanente tu cuenta y todo su contenido — cursos, eventos, tareas y perfil — de la nube y de este dispositivo. No se puede deshacer.',
+      'delete_account_password': 'Introduce tu contraseña para confirmar',
+      'delete_account_wrong_password':
+          'La contraseña es incorrecta. Inténtalo de nuevo.',
+      'delete_account_failed':
+          'No se pudo eliminar la cuenta. Comprueba tu conexión e inténtalo de nuevo.',
+      'account_deleted': 'Tu cuenta ha sido eliminada',
       'edit_event': 'Editar evento',
       'edit_assignment': 'Editar tarea',
       'edit': 'Editar',
@@ -929,6 +961,17 @@ class AppLocalizations {
       'visit_website': 'Visitar sitio web',
     },
     'de': {
+      'privacy_policy': 'Datenschutzerklärung',
+      'delete_account': 'Konto löschen',
+      'delete_account_desc': 'Konto und alle Daten dauerhaft löschen',
+      'delete_account_confirm':
+          'Dadurch werden dein Konto und alle Inhalte — Kurse, Termine, Aufgaben und Profil — dauerhaft aus der Cloud und von diesem Gerät gelöscht. Dies kann nicht rückgängig gemacht werden.',
+      'delete_account_password': 'Gib zur Bestätigung dein Passwort ein',
+      'delete_account_wrong_password':
+          'Das Passwort ist falsch. Versuche es erneut.',
+      'delete_account_failed':
+          'Das Konto konnte nicht gelöscht werden. Prüfe deine Verbindung und versuche es erneut.',
+      'account_deleted': 'Dein Konto wurde gelöscht',
       'edit_event': 'Termin bearbeiten',
       'edit_assignment': 'Aufgabe bearbeiten',
       'edit': 'Bearbeiten',
@@ -1235,6 +1278,17 @@ class AppLocalizations {
       'visit_website': 'Webseite besuchen',
     },
     'fr': {
+      'privacy_policy': 'Politique de confidentialité',
+      'delete_account': 'Supprimer le compte',
+      'delete_account_desc':
+          'Supprimer définitivement votre compte et toutes ses données',
+      'delete_account_confirm':
+          'Cette action supprime définitivement votre compte et tout son contenu — cours, événements, devoirs et profil — du cloud et de cet appareil. Elle est irréversible.',
+      'delete_account_password': 'Saisissez votre mot de passe pour confirmer',
+      'delete_account_wrong_password': 'Mot de passe incorrect. Réessayez.',
+      'delete_account_failed':
+          'Impossible de supprimer le compte. Vérifiez votre connexion et réessayez.',
+      'account_deleted': 'Votre compte a été supprimé',
       'edit_event': "Modifier l'événement",
       'edit_assignment': 'Modifier le devoir',
       'edit': 'Modifier',
@@ -1544,6 +1598,16 @@ class AppLocalizations {
       'visit_website': 'Visiter le site web',
     },
     'ar': {
+      'privacy_policy': 'سياسة الخصوصية',
+      'delete_account': 'حذف الحساب',
+      'delete_account_desc': 'حذف حسابك وجميع بياناته نهائيًا',
+      'delete_account_confirm':
+          'سيؤدي هذا إلى حذف حسابك وكل محتواه نهائيًا — المواد والأحداث والمهام والملف الشخصي — من السحابة ومن هذا الجهاز. لا يمكن التراجع عن ذلك.',
+      'delete_account_password': 'أدخل كلمة المرور للتأكيد',
+      'delete_account_wrong_password': 'كلمة المرور غير صحيحة. حاول مرة أخرى.',
+      'delete_account_failed':
+          'تعذّر حذف الحساب. تحقق من الاتصال وحاول مرة أخرى.',
+      'account_deleted': 'تم حذف حسابك',
       'edit_event': 'تعديل الحدث',
       'edit_assignment': 'تعديل المهمة',
       'edit': 'تعديل',
@@ -1842,6 +1906,16 @@ class AppLocalizations {
       'visit_website': 'زيارة الموقع',
     },
     'hi': {
+      'privacy_policy': 'गोपनीयता नीति',
+      'delete_account': 'खाता हटाएं',
+      'delete_account_desc': 'अपना खाता और उसका सारा डेटा स्थायी रूप से हटाएं',
+      'delete_account_confirm':
+          'इससे आपका खाता और उसकी सारी सामग्री — कोर्स, इवेंट, असाइनमेंट और प्रोफ़ाइल — क्लाउड और इस डिवाइस से स्थायी रूप से हट जाएगी। इसे पूर्ववत नहीं किया जा सकता।',
+      'delete_account_password': 'पुष्टि के लिए अपना पासवर्ड दर्ज करें',
+      'delete_account_wrong_password': 'पासवर्ड गलत है। फिर से कोशिश करें।',
+      'delete_account_failed':
+          'खाता नहीं हटाया जा सका। अपना कनेक्शन जांचें और फिर से कोशिश करें।',
+      'account_deleted': 'आपका खाता हटा दिया गया है',
       'edit_event': 'इवेंट संपादित करें',
       'edit_assignment': 'असाइनमेंट संपादित करें',
       'edit': 'संपादित करें',
@@ -2146,6 +2220,16 @@ class AppLocalizations {
       'visit_website': 'वेबसाइट देखें',
     },
     'sv': {
+      'privacy_policy': 'Integritetspolicy',
+      'delete_account': 'Radera konto',
+      'delete_account_desc': 'Radera ditt konto och all dess data permanent',
+      'delete_account_confirm':
+          'Detta raderar permanent ditt konto och allt innehåll — kurser, händelser, uppgifter och profil — från molnet och den här enheten. Det går inte att ångra.',
+      'delete_account_password': 'Ange ditt lösenord för att bekräfta',
+      'delete_account_wrong_password': 'Fel lösenord. Försök igen.',
+      'delete_account_failed':
+          'Kontot kunde inte raderas. Kontrollera anslutningen och försök igen.',
+      'account_deleted': 'Ditt konto har raderats',
       'edit_event': 'Redigera händelse',
       'edit_assignment': 'Redigera uppgift',
       'edit': 'Redigera',

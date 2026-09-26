@@ -24,6 +24,8 @@ class _AboutAppDialogState extends State<AboutAppDialog> {
   int _tapCount = 0;
 
   static const String _websiteUrl = 'https://rocisapps.com';
+  static const String _privacyUrl =
+      'https://rocisapps.com/schedule-privacy.html';
   static const String _githubUrl =
       'https://github.com/RoeeIlouz/ROCIs-Schedule';
   static const String _supportEmail = 'support@rocisapps.com';
@@ -148,6 +150,16 @@ class _AboutAppDialogState extends State<AboutAppDialog> {
               title: Text(l10n.translate('visit_website')),
               subtitle: const Text('rocisapps.com'),
               onTap: () => _launch(_websiteUrl),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                Icons.lock_outline_rounded,
+                color: theme.colorScheme.primary,
+                size: 22,
+              ),
+              title: Text(l10n.translate('privacy_policy')),
+              onTap: () => _launch(_privacyUrl),
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
