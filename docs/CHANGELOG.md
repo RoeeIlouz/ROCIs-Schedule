@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6+12] - 2026-09-27 (Patch 1)
+
+### Fixed
+- Google Calendar sync no longer creates a duplicate calendar when turned off and on, and classes land on the same dates the schedule shows. Sync errors now explain what went wrong.
+
 ## [0.0.6+12] - 2026-09-26
 
 ### Added

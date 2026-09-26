@@ -50,6 +50,18 @@
       padding: 0;
       overflow: hidden;
     }
+    .about {
+      max-width: 420px;
+      margin: 24px 24px 12px;
+      text-align: center;
+      color: #94A3B8;
+      font: 14px/1.5 system-ui, sans-serif;
+    }
+    .legal, .legal a, noscript, noscript a {
+      color: #CBD5E1;
+      font: 13px system-ui, sans-serif;
+    }
+    noscript { display: block; padding: 24px; }
     .loading-container {
       display: flex;
       flex-direction: column;
@@ -92,8 +104,19 @@
       <div class="spinner"></div>
       <div class="title">ROCIs Schedule</div>
       <div class="tagline">Master your semester &bull; Timetable &amp; Planner</div>
+      <p class="about">ROCIs Schedule is a university timetable and study planner: add your courses, class times, exams and assignments, get reminders, and optionally sync your schedule across devices and to Google Calendar.</p>
+      <nav class="legal">
+        <a href="https://rocisapps.com/privacy.html#schedule">Privacy Policy</a> &middot;
+        <a href="https://rocisapps.com/terms.html">Terms of Service</a> &middot;
+        <a href="https://rocisapps.com/">ROCIs Apps</a>
+      </nav>
     </div>
   </div>
+  <noscript>
+    <p>ROCIs Schedule needs JavaScript to run. It is a university timetable and study planner by ROCIs Apps.
+      Read our <a href="https://rocisapps.com/privacy.html#schedule">Privacy Policy</a> and
+      <a href="https://rocisapps.com/terms.html">Terms of Service</a>.</p>
+  </noscript>
   <script>
     window.addEventListener('flutter-first-frame', function () {
       const loadingDiv = document.getElementById("loading");
