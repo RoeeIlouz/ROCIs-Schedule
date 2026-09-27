@@ -92,7 +92,7 @@ class MyApp extends StatelessWidget {
             return SyncedTasksProvider(
               email: auth.user?.email,
               uid: auth.user?.uid,
-            )..loadTasks();
+            );
           },
           update: (_, auth, previous) {
             final email = auth.user?.email;
@@ -103,7 +103,7 @@ class MyApp extends StatelessWidget {
                 previous.uid == uid) {
               return previous;
             }
-            return SyncedTasksProvider(email: email, uid: uid)..loadTasks();
+            return SyncedTasksProvider(email: email, uid: uid);
           },
         ),
         ChangeNotifierProxyProvider2<

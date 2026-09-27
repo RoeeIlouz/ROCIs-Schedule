@@ -30,10 +30,10 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Owner-only until friend requests are implemented; a cross-user create
+      // rule must then require the sender's uid to be request.auth.uid.
       match /friend_requests/{requestId} {
-        allow read: if isOwner(userId);
-        allow create: if request.auth != null;
-        allow update, delete: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
     }
   }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:rocis_schedule/shared/models/synced_task_model.dart';
@@ -27,77 +28,93 @@ class TasksFirestoreService {
     return _androidOptions;
   }
 
-  FirebaseFirestore? _tasksDb;
-  bool _isInitialized = false;
+  static Future<FirebaseApp>? _app;
 
-  bool get isReady => _isInitialized && _tasksDb != null;
-
-  Future<void> initialize() async {
-    if (_isInitialized) return;
+  /// The rocis-todo secondary app, or null when Firebase isn't set up (tests).
+  static Future<FirebaseApp?> _tasksApp() async {
+    if (Firebase.apps.isEmpty) return null;
     try {
-      if (Firebase.apps.isEmpty) {
-        debugPrint('TasksFirestoreService: Default Firebase not ready');
-        return;
-      }
-
-      FirebaseApp tasksApp;
-      try {
-        tasksApp = Firebase.app('rocis-todo');
-      } catch (_) {
-        tasksApp = await Firebase.initializeApp(
-          name: 'rocis-todo',
-          options: _platformOptions,
-        );
-      }
-
-      _tasksDb = FirebaseFirestore.instanceFor(app: tasksApp);
-      _isInitialized = true;
-      debugPrint(
-        'TasksFirestoreService: Initialized rocis-todo secondary app successfully',
-      );
+      return await (_app ??= _initApp());
     } catch (e) {
-      debugPrint(
-        'TasksFirestoreService: Secondary app init error (non-critical): $e',
-      );
-      _isInitialized = false;
+      debugPrint('TasksFirestoreService: Secondary app init error: $e');
+      _app = null;
+      return null;
     }
   }
 
-  Future<List<SyncedTask>> fetchTasksForUser({
-    required String? email,
-    required String? uid,
-  }) async {
-    if (!_isInitialized) {
-      await initialize();
+  static Future<FirebaseApp> _initApp() async {
+    try {
+      return Firebase.app('rocis-todo');
+    } catch (_) {
+      return Firebase.initializeApp(
+        name: 'rocis-todo',
+        options: _platformOptions,
+      );
     }
-    final db = _tasksDb;
-    if (db == null) return [];
+  }
+
+  static Future<FirebaseAuth?> _tasksAuth() async {
+    final app = await _tasksApp();
+    return app == null ? null : FirebaseAuth.instanceFor(app: app);
+  }
+
+  /// Emits whenever the rocis-todo sign-in changes. Its session is persisted
+  /// separately from the Schedule one, so it survives restarts.
+  static Stream<User?> authStateChanges() async* {
+    final auth = await _tasksAuth();
+    if (auth != null) yield* auth.authStateChanges();
+  }
+
+  /// Signs in to rocis-todo with a Google access token. An ID token is issued
+  /// for the Schedule project's client, so only the access token carries over.
+  static Future<void> signInWithGoogleAccessToken(String accessToken) =>
+      _signIn(
+        (auth) => auth.signInWithCredential(
+          GoogleAuthProvider.credential(accessToken: accessToken),
+        ),
+      );
+
+  /// Signs in to rocis-todo with the same email and password, which works when
+  /// the user registered in ROCIs Tasks with them.
+  static Future<void> signInWithEmail(String email, String password) => _signIn(
+    (auth) => auth.signInWithEmailAndPassword(email: email, password: password),
+  );
+
+  /// Synced tasks are optional, so a failed sign-in only leaves them empty.
+  static Future<void> _signIn(
+    Future<UserCredential> Function(FirebaseAuth auth) signIn,
+  ) async {
+    try {
+      final auth = await _tasksAuth();
+      if (auth != null) await signIn(auth);
+    } catch (e) {
+      debugPrint('TasksFirestoreService: rocis-todo sign-in skipped: $e');
+    }
+  }
+
+  static Future<bool> get isSignedIn async =>
+      (await _tasksAuth())?.currentUser != null;
+
+  static Future<void> signOut() async {
+    try {
+      await (await _tasksAuth())?.signOut();
+    } catch (e) {
+      debugPrint('TasksFirestoreService: rocis-todo sign-out error: $e');
+    }
+  }
+
+  /// The signed-in user's open tasks in ROCIs Tasks. Tasks rules only let a
+  /// user read their own documents, so this reads as the rocis-todo user.
+  Future<List<SyncedTask>> fetchTasks() async {
+    final app = await _tasksApp();
+    if (app == null) return [];
+    final uid = FirebaseAuth.instanceFor(app: app).currentUser?.uid;
+    if (uid == null) return [];
 
     try {
-      String? targetUserId;
-      if (uid != null && uid.isNotEmpty) {
-        final doc = await db.collection('users').doc(uid).get();
-        if (doc.exists) {
-          targetUserId = uid;
-        }
-      }
-
-      if (targetUserId == null && email != null && email.isNotEmpty) {
-        final query = await db
-            .collection('users')
-            .where('email', isEqualTo: email)
-            .limit(1)
-            .get();
-        if (query.docs.isNotEmpty) {
-          targetUserId = query.docs.first.id;
-        }
-      }
-
-      if (targetUserId == null) return [];
-
-      final snapshot = await db
+      final snapshot = await FirebaseFirestore.instanceFor(app: app)
           .collection('users')
-          .doc(targetUserId)
+          .doc(uid)
           .collection('tasks')
           .where('isDeleted', isEqualTo: false)
           .get();

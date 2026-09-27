@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -6,6 +8,7 @@ import 'package:rocis_schedule/core/config/app_config.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
+import 'package:rocis_schedule/shared/services/tasks_firestore_service.dart';
 
 class AuthService extends ChangeNotifier {
   static const _serverClientId =
@@ -42,6 +45,7 @@ class AuthService extends ChangeNotifier {
       if (_customAuth != null || Firebase.apps.isNotEmpty) {
         _user = _auth.currentUser;
         _auth.authStateChanges().listen(_setUser);
+        if (isAuthenticated) unawaited(_restoreTasksSignIn());
       }
     } catch (e) {
       debugPrint('AuthService: Running in disconnected/test mode ($e)');
@@ -61,6 +65,31 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Accounts signed in before ROCIs Tasks sync existed have no rocis-todo
+  /// session yet; on Android, Google hands back a token without any UI.
+  Future<void> _restoreTasksSignIn() async {
+    if (kIsWeb || AppConfig.isGithubBuild) return;
+    if (await TasksFirestoreService.isSignedIn) return;
+    try {
+      final account = await _googleSignIn.signInSilently();
+      final token = (await account?.authentication)?.accessToken;
+      if (token != null) {
+        await TasksFirestoreService.signInWithGoogleAccessToken(token);
+      }
+    } catch (e) {
+      debugPrint('AuthService: ROCIs Tasks sign-in restore skipped: $e');
+    }
+  }
+
+  /// Also signs in to ROCIs Tasks so synced tasks can load. Not awaited:
+  /// signing in to Schedule never waits on it or fails because of it.
+  void _signInToTasks(AuthCredential? credential) {
+    final token = credential?.accessToken;
+    if (token != null) {
+      unawaited(TasksFirestoreService.signInWithGoogleAccessToken(token));
+    }
+  }
+
   Future<UserCredential?> signInWithGoogle() async {
     try {
       debugPrint('Starting Google Sign-In...');
@@ -68,6 +97,7 @@ class AuthService extends ChangeNotifier {
       if (AppConfig.isGithubBuild && !kIsWeb) {
         // Browser-based Google sign-in through the web OAuth client.
         final result = await _auth.signInWithProvider(GoogleAuthProvider());
+        _signInToTasks(result.credential);
         await _setUser(result.user);
         return result;
       }
@@ -77,6 +107,7 @@ class AuthService extends ChangeNotifier {
         final UserCredential result = await _auth.signInWithPopup(
           googleProvider,
         );
+        _signInToTasks(result.credential);
         await _setUser(result.user);
         debugPrint(
           'Firebase Web Sign-In successful for: ${result.user?.email}',
@@ -114,6 +145,7 @@ class AuthService extends ChangeNotifier {
       );
 
       final result = await _auth.signInWithCredential(credential);
+      _signInToTasks(credential);
       await _setUser(result.user);
       debugPrint('Firebase Sign-In successful for: ${result.user?.email}');
       return result;
@@ -133,6 +165,7 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
+      unawaited(TasksFirestoreService.signInWithEmail(email, password));
       await _setUser(result.user);
       return result;
     } catch (e) {
@@ -184,6 +217,7 @@ class AuthService extends ChangeNotifier {
       }
     }
 
+    await TasksFirestoreService.signOut();
     try {
       if (_customAuth != null || Firebase.apps.isNotEmpty) {
         await _auth.signOut();
@@ -280,6 +314,7 @@ class AuthService extends ChangeNotifier {
     await user.delete();
 
     await LocalDbService.deleteDatabaseFor(uid);
+    await TasksFirestoreService.signOut();
     if (!kIsWeb) {
       try {
         await _googleSignIn.signOut();
