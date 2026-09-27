@@ -1,3 +1,14 @@
+## ROCIs Tasks Sync Sign-In & Friend Request Rules - v0.0.6+12 Patch 2 - 2026-09-27
+
+#### Problems & Root Causes
+* Synced tasks were always empty: the `rocis-todo` secondary app was never signed in, so ROCIs Tasks' owner-only rules denied every read. The email fallback query was denied too.
+* `friend_requests` allowed any signed-in user to create documents under any user, for a feature that doesn't exist yet.
+
+#### Solutions Applied
+* `AuthService` signs in to `rocis-todo` after each Schedule sign-in (Google access token; email/password retried), restores it silently on Android for existing sessions, and signs out of it on sign-out and account deletion. Failures only leave synced tasks empty.
+* `TasksFirestoreService` reads as the `rocis-todo` user; `SyncedTasksProvider` reloads on `rocis-todo` auth changes. Email lookup removed.
+* `friend_requests` is owner-only (rules deployed 2026-09-27). Web redeployed.
+
 ## Google Calendar Sync & Account Deletion - v0.0.6+12 Internal Release - 2026-09-26
 
 #### Added
