@@ -142,6 +142,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: l10n.translate('password'),
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
+                      tooltip: _obscurePassword
+                          ? AppLocalizations.of(
+                              context,
+                            )!.translate('show_password')
+                          : AppLocalizations.of(
+                              context,
+                            )!.translate('hide_password'),
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_off_outlined
@@ -170,6 +177,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: l10n.translate('confirm_password'),
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
+                      tooltip: _obscureConfirmPassword
+                          ? AppLocalizations.of(
+                              context,
+                            )!.translate('show_password')
+                          : AppLocalizations.of(
+                              context,
+                            )!.translate('hide_password'),
                       icon: Icon(
                         _obscureConfirmPassword
                             ? Icons.visibility_off_outlined

@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6+12] - 2026-09-27 (Patch 3)
+
+### Changed
+- Better screen reader support: back, close, clear and show/hide password buttons are labeled, and color choices and assignment filters announce themselves and whether they're selected.
+
 ## [0.0.6+12] - 2026-09-27 (Patch 2)
 
 ### Fixed

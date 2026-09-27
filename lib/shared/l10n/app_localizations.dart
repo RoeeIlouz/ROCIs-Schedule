@@ -22,6 +22,11 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'show_password': 'Show password',
+      'hide_password': 'Hide password',
+      'apply': 'Apply',
+      'clear': 'Clear',
+      'color': 'Color',
       'gcal_sync_title': 'Sync to Google Calendar',
       'gcal_sync_desc':
           'Show your classes and events in Google Calendar on all your devices',
@@ -352,6 +357,11 @@ class AppLocalizations {
           'You need to create at least one course before scheduling events.',
     },
     'he': {
+      'show_password': 'הצג סיסמה',
+      'hide_password': 'הסתר סיסמה',
+      'apply': 'החל',
+      'clear': 'נקה',
+      'color': 'צבע',
       'gcal_sync_title': 'סנכרון ל-Google Calendar',
       'gcal_sync_desc':
           'הצגת השיעורים והאירועים שלכם ב-Google Calendar בכל המכשירים',
@@ -676,6 +686,11 @@ class AppLocalizations {
           'יש ליצור לפחות קורס אחד לפני הוספת אירועים למערכת.',
     },
     'es': {
+      'show_password': 'Mostrar contraseña',
+      'hide_password': 'Ocultar contraseña',
+      'apply': 'Aplicar',
+      'clear': 'Borrar',
+      'color': 'Color',
       'gcal_sync_title': 'Sincronizar con Google Calendar',
       'gcal_sync_desc':
           'Muestra tus clases y eventos en Google Calendar en todos tus dispositivos',
@@ -1013,6 +1028,11 @@ class AppLocalizations {
       'visit_website': 'Visitar sitio web',
     },
     'de': {
+      'show_password': 'Passwort anzeigen',
+      'hide_password': 'Passwort verbergen',
+      'apply': 'Übernehmen',
+      'clear': 'Löschen',
+      'color': 'Farbe',
       'gcal_sync_title': 'Mit Google Kalender synchronisieren',
       'gcal_sync_desc':
           'Zeige Kurse und Termine auf all deinen Geräten in Google Kalender',
@@ -1348,6 +1368,11 @@ class AppLocalizations {
       'visit_website': 'Webseite besuchen',
     },
     'fr': {
+      'show_password': 'Afficher le mot de passe',
+      'hide_password': 'Masquer le mot de passe',
+      'apply': 'Appliquer',
+      'clear': 'Effacer',
+      'color': 'Couleur',
       'gcal_sync_title': 'Synchroniser avec Google Agenda',
       'gcal_sync_desc':
           'Affichez vos cours et événements dans Google Agenda sur tous vos appareils',
@@ -1687,6 +1712,11 @@ class AppLocalizations {
       'visit_website': 'Visiter le site web',
     },
     'ar': {
+      'show_password': 'إظهار كلمة المرور',
+      'hide_password': 'إخفاء كلمة المرور',
+      'apply': 'تطبيق',
+      'clear': 'مسح',
+      'color': 'اللون',
       'gcal_sync_title': 'المزامنة مع تقويم Google',
       'gcal_sync_desc': 'اعرض محاضراتك وأحداثك في تقويم Google على جميع أجهزتك',
       'gcal_syncing': 'جارٍ المزامنة…',
@@ -2011,6 +2041,11 @@ class AppLocalizations {
       'visit_website': 'زيارة الموقع',
     },
     'hi': {
+      'show_password': 'पासवर्ड दिखाएं',
+      'hide_password': 'पासवर्ड छिपाएं',
+      'apply': 'लागू करें',
+      'clear': 'साफ़ करें',
+      'color': 'रंग',
       'gcal_sync_title': 'Google कैलेंडर से सिंक करें',
       'gcal_sync_desc':
           'अपनी कक्षाएं और इवेंट सभी डिवाइस पर Google कैलेंडर में देखें',
@@ -2342,6 +2377,11 @@ class AppLocalizations {
       'visit_website': 'वेबसाइट देखें',
     },
     'sv': {
+      'show_password': 'Visa lösenord',
+      'hide_password': 'Dölj lösenord',
+      'apply': 'Använd',
+      'clear': 'Rensa',
+      'color': 'Färg',
       'gcal_sync_title': 'Synka till Google Kalender',
       'gcal_sync_desc':
           'Visa dina lektioner och händelser i Google Kalender på alla dina enheter',

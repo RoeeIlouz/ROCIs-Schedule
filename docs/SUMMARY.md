@@ -1,3 +1,15 @@
+## Accessibility Labels & Hosting Security Headers - v0.0.6+12 Patch 3 - 2026-09-27
+
+#### Problems & Root Causes
+* 10 icon-only buttons (back, close, clear, apply, password visibility) had no tooltip, so screen readers announced just "button".
+* Color swatches in Add Event and the assignment filter tabs were bare `GestureDetector`s with no role, label or selected state.
+* Firebase Hosting sent no security headers.
+
+#### Solutions Applied
+* Tooltips from `MaterialLocalizations` (back/close) or new keys `show_password`, `hide_password`, `apply`, `clear`, `color` in all 8 languages.
+* `Semantics(button, selected, label)` around the swatches and filter tabs; color picker label and hints no longer hardcoded English.
+* `firebase.json`: HSTS, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy` (no framing headers: the Firebase auth iframe shares the hosting site).
+
 ## ROCIs Tasks Sync Sign-In & Friend Request Rules - v0.0.6+12 Patch 2 - 2026-09-27
 
 #### Problems & Root Causes

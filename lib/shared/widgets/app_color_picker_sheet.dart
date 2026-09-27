@@ -308,7 +308,8 @@ class _AppColorPickerSheetState extends State<AppColorPickerSheet> {
                       _updateColor(color);
                     },
                     child: Semantics(
-                      label: 'Color ${_formatHex(color)}',
+                      label:
+                          '${AppLocalizations.of(context)!.translate('color')} ${_formatHex(color)}',
                       selected: isSelected,
                       button: true,
                       child: AnimatedContainer(
@@ -496,11 +497,12 @@ class _AppColorPickerSheetState extends State<AppColorPickerSheet> {
                 controller: _hexController,
                 maxLength: 7,
                 decoration: InputDecoration(
-                  labelText: 'HEX Code',
+                  labelText: 'HEX',
                   hintText: '#6366F1',
                   counterText: '',
                   prefixIcon: const Icon(Icons.tag_rounded, size: 20),
                   suffixIcon: IconButton(
+                    tooltip: AppLocalizations.of(context)!.translate('apply'),
                     icon: const Icon(Icons.check_rounded),
                     onPressed: () => _onHexChanged(_hexController.text),
                   ),

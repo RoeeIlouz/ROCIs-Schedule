@@ -433,6 +433,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           backgroundColor: theme.colorScheme.surfaceContainerLowest,
           elevation: 0,
           leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: _cancelOrClose,
           ),

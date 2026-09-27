@@ -640,38 +640,45 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           spacing: 10,
                           children: _workColorPalette.map((color) {
                             final isSelected = _customColor == color;
-                            return GestureDetector(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                setState(() => _customColor = color);
-                              },
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: theme.colorScheme.onSurface,
-                                          width: 2.5,
+                            return Semantics(
+                              button: true,
+                              selected: isSelected,
+                              label: AppLocalizations.of(
+                                context,
+                              )!.translate('color'),
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _customColor = color);
+                                },
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: isSelected
+                                        ? Border.all(
+                                            color: theme.colorScheme.onSurface,
+                                            width: 2.5,
+                                          )
+                                        : null,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.35),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: isSelected
+                                      ? const Icon(
+                                          Icons.check_rounded,
+                                          size: 18,
+                                          color: Colors.white,
                                         )
                                       : null,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: color.withValues(alpha: 0.35),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
                                 ),
-                                child: isSelected
-                                    ? const Icon(
-                                        Icons.check_rounded,
-                                        size: 18,
-                                        color: Colors.white,
-                                      )
-                                    : null,
                               ),
                             );
                           }).toList(),
@@ -700,38 +707,43 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 spacing: 10,
                 children: _workColorPalette.map((color) {
                   final isSelected = _customColor == color;
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _customColor = color);
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(
-                                color: theme.colorScheme.onSurface,
-                                width: 2.5,
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: AppLocalizations.of(context)!.translate('color'),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _customColor = color);
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(
+                                  color: theme.colorScheme.onSurface,
+                                  width: 2.5,
+                                )
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.35),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check_rounded,
+                                size: 18,
+                                color: Colors.white,
                               )
                             : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.35),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
-                      child: isSelected
-                          ? const Icon(
-                              Icons.check_rounded,
-                              size: 18,
-                              color: Colors.white,
-                            )
-                          : null,
                     ),
                   );
                 }).toList(),
@@ -768,38 +780,45 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           spacing: 10,
                           children: _personalColorPalette.map((color) {
                             final isSelected = _customColor == color;
-                            return GestureDetector(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                setState(() => _customColor = color);
-                              },
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: theme.colorScheme.onSurface,
-                                          width: 2.5,
+                            return Semantics(
+                              button: true,
+                              selected: isSelected,
+                              label: AppLocalizations.of(
+                                context,
+                              )!.translate('color'),
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _customColor = color);
+                                },
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                    border: isSelected
+                                        ? Border.all(
+                                            color: theme.colorScheme.onSurface,
+                                            width: 2.5,
+                                          )
+                                        : null,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.35),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: isSelected
+                                      ? const Icon(
+                                          Icons.check_rounded,
+                                          size: 18,
+                                          color: Colors.white,
                                         )
                                       : null,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: color.withValues(alpha: 0.35),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
                                 ),
-                                child: isSelected
-                                    ? const Icon(
-                                        Icons.check_rounded,
-                                        size: 18,
-                                        color: Colors.white,
-                                      )
-                                    : null,
                               ),
                             );
                           }).toList(),
@@ -828,38 +847,43 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 spacing: 10,
                 children: _personalColorPalette.map((color) {
                   final isSelected = _customColor == color;
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _customColor = color);
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(
-                                color: theme.colorScheme.onSurface,
-                                width: 2.5,
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: AppLocalizations.of(context)!.translate('color'),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _customColor = color);
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(
+                                  color: theme.colorScheme.onSurface,
+                                  width: 2.5,
+                                )
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.35),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check_rounded,
+                                size: 18,
+                                color: Colors.white,
                               )
                             : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.35),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
-                      child: isSelected
-                          ? const Icon(
-                              Icons.check_rounded,
-                              size: 18,
-                              color: Colors.white,
-                            )
-                          : null,
                     ),
                   );
                 }).toList(),
@@ -1183,6 +1207,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           backgroundColor: theme.colorScheme.surfaceContainerLowest,
           elevation: 0,
           leading: IconButton(
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: _cancelOrClose,
           ),

@@ -211,6 +211,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: l10n.translate('password'),
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
+                        tooltip: _obscurePassword
+                            ? AppLocalizations.of(
+                                context,
+                              )!.translate('show_password')
+                            : AppLocalizations.of(
+                                context,
+                              )!.translate('hide_password'),
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility_off_outlined

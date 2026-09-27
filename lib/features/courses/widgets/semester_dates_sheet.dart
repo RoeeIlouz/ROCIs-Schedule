@@ -85,6 +85,9 @@ class SemesterDatesSheet extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).closeButtonTooltip,
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.of(sheetContext).pop(),
                   ),

@@ -424,6 +424,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       ),
                       if (_searchController.text.isNotEmpty)
                         IconButton(
+                          tooltip: AppLocalizations.of(
+                            context,
+                          )!.translate('clear'),
                           icon: const Icon(Icons.clear_rounded, size: 18),
                           onPressed: () => _searchController.clear(),
                           padding: EdgeInsets.zero,

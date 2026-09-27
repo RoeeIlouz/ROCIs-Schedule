@@ -9,7 +9,7 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final bool isEditing;
-  
+
   const ProfileSetupScreen({super.key, this.isEditing = false});
 
   @override
@@ -90,9 +90,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           // If editing from settings, go back
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.translate('profile_saved')),
-            ),
+            SnackBar(content: Text(l10n.translate('profile_saved'))),
           );
         } else {
           // If onboarding, go to schedule
@@ -126,6 +124,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         title: Text(l10n.translate('profile_info')),
         leading: widget.isEditing
             ? IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.of(context).pop(),
               )

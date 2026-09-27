@@ -923,7 +923,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                       ),
                       decoration: InputDecoration(
                         labelText: l10n.translate('grade'),
-                        hintText: 'e.g. 92',
+                        hintText: '92',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
