@@ -1,4 +1,4 @@
-import 'package:rocis_schedule/core/config/app_config.dart';
+import 'package:rocis_schedule/core/services/app_version_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -560,8 +560,7 @@ class SettingsScreen extends StatelessWidget {
             Center(
               child: GestureDetector(
                 onTap: () => AboutAppDialog.show(context),
-                child: Text(
-                  'v${AppConfig.appVersion}',
+                child: AppVersionText(
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,

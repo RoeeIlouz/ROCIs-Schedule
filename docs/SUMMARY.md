@@ -1,3 +1,11 @@
+## Patch Number in Version - v0.0.7+13 Patch 1 - 2026-09-28
+
+#### Problems & Root Causes
+* The app showed only the release version, so there was no way to tell which Shorebird patch a device runs.
+
+#### Solutions Applied
+* `AppVersionService.label()` reads the running patch via `shorebird_code_push` (`ShorebirdUpdater.readCurrentPatch`); `AppVersionText` shows `v0.0.7 P1` in Settings and the About dialog, plain version in debug/web/tests. The package is pure Dart (FFI into the engine), so it ships in a patch.
+
 ## Accessibility Labels & Hosting Security Headers - v0.0.6+12 Patch 3 - 2026-09-27
 
 #### Problems & Root Causes

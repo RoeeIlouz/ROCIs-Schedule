@@ -1,4 +1,4 @@
-import 'package:rocis_schedule/core/config/app_config.dart';
+import 'package:rocis_schedule/core/services/app_version_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -111,8 +111,7 @@ class _AboutAppDialogState extends State<AboutAppDialog> {
                       HapticFeedback.selectionClick();
                     }
                   },
-                  child: Text(
-                    'v${AppConfig.appVersion}',
+                  child: AppVersionText(
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontFamily: 'monospace',
