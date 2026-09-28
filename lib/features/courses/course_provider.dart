@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show DateUtils;
+import 'package:rocis_schedule/core/dev/screenshot_seed.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
@@ -133,6 +134,7 @@ class CourseProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
+      if (ScreenshotSeed.enabled) await ScreenshotSeed.apply(_dbService);
       _courses = await _dbService.getCourses();
       _events = await _dbService.getEvents();
       _semesters = await _dbService.getSemesters();
