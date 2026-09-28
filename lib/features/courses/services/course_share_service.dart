@@ -23,9 +23,13 @@ class CourseShareData {
 }
 
 class CourseShareService {
-  static const String offlineScheme = 'rocis://schedule/course';
-  static const String cloudScheme = 'rocis://schedule/cloud';
-  static const String cloudWebPrefix = 'https://rocisschedule.web.app/share';
+  /// Share links are verified App Links: they open the app, or the web app
+  /// when it isn't installed. Both routes handle `/share`.
+  static const String linkBase = 'https://schedule.rocisapps.com/share';
+
+  /// Prefixes of QR codes made before https links; they still resolve.
+  static const String legacyOfflineScheme = 'rocis://schedule/course';
+  static const String legacyCloudScheme = 'rocis://schedule/cloud';
   static const int cloudTtlDays = 7;
 
   final FirebaseFirestore? _customFirestore;
@@ -40,7 +44,7 @@ class CourseShareService {
   // ---------------------------------------------------------------------------
 
   /// Compresses a [course] and its linked [events] into a compact offline QR payload.
-  /// Format: `rocis://schedule/course?d=<BASE64URL_GZIP_JSON>`
+  /// Format: `https://schedule.rocisapps.com/share?d=<BASE64URL_GZIP_JSON>`
   String generateOfflinePayload(Course course, List<ScheduleEvent> events) {
     final compactEvents = events.map((e) {
       return <String, dynamic>{
@@ -71,16 +75,16 @@ class CourseShareService {
     final jsonStr = jsonEncode(compact);
     final compressedBytes = GZipEncoder().encodeBytes(utf8.encode(jsonStr));
     final b64 = base64Url.encode(compressedBytes);
-    return '$offlineScheme?d=$b64';
+    return '$linkBase?d=$b64';
   }
 
   /// Decodes raw query payload into a JSON map. Returns `null` if invalid.
   Map<String, dynamic>? decodeOfflinePayload(String rawUrlOrData) {
     try {
       String b64 = rawUrlOrData.trim();
-      if (b64.startsWith(offlineScheme)) {
-        final uri = Uri.parse(b64);
-        b64 = uri.queryParameters['d'] ?? '';
+      // Any link form: https://…/share?d=, /share?d= (router), rocis://…?d=
+      if (b64.contains('?d=') || b64.contains('&d=')) {
+        b64 = Uri.tryParse(b64)?.queryParameters['d'] ?? '';
       }
       if (b64.isEmpty) return null;
 
@@ -127,7 +131,7 @@ class CourseShareService {
     };
 
     await docRef.set(payload);
-    return '$cloudScheme?id=$shareId';
+    return '$linkBase?id=$shareId';
   }
 
   /// Fetches a cloud-shared course by [shareId].
@@ -168,8 +172,7 @@ class CourseShareService {
     final trimmed = rawUrl.trim();
 
     // Check Cloud Mode
-    if (trimmed.startsWith(cloudScheme) ||
-        trimmed.startsWith(cloudWebPrefix) ||
+    if (trimmed.startsWith(legacyCloudScheme) ||
         trimmed.contains('shared_courses') ||
         (trimmed.contains('?id=') && !trimmed.contains('?d='))) {
       final uri = Uri.tryParse(trimmed);
@@ -206,7 +209,7 @@ class CourseShareService {
     }
 
     // Check Offline Direct Mode
-    if (trimmed.startsWith(offlineScheme) || trimmed.contains('?d=')) {
+    if (trimmed.startsWith(legacyOfflineScheme) || trimmed.contains('?d=')) {
       final decoded = decodeOfflinePayload(trimmed);
       if (decoded == null) {
         throw StateError('Invalid offline course QR code payload.');

@@ -69,6 +69,7 @@ dependencies:
   mobile_scanner: ^7.4.2
   file_picker: ^13.1.0
   archive: ^4.1.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

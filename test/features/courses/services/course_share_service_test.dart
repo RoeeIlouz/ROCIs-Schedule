@@ -56,7 +56,7 @@ void main() {
 
       final payload = service.generateOfflinePayload(course, events);
 
-      expect(payload.startsWith(CourseShareService.offlineScheme), isTrue);
+      expect(payload.startsWith('${CourseShareService.linkBase}?d='), isTrue);
       expect(payload, contains('?d='));
 
       final decoded = service.decodeOfflinePayload(payload);
@@ -68,6 +68,32 @@ void main() {
       expect(decoded['ev'], isA<List>());
       expect((decoded['ev'] as List).length, equals(2));
     });
+
+    test(
+      'resolves https links, router-relative links and legacy QR codes',
+      () async {
+        final course = Course(
+          id: 'c',
+          name: 'Physics',
+          code: 'PHY1',
+          instructor: '',
+          color: const Color(0xFF2563EB),
+          credits: 3,
+        );
+        final link = service.generateOfflinePayload(course, const []);
+        final query = Uri.parse(link).query;
+
+        for (final raw in [
+          link,
+          '/share?$query', // what the /share route receives as state.uri
+          'rocis://schedule/course?$query', // QR codes made before 0.0.7
+        ]) {
+          final data = await service.resolveQrString(raw);
+          expect(data.course.name, 'Physics', reason: raw);
+          expect(data.isCloud, isFalse, reason: raw);
+        }
+      },
+    );
 
     test(
       'resolveQrString generates fresh UUIDs and unlinks original IDs',

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/features/auth/login_screen.dart';
@@ -5,6 +6,7 @@ import 'package:rocis_schedule/features/auth/register_screen.dart';
 import 'package:rocis_schedule/features/onboarding/onboarding_screen.dart';
 import 'package:rocis_schedule/features/onboarding/profile_setup_screen.dart';
 import 'package:rocis_schedule/features/courses/add_course_screen.dart';
+import 'package:rocis_schedule/features/courses/screens/shared_course_link_screen.dart';
 import 'package:rocis_schedule/features/schedule/add_event_screen.dart';
 import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
@@ -15,10 +17,16 @@ class AppRouter {
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
   static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+  // The web app uses hash URLs, so a https://schedule.rocisapps.com/share?…
+  // link would start at the default; route it to the share screen explicitly.
+  static String get _initialLocation => kIsWeb && Uri.base.path == '/share'
+      ? '/share?${Uri.base.query}'
+      : '/schedule';
+
   static final router = GoRouter(
     // The app opens straight into the schedule; signing in is optional and
     // only needed to sync across devices.
-    initialLocation: '/schedule',
+    initialLocation: _initialLocation,
     navigatorKey: _rootNavigatorKey,
     routes: [
       GoRoute(path: '/', redirect: (context, state) => '/schedule'),
@@ -112,6 +120,11 @@ class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) =>
             AddCourseScreen(courseToEdit: state.extra as Course?),
+      ),
+      GoRoute(
+        path: '/share',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => SharedCourseLinkScreen(link: state.uri),
       ),
       GoRoute(
         path: '/profile/edit',
