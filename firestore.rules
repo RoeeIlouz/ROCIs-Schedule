@@ -36,5 +36,22 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
     }
+
+    // QR "Cloud Link" course shares. A signed-in author creates a snapshot that
+    // anyone holding its random ID can open; listing is denied. The app rejects
+    // expired shares and a TTL policy on expiresAt deletes them.
+    match /shared_courses/{shareId} {
+      allow get: if true;
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.id == shareId
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt < request.time + duration.value(8, 'd')
+        && request.resource.data.course is map
+        && request.resource.data.events is list
+        && request.resource.data.events.size() <= 300;
+      allow delete: if request.auth != null
+        && resource.data.authorId == request.auth.uid;
+    }
   }
 }

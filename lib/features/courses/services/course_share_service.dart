@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:io' show gzip;
+import 'package:archive/archive.dart' show GZipDecoder, GZipEncoder;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -68,7 +69,7 @@ class CourseShareService {
     };
 
     final jsonStr = jsonEncode(compact);
-    final compressedBytes = gzip.encode(utf8.encode(jsonStr));
+    final compressedBytes = GZipEncoder().encodeBytes(utf8.encode(jsonStr));
     final b64 = base64Url.encode(compressedBytes);
     return '$offlineScheme?d=$b64';
   }
@@ -85,7 +86,7 @@ class CourseShareService {
 
       final normalizedB64 = base64Url.normalize(b64);
       final compressedBytes = base64Url.decode(normalizedB64);
-      final decompressedBytes = gzip.decode(compressedBytes);
+      final decompressedBytes = GZipDecoder().decodeBytes(compressedBytes);
       final jsonStr = utf8.decode(decompressedBytes);
       final decoded = jsonDecode(jsonStr);
       if (decoded is Map<String, dynamic>) {
@@ -110,16 +111,17 @@ class CourseShareService {
     String? authorId,
   }) async {
     final shareId = const Uuid().v4().replaceAll('-', '').substring(0, 12);
-    final now = DateTime.now().toUtc();
+    final now = DateTime.now();
     final expiresAt = now.add(const Duration(days: cloudTtlDays));
 
     final docRef = _firestore.collection('shared_courses').doc(shareId);
 
     final payload = {
       'id': shareId,
-      'createdAt': now.toIso8601String(),
-      'expiresAt': expiresAt.toIso8601String(),
-      'authorId': authorId ?? 'anonymous',
+      'createdAt': Timestamp.fromDate(now),
+      // A Timestamp so the Firestore TTL policy on expiresAt deletes the doc.
+      'expiresAt': Timestamp.fromDate(expiresAt),
+      'authorId': authorId ?? FirebaseAuth.instance.currentUser?.uid,
       'course': course.toMap(),
       'events': events.map((e) => e.toMap()).toList(),
     };
@@ -143,12 +145,14 @@ class CourseShareService {
     }
 
     final data = docSnap.data()!;
-    final expiresAtStr = data['expiresAt'] as String?;
-    if (expiresAtStr != null) {
-      final expiresAt = DateTime.tryParse(expiresAtStr);
-      if (expiresAt != null && DateTime.now().toUtc().isAfter(expiresAt)) {
-        return null; // Expired share
-      }
+    final expiresAtRaw = data['expiresAt'];
+    final expiresAt = expiresAtRaw is Timestamp
+        ? expiresAtRaw.toDate()
+        : expiresAtRaw is String
+        ? DateTime.tryParse(expiresAtRaw)
+        : null;
+    if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
+      return null; // Expired share
     }
 
     return data;
