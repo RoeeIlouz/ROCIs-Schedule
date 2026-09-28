@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7+13] - 2026-09-28
+
+### Added
+- Share courses by QR code or link: https://schedule.rocisapps.com/share links open the app (web fallback), offline or 7-day cloud links, import preview with semester picker
+
 ## [0.0.6+12] - 2026-09-27 (Patch 3)
 
 ### Changed
