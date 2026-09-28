@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="assets/images/play_store/app_icon_512.jpg" alt="ROCIs Schedule Icon" width="120" style="border-radius: 24px;" />
+  <img src="assets/images/play_store/icon-512.png" alt="ROCIs Schedule Icon" width="120" style="border-radius: 24px;" />
 
   # 🎓 ROCIs Schedule
   **The Next-Generation Academic Timetable & GPA Management Assistant**
@@ -14,7 +14,7 @@
 
   <br />
 
-  <img src="assets/images/play_store/feature_graphic_1024x500.jpg" alt="ROCIs Schedule Feature Graphic" width="100%" style="border-radius: 16px;" />
+  <img src="assets/images/play_store/en/feature.jpg" alt="ROCIs Schedule Feature Graphic" width="100%" style="border-radius: 16px;" />
 
 </div>
 
@@ -66,24 +66,24 @@
 <div align="center">
   <table>
     <tr>
-      <td width="33%"><img src="assets/images/play_store/screenshot_1_hero.jpg" alt="Weekly Timetable" /></td>
-      <td width="33%"><img src="assets/images/play_store/screenshot_2_exams.jpg" alt="Exam Countdown" /></td>
-      <td width="33%"><img src="assets/images/play_store/screenshot_3_gpa.jpg" alt="GPA Calculator" /></td>
+      <td width="33%"><img src="assets/images/play_store/en/phone/01.jpg" alt="Weekly Timetable" /></td>
+      <td width="33%"><img src="assets/images/play_store/en/phone/02.jpg" alt="Share a Course by QR or Link" /></td>
+      <td width="33%"><img src="assets/images/play_store/en/phone/03.jpg" alt="GPA and Credits" /></td>
     </tr>
     <tr>
       <td align="center"><b>Weekly Timetable</b></td>
-      <td align="center"><b>Exam Countdowns</b></td>
-      <td align="center"><b>GPA Overview</b></td>
+      <td align="center"><b>Course Sharing (QR / Link)</b></td>
+      <td align="center"><b>GPA & Credits</b></td>
     </tr>
     <tr>
-      <td width="33%"><img src="assets/images/play_store/screenshot_4_tasks.jpg" alt="Assignments & Tasks" /></td>
-      <td width="33%"><img src="assets/images/play_store/screenshot_5_import.jpg" alt="ICS Calendar Import" /></td>
-      <td width="33%"><img src="assets/images/play_store/screenshot_6_amoled.jpg" alt="AMOLED Dark Mode" /></td>
+      <td width="33%"><img src="assets/images/play_store/en/phone/04.jpg" alt="Assignments" /></td>
+      <td width="33%"><img src="assets/images/play_store/en/phone/05.jpg" alt="Calendar Import" /></td>
+      <td width="33%"><img src="assets/images/play_store/en/phone/06.jpg" alt="Dark Mode" /></td>
     </tr>
     <tr>
       <td align="center"><b>Assignments</b></td>
-      <td align="center"><b>.ICS Calendar Import</b></td>
-      <td align="center"><b>AMOLED Dark Mode</b></td>
+      <td align="center"><b>Calendar Import</b></td>
+      <td align="center"><b>Dark Mode</b></td>
     </tr>
   </table>
 </div>

@@ -1,3 +1,12 @@
+## Store & README Graphics Redesign - 2026-09-29 (assets only, no app change)
+
+#### Problems & Root Causes
+* Old store images were AI/HTML mockups of screens that do not exist, at wrong sizes (768x1376 screenshots, 1376x768 feature graphic).
+
+#### Solutions Applied
+* New set from real web captures with demo data (`--dart-define=SCREENSHOT_SEED=true`, see `lib/core/dev/screenshot_seed.dart`; off in release builds) and the in-app teal accent: `assets/images/play_store/en/{feature.jpg, phone/01-07.jpg}` plus `icon-512.png`. Deck lives in ROCIs-tasks `tools/store-screenshots/projects/schedule.json`.
+* README points at the new set. Old files (`assets/images/play_store/*.jpg`, `docs/marketing/playstore/`) kept until deletion is approved.
+
 ## Patch Number in Version - v0.0.7+13 Patch 1 - 2026-09-28
 
 #### Problems & Root Causes
