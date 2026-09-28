@@ -9,6 +9,8 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
+import 'package:rocis_schedule/features/courses/screens/course_qr_scanner_screen.dart';
+import 'package:rocis_schedule/features/courses/widgets/share_course_qr_sheet.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
@@ -96,6 +98,12 @@ class _CourseListScreenState extends State<CourseListScreen> {
                         onPressed: () => context.push('/courses/add'),
                         icon: const Icon(Icons.add),
                         label: Text(l10n.translate('add_course')),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => CourseQrScannerScreen.open(context),
+                        icon: const Icon(Icons.qr_code_scanner_rounded),
+                        label: Text(l10n.translate('scan_course_qr')),
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
@@ -258,6 +266,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 ),
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.qr_code_scanner_rounded),
+                    tooltip: l10n.translate('scan_course_qr'),
+                    onPressed: () => CourseQrScannerScreen.open(context),
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.search_rounded),
                     tooltip: l10n.translate('search'),
                     onPressed: () => CommandPaletteDialog.show(context),
@@ -334,6 +347,19 @@ class _CourseListScreenState extends State<CourseListScreen> {
             child: _buildSemesterFilterStrip(context, provider, l10n, theme),
           ),
           const SizedBox(width: 16),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
+            label: Text(l10n.translate('scan_course_qr')),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => CourseQrScannerScreen.open(context),
+          ),
+          const SizedBox(width: 8),
           OutlinedButton.icon(
             icon: const Icon(Icons.file_download_outlined, size: 16),
             label: Text(l10n.translate('import_ics')),
@@ -707,13 +733,34 @@ class _CourseListScreenState extends State<CourseListScreen> {
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.more_vert_rounded, size: 20),
                           onSelected: (value) async {
-                            if (value == 'edit') {
+                            if (value == 'share_qr') {
+                              final events = context
+                                  .read<CourseProvider>()
+                                  .events
+                                  .where((e) => e.courseId == course.id)
+                                  .toList();
+                              ShareCourseQrSheet.show(
+                                context,
+                                course: course,
+                                events: events,
+                              );
+                            } else if (value == 'edit') {
                               context.push('/courses/edit', extra: course);
                             } else if (value == 'delete') {
                               await _handleDeleteCourse(context, course, l10n);
                             }
                           },
                           itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: 'share_qr',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.qr_code_2_rounded, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text(l10n.translate('share_course_qr')),
+                                ],
+                              ),
+                            ),
                             PopupMenuItem(
                               value: 'edit',
                               child: Row(
