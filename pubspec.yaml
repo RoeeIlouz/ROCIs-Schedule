@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.0.7+13
+version: 0.0.8+14
 
 environment:
   sdk: ^3.10.0
@@ -88,19 +88,25 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo.png"
-  adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/images/logo.png"
+  image_path: "assets/brand/png/schedule-icon-1024.png"
+  image_path_ios: "assets/brand/png/schedule-play-store-512.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "assets/brand/png/schedule-adaptive-background-1024.png"
+  adaptive_icon_foreground: "assets/brand/png/schedule-adaptive-foreground-1024.png"
+  adaptive_icon_foreground_inset: 0
+  adaptive_icon_monochrome: "assets/brand/png/schedule-adaptive-monochrome-1024.png"
   min_sdk_android: 21
   web:
     generate: true
-    image_path: "assets/images/logo.png"
+    image_path: "assets/brand/png/schedule-icon-1024.png"
+    background_color: "#0E6FA8"
+    theme_color: "#0E6FA8"
   windows:
     generate: true
-    image_path: "assets/images/logo.png"
+    image_path: "assets/brand/png/schedule-icon-1024.png"
   macos:
     generate: true
-    image_path: "assets/images/logo.png"
+    image_path: "assets/brand/png/schedule-play-store-512.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
