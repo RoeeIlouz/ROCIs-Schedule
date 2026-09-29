@@ -1,0 +1,77 @@
+name: Shorebird Patch (Android)
+
+# Builds and publishes an over-the-air Shorebird patch for an existing release.
+# Runs on Linux because Windows Smart App Control blocks Shorebird's unsigned
+# impellerc.exe on the dev machine. Manual trigger only.
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release to patch, exactly as in pubspec.yaml (e.g. 0.0.7+13)'
+        required: true
+      allow_asset_diffs:
+        description: 'Allow asset differences (they will NOT reach users; only Dart code is patched)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorebird-patch
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check required secrets
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$SHOREBIRD_TOKEN" ]; then echo "::error::Missing secret SHOREBIRD_TOKEN"; exit 1; fi
+
+      - name: Check the version matches pubspec.yaml
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        run: |
+          pubspec=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
+          if [ "$pubspec" != "$RELEASE_VERSION" ]; then
+            echo "::error::pubspec.yaml is $pubspec but the input is $RELEASE_VERSION"
+            exit 1
+          fi
+
+      - name: Free disk space
+        shell: bash
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+          sudo docker system prune -af || true
+
+      # Same major JDK as the local release builds (Android Studio JBR 25), so
+      # Shorebird sees no Java/Kotlin differences against the release.
+      - name: Set up Java
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: Set up Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: Publish patch
+        shell: bash
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          ALLOW_ASSET_DIFFS: ${{ inputs.allow_asset_diffs }}
+        run: |
+          args=(--platforms=android "--release-version=$RELEASE_VERSION")
+          if [ "$ALLOW_ASSET_DIFFS" = "true" ]; then args+=(--allow-asset-diffs); fi
+          shorebird patch "${args[@]}"
