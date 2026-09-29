@@ -143,6 +143,8 @@ class MyApp extends StatelessWidget {
               final ColorScheme lightScheme =
                   (themeProvider.useDynamicColor && lightDynamic != null)
                   ? lightDynamic
+                  : themeProvider.customSeedColor == ThemeProvider.brandSeed
+                  ? AppTheme.brandScheme(Brightness.light)
                   : ColorScheme.fromSeed(
                       seedColor: themeProvider.customSeedColor,
                       brightness: Brightness.light,
@@ -150,6 +152,8 @@ class MyApp extends StatelessWidget {
               final ColorScheme darkScheme =
                   (themeProvider.useDynamicColor && darkDynamic != null)
                   ? darkDynamic
+                  : themeProvider.customSeedColor == ThemeProvider.brandSeed
+                  ? AppTheme.brandScheme(Brightness.dark)
                   : ColorScheme.fromSeed(
                       seedColor: themeProvider.customSeedColor,
                       brightness: Brightness.dark,

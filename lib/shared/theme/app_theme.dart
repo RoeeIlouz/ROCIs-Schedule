@@ -63,6 +63,35 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
 class AppTheme {
   // ROCI's Standard Color Tokens
   static const Color primaryIndigo = Color(0xFF6366F1);
+
+  // Brand palette, taken from the app logo: an ocean-blue badge fading to
+  // cyan, with a green "today" cell.
+  static const Color brandOcean = Color(0xFF0E6FA8);
+  static const Color brandTeal = Color(0xFF16B5C9);
+  static const Color brandGreen = Color(0xFF3CC44A);
+
+  /// Logo-matched scheme: ocean-blue primary (fidelity keeps the logo hue),
+  /// cyan-teal secondary and the logo's green as tertiary.
+  static ColorScheme brandScheme(Brightness brightness) {
+    ColorScheme seeded(Color seed) => ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: brightness,
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+    );
+    final teal = seeded(brandTeal);
+    final green = seeded(brandGreen);
+    return seeded(brandOcean).copyWith(
+      secondary: teal.primary,
+      onSecondary: teal.onPrimary,
+      secondaryContainer: teal.primaryContainer,
+      onSecondaryContainer: teal.onPrimaryContainer,
+      tertiary: green.primary,
+      onTertiary: green.onPrimary,
+      tertiaryContainer: green.primaryContainer,
+      onTertiaryContainer: green.onPrimaryContainer,
+    );
+  }
+
   static const Color successEmerald = Color(0xFF10B981);
   static const Color warningAmber = Color(0xFFF59E0B);
   static const Color dangerRed = Color(0xFFEF4444);
@@ -189,15 +218,7 @@ class AppTheme {
   }
 
   static ThemeData lightTheme(ColorScheme? dynamicColorScheme) {
-    final baseScheme =
-        dynamicColorScheme ??
-        ColorScheme.fromSeed(
-          seedColor: primaryIndigo,
-          secondary: const Color(0xFF0EA5E9),
-          tertiary: warningAmber,
-          error: dangerRed,
-          brightness: Brightness.light,
-        );
+    final baseScheme = dynamicColorScheme ?? brandScheme(Brightness.light);
 
     // Harmonized surface tones derived from seed
     final colorScheme = baseScheme.copyWith(
@@ -510,15 +531,7 @@ class AppTheme {
     ColorScheme? dynamicColorScheme, {
     bool isAmoled = false,
   }) {
-    final baseScheme =
-        dynamicColorScheme ??
-        ColorScheme.fromSeed(
-          seedColor: primaryIndigo,
-          secondary: const Color(0xFF38BDF8),
-          tertiary: const Color(0xFFFBBF24),
-          error: const Color(0xFFF87171),
-          brightness: Brightness.dark,
-        );
+    final baseScheme = dynamicColorScheme ?? brandScheme(Brightness.dark);
 
     final Color bgColor;
     final Color surfaceColor;

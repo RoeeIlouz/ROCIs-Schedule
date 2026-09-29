@@ -1,3 +1,11 @@
+## Brand Theme - 2026-09-29 (Patch 2 on 0.0.7+13)
+
+#### Problems & Root Causes
+* Dynamic color was the default, so the logo's colors never showed on Android 12+; the fallback seed was indigo.
+
+#### Solutions Applied
+* `AppTheme.brandScheme` (ocean 0E6FA8 fidelity primary, teal 16B5C9 secondary, green 3CC44A tertiary); `ThemeProvider.brandSeed`, new first preset `rocis` ("ROCIs Ocean"); `use_dynamic_color` defaults to false; main.dart uses the brand scheme when the seed is the brand seed.
+
 ## Store & README Graphics Redesign - 2026-09-29 (assets only, no app change)
 
 #### Problems & Root Causes
@@ -183,5 +191,4 @@ This file summarizes errors encountered and changes made to the codebase, ensuri
   - Ecosystem launcher tile in `SettingsScreen`.
 * **Bi-directional Sync**: Offline SQLite database per user (`rocis_schedule_<uid>.db`) with remote Firestore synchronization for courses, schedule events, and assignments.
 * **Automated Tests**: 22/22 unit and widget tests passing, 0 analyzer issues found.
-
 

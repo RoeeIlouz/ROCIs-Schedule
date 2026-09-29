@@ -277,7 +277,7 @@ class SettingsScreen extends StatelessWidget {
                     title: l10n.translate('accent_color'),
                     initialColor: themeProvider.customSeedColor,
                     onResetToDefault: () {
-                      themeProvider.setCustomSeedColor(const Color(0xFF6366F1));
+                      themeProvider.setCustomSeedColor(ThemeProvider.brandSeed);
                     },
                     resetLabel: l10n.translate('reset_colors'),
                     onColorChanged: (c) {

@@ -32,7 +32,16 @@ class ThemeProvider extends ChangeNotifier {
   static const String _keyBetaFeaturesUnlocked = 'beta_features_unlocked';
   static const String _keySelectedPresetId = 'selected_preset_id';
 
+  static const Color brandSeed = Color(0xFF0E6FA8);
+
   static const List<ThemePreset> presets = [
+    ThemePreset(
+      id: 'rocis',
+      name: 'ROCIs Ocean',
+      primaryColor: brandSeed,
+      secondaryColor: Color(0xFF16B5C9),
+      icon: Icons.calendar_month_rounded,
+    ),
     ThemePreset(
       id: 'indigo',
       name: 'Indigo Modern',
@@ -92,13 +101,13 @@ class ThemeProvider extends ChangeNotifier {
   ];
 
   ThemeMode _themeMode = ThemeMode.system;
-  bool _useDynamicColor = true;
+  bool _useDynamicColor = false;
   bool _isAmoled = false;
   bool _useGlassmorphism = true;
   Locale? _locale;
   bool _use24HourFormat = true;
   bool _enableReminders = true;
-  Color _customSeedColor = const Color(0xFF6366F1);
+  Color _customSeedColor = brandSeed;
   int _reminderLeadMinutes = 15;
   bool _enableTasksIntegration = false;
   bool _betaFeaturesUnlocked = false;
@@ -129,7 +138,7 @@ class ThemeProvider extends ChangeNotifier {
       _themeMode = ThemeMode.values[modeIndex];
     }
 
-    _useDynamicColor = prefs.getBool(_keyUseDynamicColor) ?? true;
+    _useDynamicColor = prefs.getBool(_keyUseDynamicColor) ?? false;
     _isAmoled = prefs.getBool(_keyIsAmoled) ?? false;
     _useGlassmorphism = prefs.getBool(_keyUseGlassmorphism) ?? true;
     _use24HourFormat = prefs.getBool(_keyUse24HourFormat) ?? true;

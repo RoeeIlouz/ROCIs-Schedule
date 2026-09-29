@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +19,9 @@ void main() {
       expect(provider.themeMode, ThemeMode.system);
       expect(provider.isAmoled, isFalse);
       expect(provider.useGlassmorphism, isTrue);
-      expect(provider.useDynamicColor, isTrue);
+      // Brand colors by default; wallpaper colors are opt-in.
+      expect(provider.useDynamicColor, isFalse);
+      expect(provider.customSeedColor, ThemeProvider.brandSeed);
       expect(provider.use24HourFormat, isTrue);
       expect(provider.enableReminders, isTrue);
       expect(provider.locale, isNull);
@@ -63,8 +66,9 @@ void main() {
         await provider.setUseGlassmorphism(false);
         expect(provider.useGlassmorphism, isFalse);
 
-        await provider.setUseDynamicColor(false);
-        expect(provider.useDynamicColor, isFalse);
+        await provider.setUseDynamicColor(true);
+        // Always false on web; on device it follows the opt-in.
+        expect(provider.useDynamicColor, !kIsWeb);
 
         await provider.setUse24HourFormat(false);
         expect(provider.use24HourFormat, isFalse);
@@ -74,7 +78,7 @@ void main() {
 
         final prefs = await SharedPreferences.getInstance();
         expect(prefs.getBool('use_glassmorphism'), isFalse);
-        expect(prefs.getBool('use_dynamic_color'), isFalse);
+        expect(prefs.getBool('use_dynamic_color'), isTrue);
         expect(prefs.getBool('use_24_hour_format'), isFalse);
         expect(prefs.getBool('enable_reminders'), isFalse);
       },
@@ -141,7 +145,8 @@ void main() {
         await Future.delayed(const Duration(milliseconds: 50));
 
         expect(ThemeProvider.presets, isNotEmpty);
-        expect(ThemeProvider.presets.length, equals(8));
+        expect(ThemeProvider.presets.length, equals(9));
+        expect(ThemeProvider.presets.first.id, 'rocis');
 
         final tealPreset = ThemeProvider.presets.firstWhere(
           (p) => p.id == 'teal',
