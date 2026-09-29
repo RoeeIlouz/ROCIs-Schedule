@@ -5,7 +5,7 @@
 
 #### Solutions Applied
 * New set from real web captures with demo data (`--dart-define=SCREENSHOT_SEED=true`, see `lib/core/dev/screenshot_seed.dart`; off in release builds) and the in-app teal accent: `assets/images/play_store/en/{feature.jpg, phone/01-07.jpg}` plus `icon-512.png`. Deck lives in ROCIs-tasks `tools/store-screenshots/projects/schedule.json`.
-* README points at the new set. Old files (`assets/images/play_store/*.jpg`, `docs/marketing/playstore/`) kept until deletion is approved.
+* README points at the new set. Old files (`assets/images/play_store/*.jpg`, `docs/marketing/playstore/`) removed.
 
 ## Patch Number in Version - v0.0.7+13 Patch 1 - 2026-09-28
 
