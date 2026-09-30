@@ -1,3 +1,11 @@
+## Localized Dates - 2026-09-30 (Patch 1 on 0.0.8+14)
+
+#### Problems & Root Causes
+* `DateFormat` calls without a locale used Intl's English default, so the schedule header, day strip and date labels stayed English in every language; two weekday lists were hardcoded English for all non-Hebrew languages.
+
+#### Solutions Applied
+* `AppLocalizationsDelegate.load` awaits `initializeDateFormatting(languageCode)` and sets `Intl.defaultLocale`; the weekday fallbacks use `DateFormat.E()`. `ScreenshotSeed` demo data now follows the saved `locale` pref (8-language Play set).
+
 ## Brand Theme - 2026-09-29 (Patch 2 on 0.0.7+13)
 
 #### Problems & Root Causes
