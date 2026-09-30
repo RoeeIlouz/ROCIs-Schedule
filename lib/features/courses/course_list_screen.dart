@@ -1122,7 +1122,8 @@ class _CourseListScreenState extends State<CourseListScreen> {
       final l10n = AppLocalizations.of(context)!;
       final weekdayNames = l10n.locale.languageCode == 'he'
           ? ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\'']
-          : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          // 2023-01-01 was a Sunday.
+          : [for (var i = 0; i < 7; i++) DateFormat.E().format(DateTime(2023, 1, 1 + i))];
       final days = event.daysOfWeek
           .map((day) => weekdayNames[((day % 7) + 7) % 7])
           .join(', ');

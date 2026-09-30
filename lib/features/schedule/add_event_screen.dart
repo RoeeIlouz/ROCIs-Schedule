@@ -272,8 +272,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       const days = ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\''];
       return days[index % 7];
     }
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return days[index % 7];
+    // 2023-01-01 was a Sunday.
+    return DateFormat.E().format(DateTime(2023, 1, 1 + index % 7));
   }
 
   @override

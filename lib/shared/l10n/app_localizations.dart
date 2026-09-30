@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 class AppLocalizations {
   final Locale locale;
@@ -2922,6 +2924,9 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
 
   @override
   Future<AppLocalizations> load(Locale locale) async {
+    // DateFormat calls without an explicit locale follow the app language.
+    await initializeDateFormatting(locale.languageCode);
+    Intl.defaultLocale = locale.languageCode;
     return AppLocalizations(locale);
   }
 
