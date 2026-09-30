@@ -61,7 +61,7 @@ class AppDesignTokens extends ThemeExtension<AppDesignTokens> {
 }
 
 class AppTheme {
-  // ROCI's Standard Color Tokens
+  // ROCIs Standard Color Tokens
   static const Color primaryIndigo = Color(0xFF6366F1);
 
   // Brand palette, taken from the app logo: an ocean-blue badge fading to

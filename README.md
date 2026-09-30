@@ -22,7 +22,7 @@
 
 ## 🌟 Overview
 
-**ROCIs Schedule** is an offline-first academic management app designed for students and educators. Built with Flutter and adhering to ROCI's Design System, it unifies weekly lecture schedules, live exam countdown alerts, weighted GPA simulations, assignment tracking, and 1-tap `.ics` calendar imports from Canvas, Moodle, and Google Calendar.
+**ROCIs Schedule** is an offline-first academic management app designed for students and educators. Built with Flutter and adhering to ROCIs Design System, it unifies weekly lecture schedules, live exam countdown alerts, weighted GPA simulations, assignment tracking, and 1-tap `.ics` calendar imports from Canvas, Moodle, and Google Calendar.
 
 ---
 
@@ -105,7 +105,7 @@ graph TD
 - **State Management:** `provider`
 - **Persistence:** `sqflite` (Offline-first local SQLite cache) & `shared_preferences`
 - **Cloud Backend:** Firebase Auth & Cloud Firestore
-- **UI & Theming:** Google Fonts `Outfit`, `GlassContainer`, ROCI's Design Tokens
+- **UI & Theming:** Google Fonts `Outfit`, `GlassContainer`, ROCIs Design Tokens
 - **Routing:** `go_router`
 - **Testing:** 69 exhaustive unit, widget, and adversarial stress tests (`ruthless_edge_cases_test.dart`)
 
