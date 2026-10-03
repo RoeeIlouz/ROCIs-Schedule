@@ -1,3 +1,11 @@
+## Phone Week View - 2026-10-03 (Patch 2 on 0.0.8+14)
+
+#### Problems & Root Causes
+* `WeeklyTimetableGrid` was only built in the desktop branch of `ScheduleScreen` (width >= 850), so phones had no way to see the whole week.
+
+#### Solutions Applied
+* Added a `compact` mode to `WeeklyTimetableGrid` (narrow time axis, single-letter weekdays, wrapped titles) and an app bar toggle on phones, saved as the `schedule_mobile_week_view` pref. Swipe changes the week; a day header tap opens that day's list.
+
 ## Localized Dates - 2026-09-30 (Patch 1 on 0.0.8+14)
 
 #### Problems & Root Causes

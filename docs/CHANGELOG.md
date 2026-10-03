@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8+14] - 2026-10-03 (Patch 2)
+
+### Added
+- Week view on phones: a button in the top bar switches between the day list and a week grid. Swipe to change weeks, tap a day to open it. The app remembers your choice.
+
 ## [0.0.8+14] - 2026-09-30 (Patch 1)
 
 ### Fixed
