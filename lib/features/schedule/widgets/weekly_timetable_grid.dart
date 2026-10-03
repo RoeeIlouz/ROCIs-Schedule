@@ -57,6 +57,10 @@ class WeeklyTimetableGrid extends StatefulWidget {
   final CourseProvider courseProvider;
   final bool use24HourFormat;
 
+  /// Phone layout: a narrower time axis, shorter hours and event blocks that
+  /// wrap the title instead of showing time and location.
+  final bool compact;
+
   const WeeklyTimetableGrid({
     super.key,
     required this.events,
@@ -67,6 +71,7 @@ class WeeklyTimetableGrid extends StatefulWidget {
     this.onEmptySlotTap,
     required this.courseProvider,
     this.use24HourFormat = true,
+    this.compact = false,
   });
 
   @override
@@ -78,8 +83,8 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
   // events that week.
   static const int _defaultStartHour = 8;
   static const int _defaultEndHour = 20;
-  static const double _hourHeight = 64.0;
-  static const double _timeColWidth = 58.0;
+  double get _hourHeight => widget.compact ? 56.0 : 64.0;
+  double get _timeColWidth => widget.compact ? 34.0 : 58.0;
 
   late ScrollController _verticalScrollController;
 
@@ -142,6 +147,7 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
     final Color gridLineColor = isDark
         ? const Color(0xFF27272A)
         : const Color(0xFFE4E4E7);
+    final compact = widget.compact;
     final Color headerBgColor = isDark
         ? const Color(0xFF13141B)
         : const Color(0xFFF8FAFC);
@@ -157,7 +163,7 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
         children: [
           // 1. Days of Week Header
           Container(
-            height: 60,
+            height: compact ? 56 : 60,
             decoration: BoxDecoration(
               color: headerBgColor,
               border: Border(bottom: BorderSide(color: gridLineColor)),
@@ -170,7 +176,7 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                   child: Center(
                     child: Icon(
                       Icons.schedule_rounded,
-                      size: 18,
+                      size: compact ? 15 : 18,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
@@ -192,7 +198,9 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                         widget.onDateSelected(day);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          vertical: compact ? 4 : 6,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? theme.colorScheme.primary.withValues(
@@ -212,9 +220,12 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              DateFormat('E').format(day).toUpperCase(),
+                              DateFormat(
+                                compact ? 'EEEEE' : 'E',
+                              ).format(day).toUpperCase(),
+                              maxLines: 1,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: compact ? 10 : 11,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.5,
                                 color: isToday
@@ -226,8 +237,8 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                             ),
                             const SizedBox(height: 2),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 5 : 7,
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
@@ -239,7 +250,7 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                               child: Text(
                                 '${day.day}',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: compact ? 12 : 13,
                                   fontWeight: isToday || isSelected
                                       ? FontWeight.bold
                                       : FontWeight.w500,
@@ -279,16 +290,24 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                           return SizedBox(
                             height: _hourHeight,
                             child: Padding(
-                              padding: const EdgeInsets.only(right: 8, top: 4),
+                              padding: EdgeInsetsDirectional.only(
+                                end: compact ? 4 : 8,
+                                top: 4,
+                              ),
                               child: Text(
                                 widget.use24HourFormat
-                                    ? '${hour.toString().padLeft(2, '0')}:00'
+                                    ? (compact
+                                          ? hour.toString().padLeft(2, '0')
+                                          : '${hour.toString().padLeft(2, '0')}:00')
                                     : DateFormat.j().format(
                                         DateTime(2026, 1, 1, hour),
                                       ),
-                                textAlign: TextAlign.right,
+                                textAlign: TextAlign.end,
+                                maxLines: 1,
+                                softWrap: false,
+                                overflow: TextOverflow.clip,
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: compact ? 9.5 : 11,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.45,
@@ -446,11 +465,11 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                               ),
                                               Padding(
                                                 padding:
-                                                    const EdgeInsetsDirectional.only(
-                                                      start: 7,
-                                                      end: 6,
-                                                      top: 4,
-                                                      bottom: 4,
+                                                    EdgeInsetsDirectional.only(
+                                                      start: compact ? 5.5 : 7,
+                                                      end: compact ? 2 : 6,
+                                                      top: compact ? 3 : 4,
+                                                      bottom: compact ? 3 : 4,
                                                     ),
                                                 child: Column(
                                                   crossAxisAlignment:
@@ -460,9 +479,10 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                                   children: [
                                                     Row(
                                                       children: [
-                                                        if (event.domain !=
-                                                            EventDomain
-                                                                .academic) ...[
+                                                        if (!compact &&
+                                                            event.domain !=
+                                                                EventDomain
+                                                                    .academic) ...[
                                                           Icon(
                                                             event.domain.icon,
                                                             size: 11,
@@ -485,14 +505,27 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                                               fontWeight:
                                                                   FontWeight
                                                                       .w700,
-                                                              fontSize: 11,
+                                                              fontSize: compact
+                                                                  ? 9.5
+                                                                  : 11,
+                                                              height: compact
+                                                                  ? 1.2
+                                                                  : null,
                                                               color: isDark
                                                                   ? Colors.white
                                                                   : const Color(
                                                                       0xFF0F172A,
                                                                     ),
                                                             ),
-                                                            maxLines: 1,
+                                                            maxLines: compact
+                                                                ? ((blockHeight -
+                                                                              6) ~/
+                                                                          11.4)
+                                                                      .clamp(
+                                                                        1,
+                                                                        6,
+                                                                      )
+                                                                : 1,
                                                             overflow:
                                                                 TextOverflow
                                                                     .ellipsis,
@@ -500,7 +533,8 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                                         ),
                                                       ],
                                                     ),
-                                                    if (blockHeight >= 42) ...[
+                                                    if (!compact &&
+                                                        blockHeight >= 42) ...[
                                                       const SizedBox(height: 2),
                                                       Text(
                                                         '${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}',
@@ -513,7 +547,8 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                                         maxLines: 1,
                                                       ),
                                                     ],
-                                                    if (blockHeight >= 56 &&
+                                                    if (!compact &&
+                                                        blockHeight >= 56 &&
                                                         event
                                                             .location
                                                             .isNotEmpty) ...[

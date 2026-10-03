@@ -9,6 +9,7 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
 import 'package:rocis_schedule/features/schedule/schedule_screen.dart';
+import 'package:rocis_schedule/features/schedule/widgets/weekly_timetable_grid.dart';
 import 'package:rocis_schedule/features/assignments/assignment_list_screen.dart';
 import 'package:rocis_schedule/features/courses/course_list_screen.dart';
 import 'package:rocis_schedule/features/profile/settings_screen.dart';
@@ -101,6 +102,61 @@ void main() {
 
         expect(find.text('Lecture 1'), findsOneWidget);
         expect(find.text('Algorithms'), findsOneWidget);
+        expect(find.text('Hall B'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'ScheduleScreen on a phone switches to the week grid and remembers it',
+      (WidgetTester tester) async {
+        await tester.binding.setSurfaceSize(const Size(360, 780));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final courseProvider = CourseProvider('test_uid');
+        final now = DateTime.now();
+        courseProvider.addCourseFromSync(
+          Course(
+            id: 'c1',
+            name: 'Algorithms',
+            code: 'CS201',
+            instructor: 'Dr. Turing',
+            color: Colors.teal,
+            credits: 4,
+          ),
+        );
+        courseProvider.addEventFromSync(
+          ScheduleEvent(
+            id: 'e1',
+            courseId: 'c1',
+            title: 'Lecture 1',
+            type: EventType.classType,
+            startTime: DateTime(now.year, now.month, now.day, 10),
+            endTime: DateTime(now.year, now.month, now.day, 12),
+            location: 'Hall B',
+          ),
+        );
+
+        await tester.pumpWidget(
+          createTestWidget(
+            child: const ScheduleScreen(),
+            courseProvider: courseProvider,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byType(WeeklyTimetableGrid), findsNothing);
+
+        await tester.tap(find.byTooltip('Week view'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(WeeklyTimetableGrid), findsOneWidget);
+        expect(find.text('Lecture 1'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getBool('schedule_mobile_week_view'), isTrue);
+
+        await tester.tap(find.byTooltip('Day view'));
+        await tester.pumpAndSettle();
+        expect(find.byType(WeeklyTimetableGrid), findsNothing);
         expect(find.text('Hall B'), findsOneWidget);
       },
     );

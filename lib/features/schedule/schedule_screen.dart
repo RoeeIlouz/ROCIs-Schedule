@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
@@ -26,6 +27,34 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   EventType? _selectedFilter;
   EventDomain? _selectedDomainFilter;
   bool _isTimetableGridView = true;
+
+  /// Phone layout only: the week grid instead of the day list. Remembered
+  /// across launches.
+  bool _isMobileWeekView = false;
+  static const _mobileWeekViewKey = 'schedule_mobile_week_view';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMobileViewPreference();
+  }
+
+  Future<void> _loadMobileViewPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getBool(_mobileWeekViewKey) ?? false;
+    if (mounted && saved != _isMobileWeekView) {
+      setState(() => _isMobileWeekView = saved);
+    }
+  }
+
+  void _setMobileWeekView(bool value) {
+    HapticFeedback.selectionClick();
+    setState(() => _isMobileWeekView = value);
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.setBool(_mobileWeekViewKey, value),
+    );
+  }
+
   bool _isEventOnDate(
     ScheduleEvent event,
     DateTime date,
@@ -145,6 +174,35 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ],
         );
 
+        Widget buildWeekGrid({required bool compact}) => WeeklyTimetableGrid(
+          events: courseProvider.events.where((event) {
+            if (_selectedDomainFilter != null &&
+                event.domain != _selectedDomainFilter) {
+              return false;
+            }
+            if (_selectedFilter != null && event.type != _selectedFilter) {
+              return false;
+            }
+            return true;
+          }).toList(),
+          courses: courses,
+          selectedDate: _selectedDate,
+          // On a phone, tapping a day header opens that day's list.
+          onDateSelected: (day) {
+            setState(() => _selectedDate = day);
+            if (compact) _setMobileWeekView(false);
+          },
+          onEventTap: (event, course) =>
+              _showEventDetailsDialog(context, event, course, l10n),
+          onEmptySlotTap: (date, hour) => context.push(
+            '/schedule/add-event',
+            extra: DateTime(date.year, date.month, date.day, hour),
+          ),
+          courseProvider: courseProvider,
+          use24HourFormat: context.watch<ThemeProvider>().use24HourFormat,
+          compact: compact,
+        );
+
         if (isDesktop) {
           final theme = Theme.of(context);
           final centerWorkspace = isFirstRun
@@ -152,33 +210,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               : _isTimetableGridView
               ? Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: WeeklyTimetableGrid(
-                    events: courseProvider.events.where((event) {
-                      if (_selectedDomainFilter != null &&
-                          event.domain != _selectedDomainFilter) {
-                        return false;
-                      }
-                      if (_selectedFilter != null &&
-                          event.type != _selectedFilter) {
-                        return false;
-                      }
-                      return true;
-                    }).toList(),
-                    courses: courses,
-                    selectedDate: _selectedDate,
-                    onDateSelected: (day) =>
-                        setState(() => _selectedDate = day),
-                    onEventTap: (event, course) =>
-                        _showEventDetailsDialog(context, event, course, l10n),
-                    onEmptySlotTap: (date, hour) => context.push(
-                      '/schedule/add-event',
-                      extra: DateTime(date.year, date.month, date.day, hour),
-                    ),
-                    courseProvider: courseProvider,
-                    use24HourFormat: context
-                        .watch<ThemeProvider>()
-                        .use24HourFormat,
-                  ),
+                  child: buildWeekGrid(compact: false),
                 )
               : Center(
                   child: ConstrainedBox(
@@ -229,6 +261,40 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           );
         }
 
+        final showMobileWeek = _isMobileWeekView && !isFirstRun;
+        final isRtl = Directionality.of(context) == TextDirection.rtl;
+        final mobileBody = showMobileWeek
+            ? Column(
+                children: [
+                  if (upcomingExams.isNotEmpty)
+                    _buildUpcomingExamsBanner(upcomingExams, courses, l10n),
+                  const SizedBox(height: 6),
+                  _buildFilterChips(l10n),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    // Swiping sideways changes the week, as on the day strip.
+                    child: GestureDetector(
+                      onHorizontalDragEnd: (details) {
+                        final velocity = details.primaryVelocity ?? 0;
+                        if (velocity.abs() < 200) return;
+                        final forward = isRtl ? velocity > 0 : velocity < 0;
+                        _shiftWeek(forward ? 1 : -1);
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          8,
+                          0,
+                          8,
+                          contentBottomPadding - 8,
+                        ),
+                        child: buildWeekGrid(compact: true),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : mainTimetableContent;
+
         return Scaffold(
           appBar: AppBar(
             title: InkWell(
@@ -253,6 +319,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ),
             ),
             actions: [
+              if (!isFirstRun)
+                IconButton(
+                  icon: Icon(
+                    _isMobileWeekView
+                        ? Icons.view_agenda_outlined
+                        : Icons.calendar_view_week_rounded,
+                  ),
+                  tooltip: l10n.translate(
+                    _isMobileWeekView ? 'day_view' : 'week_view',
+                  ),
+                  onPressed: () => _setMobileWeekView(!_isMobileWeekView),
+                ),
               IconButton(
                 icon: const Icon(Icons.search_rounded),
                 tooltip: l10n.translate('search'),
@@ -271,7 +349,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               const SizedBox(width: 4),
             ],
           ),
-          body: mainTimetableContent,
+          body: mobileBody,
           floatingActionButton: isFirstRun
               ? null
               : Padding(
