@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.9+15] - 2026-10-05
+
+### Added
+- Week view: event icons with optional per-course icon, start time and location on tall blocks, press and hold to preview an event
+
 ## [0.0.8+14] - 2026-10-03 (Patch 2)
 
 ### Added
