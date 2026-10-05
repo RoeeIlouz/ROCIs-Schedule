@@ -149,7 +149,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(WeeklyTimetableGrid), findsOneWidget);
-        expect(find.text('Lecture 1'), findsOneWidget);
+        expect(find.textContaining('Lecture 1'), findsOneWidget);
         expect(tester.takeException(), isNull);
         final prefs = await SharedPreferences.getInstance();
         expect(prefs.getBool('schedule_mobile_week_view'), isTrue);

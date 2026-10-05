@@ -775,7 +775,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               Row(
                 children: [
                   Icon(
-                    _getEventIcon(event.type),
+                    event.type.icon,
                     size: 16,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -1778,20 +1778,5 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       return days[date.weekday % 7];
     }
     return DateFormat.E().format(date);
-  }
-
-  IconData _getEventIcon(EventType type) {
-    switch (type) {
-      case EventType.classType:
-        return Icons.class_outlined;
-      case EventType.exam:
-        return Icons.assignment_outlined;
-      case EventType.lab:
-        return Icons.science_outlined;
-      case EventType.study:
-        return Icons.menu_book_outlined;
-      case EventType.other:
-        return Icons.event_outlined;
-    }
   }
 }

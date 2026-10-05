@@ -1036,11 +1036,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          _getEventIcon(event.type),
-                          color: course.color,
-                          size: 20,
-                        ),
+                        Icon(event.type.icon, color: course.color, size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -1132,20 +1128,5 @@ class _CourseListScreenState extends State<CourseListScreen> {
     final localizations = MaterialLocalizations.of(context);
     final date = localizations.formatShortDate(event.startTime);
     return '$date   $start - $end';
-  }
-
-  IconData _getEventIcon(EventType type) {
-    switch (type) {
-      case EventType.classType:
-        return Icons.class_outlined;
-      case EventType.exam:
-        return Icons.assignment_outlined;
-      case EventType.lab:
-        return Icons.science_outlined;
-      case EventType.study:
-        return Icons.menu_book_outlined;
-      case EventType.other:
-        return Icons.event_outlined;
-    }
   }
 }

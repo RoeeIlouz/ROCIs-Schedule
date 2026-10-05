@@ -62,6 +62,9 @@ class Course {
   final double? grade;
   final String? semester;
 
+  /// Optional [CourseIcons] key shown on this course's events.
+  final String? icon;
+
   Course({
     required this.id,
     required this.name,
@@ -71,7 +74,10 @@ class Course {
     required this.credits,
     this.grade,
     this.semester = 'semester_1',
+    this.icon,
   });
+
+  IconData? get iconData => CourseIcons.byKey[icon];
 
   Course copyWith({
     String? id,
@@ -82,6 +88,8 @@ class Course {
     double? credits,
     double? grade,
     String? semester,
+    String? icon,
+    bool clearIcon = false,
   }) {
     return Course(
       id: id ?? this.id,
@@ -92,6 +100,7 @@ class Course {
       credits: credits ?? this.credits,
       grade: grade ?? this.grade,
       semester: semester ?? this.semester,
+      icon: clearIcon ? null : (icon ?? this.icon),
     );
   }
 
@@ -105,6 +114,7 @@ class Course {
       'credits': credits,
       'grade': grade,
       'semester': semester ?? 'semester_1',
+      'icon': icon,
     };
   }
 
@@ -145,6 +155,7 @@ class Course {
       credits: parsedCredits,
       grade: parsedGrade,
       semester: map['semester']?.toString() ?? 'semester_1',
+      icon: CourseIcons.byKey.containsKey(map['icon']) ? map['icon'] : null,
     );
   }
 }
@@ -190,7 +201,74 @@ enum EventDomain {
   }
 }
 
-enum EventType { classType, exam, lab, study, other }
+enum EventType {
+  classType,
+  exam,
+  lab,
+  study,
+  other;
+
+  IconData get icon {
+    switch (this) {
+      case EventType.classType:
+        return Icons.class_outlined;
+      case EventType.exam:
+        return Icons.assignment_outlined;
+      case EventType.lab:
+        return Icons.science_outlined;
+      case EventType.study:
+        return Icons.menu_book_outlined;
+      case EventType.other:
+        return Icons.event_outlined;
+    }
+  }
+
+  String get l10nKey {
+    switch (this) {
+      case EventType.classType:
+        return 'class_type';
+      case EventType.exam:
+        return 'exam';
+      case EventType.lab:
+        return 'lab';
+      case EventType.study:
+        return 'study';
+      case EventType.other:
+        return 'other';
+    }
+  }
+}
+
+/// Icons a user can pick for a course. Stored by key (not code point) so
+/// icon tree shaking keeps working in release builds.
+class CourseIcons {
+  static const Map<String, IconData> byKey = {
+    'school': Icons.school_outlined,
+    'book': Icons.menu_book_outlined,
+    'calculate': Icons.calculate_outlined,
+    'functions': Icons.functions_rounded,
+    'science': Icons.science_outlined,
+    'biotech': Icons.biotech_outlined,
+    'code': Icons.code_rounded,
+    'computer': Icons.computer_rounded,
+    'memory': Icons.memory_rounded,
+    'engineering': Icons.engineering_outlined,
+    'architecture': Icons.architecture_rounded,
+    'palette': Icons.palette_outlined,
+    'music': Icons.music_note_rounded,
+    'language': Icons.translate_rounded,
+    'history': Icons.account_balance_outlined,
+    'public': Icons.public_rounded,
+    'psychology': Icons.psychology_outlined,
+    'health': Icons.medical_services_outlined,
+    'gavel': Icons.gavel_rounded,
+    'business': Icons.business_center_outlined,
+    'trending': Icons.trending_up_rounded,
+    'sports': Icons.sports_soccer_rounded,
+    'eco': Icons.eco_outlined,
+    'edit': Icons.edit_note_rounded,
+  };
+}
 
 class ScheduleEvent {
   final String id;
@@ -207,6 +285,12 @@ class ScheduleEvent {
   final Color? color;
 
   Duration get duration => endTime.difference(startTime);
+
+  /// The course's chosen icon, else the event type's for academic events;
+  /// the domain's icon otherwise.
+  IconData iconFor(Course? course) => domain == EventDomain.academic
+      ? (course?.iconData ?? type.icon)
+      : domain.icon;
   bool get isNegativeDuration => duration.isNegative;
 
   ScheduleEvent({

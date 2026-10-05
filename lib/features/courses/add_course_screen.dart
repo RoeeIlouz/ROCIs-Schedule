@@ -26,6 +26,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   late final TextEditingController _instructorController;
   late final TextEditingController _creditsController;
   late Color _selectedColor;
+  String? _selectedIcon;
   late String _selectedSemester;
   bool _isLoading = false;
 
@@ -57,6 +58,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           : '',
     );
     _selectedColor = editing?.color ?? const Color(0xFF6366F1);
+    _selectedIcon = editing?.icon;
     _selectedSemester = editing?.semester ?? 'semester_1';
   }
 
@@ -111,6 +113,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           credits: creditsValue,
           color: _selectedColor,
           semester: _selectedSemester,
+          icon: _selectedIcon,
+          clearIcon: _selectedIcon == null,
         );
         await context.read<CourseProvider>().updateCourse(updated);
         if (mounted) {
@@ -128,6 +132,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           credits: creditsValue,
           color: _selectedColor,
           semester: _selectedSemester,
+          icon: _selectedIcon,
         );
         await context.read<CourseProvider>().addCourse(course);
         if (mounted) _cancelOrClose();
@@ -141,6 +146,44 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Widget _buildIconOption(
+    String? key,
+    IconData icon,
+    String? tooltip,
+    ThemeData theme,
+  ) {
+    final isSelected = _selectedIcon == key;
+    final option = InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedIcon = key);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: _selectedColor.withValues(alpha: isSelected ? 0.18 : 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? _selectedColor
+                : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: key == null && !isSelected
+              ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+              : _selectedColor,
+        ),
+      ),
+    );
+    return tooltip == null ? option : Tooltip(message: tooltip, child: option);
   }
 
   @override
@@ -365,6 +408,28 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 ),
               );
             }).toList(),
+          ),
+          const SizedBox(height: 24),
+
+          // Optional icon shown on this course's events
+          Text(
+            l10n.translate('course_icon'),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildIconOption(
+                null,
+                EventType.classType.icon,
+                l10n.translate('course_icon_default'),
+                theme,
+              ),
+              for (final entry in CourseIcons.byKey.entries)
+                _buildIconOption(entry.key, entry.value, null, theme),
+            ],
           ),
           const SizedBox(height: 36),
 
