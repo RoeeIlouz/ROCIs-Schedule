@@ -1,3 +1,13 @@
+## Week Grid Details & Course Icons - 2026-10-05 (Internal release 0.0.9+15)
+
+#### Problems & Root Causes
+* Compact (phone) `WeeklyTimetableGrid` blocks showed only the title, so time, place and event kind needed a tap into the details dialog.
+* Shipping as a Shorebird patch was not possible: the new icons change the tree-shaken `MaterialIcons-Regular.otf`, an asset patches cannot carry.
+
+#### Solutions Applied
+* Event blocks moved into `_EventBlock`: an inline icon (`ScheduleEvent.iconFor`: course icon, else `EventType.icon`, else domain icon), start time from ~75 min and location from ~100 min on phones, and a press-and-hold `_EventPeek` overlay card.
+* Optional `Course.icon` stored as a `CourseIcons.byKey` key (keeps icon tree shaking), picker in `AddCourseScreen`, local DB v7 adds `courses.icon`.
+
 ## Phone Week View - 2026-10-03 (Patch 2 on 0.0.8+14)
 
 #### Problems & Root Causes
