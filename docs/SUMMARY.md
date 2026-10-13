@@ -1,3 +1,19 @@
+## Multi-day Events, Semester Picker, Colors, Bidi Text - 2026-10-13 (Patch 1 on 0.0.9+15)
+
+#### Problems & Root Causes
+* One-time events were tied to a single day (`occursOn` compared only `startTime`'s date), so holidays and trips could not span days.
+* Text widgets and fields used the app's direction, so Hebrew mixed with English (or the reverse) was reordered.
+* The event details dialog had three full buttons that stacked on phones; the week grid preview was touch-only.
+* The event form listed every course with no semester, school events could not have their own color, and only fixed swatches existed.
+
+#### Solutions Applied
+* `ScheduleEvent.allDay` (local DB v8) plus `coversDay`/`spansDays`; spanning events go to an all-day band (`layoutSpanRows`) and export as date-only ICS / Google Calendar events.
+* `textDirectionOf` / `BidiText` / `BidiFieldBuilder` (`lib/shared/utils/bidi.dart`) use the first strong character's direction.
+* Dialog: close X, delete icon, compact edit button. `_EventBlock` shows the preview on mouse hover after 450 ms.
+* Semester dropdown before course (`semestersWithCourses`, `semesterOn`); location `RawAutocomplete` from `locationSuggestions`.
+* `ScheduleEvent.colorFor` (own color, else course/category); `ColorSwatchPicker` with a More colors swatch opening `AppColorPickerSheet`. Shared-course imports and course recolors no longer freeze copies of the course color on events.
+* The Material icon set is kept identical to the release (no icon added or dropped, `edit_calendar_rounded` stays on the phone date tiles): the tree-shaken `MaterialIcons-Regular.otf` is an asset, and patches cannot change it.
+
 ## Week Grid Details & Course Icons - 2026-10-05 (Internal release 0.0.9+15)
 
 #### Problems & Root Causes

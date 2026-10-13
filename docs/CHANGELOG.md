@@ -5,6 +5,18 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.9+15] - 2026-10-13 (Patch 1)
+
+### Added
+- Multi-day and all-day events (holidays, trips), shown as bars above the week grid
+- New school events: pick the semester, then a course from it; past locations are suggested
+- More colors for courses and events, and school events can have their own color
+- Hover an event in the web week view to preview it
+
+### Fixed
+- Text mixing Hebrew or Arabic with English now reads in the right direction
+- Event popup buttons fit on phones
+
 ## [0.0.9+15] - 2026-10-05
 
 ### Added
