@@ -41,7 +41,7 @@ class LocalDbService {
     }
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -106,6 +106,11 @@ class LocalDbService {
         await db.execute('ALTER TABLE courses ADD COLUMN icon TEXT');
       } catch (_) {}
     }
+    if (oldVersion < 8) {
+      try {
+        await db.execute('ALTER TABLE events ADD COLUMN allDay INTEGER');
+      } catch (_) {}
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -137,6 +142,7 @@ class LocalDbService {
         notes TEXT,
         domain TEXT,
         color INTEGER,
+        allDay INTEGER,
         FOREIGN KEY (courseId) REFERENCES courses (id) ON DELETE CASCADE
       )
     ''');

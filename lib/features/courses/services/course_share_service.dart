@@ -55,6 +55,7 @@ class CourseShareService {
         if (e.location.trim().isNotEmpty) 'loc': e.location.trim(),
         if (e.daysOfWeek.isNotEmpty) 'dow': e.daysOfWeek,
         if (e.recurring) 'rec': 1,
+        if (e.allDay) 'ad': 1,
         if (e.notes.trim().isNotEmpty) 'not': e.notes.trim(),
         if (e.domain != EventDomain.academic) 'dom': e.domain.name,
         if (e.color != null) 'col': e.color!.toARGB32(),
@@ -276,7 +277,9 @@ class CourseShareService {
         recurring: event.recurring,
         notes: event.notes,
         domain: event.domain,
-        color: sanitizedCourse.color,
+        // Same as the course's means it simply follows the course.
+        color: event.color == baseCourse.color ? null : event.color,
+        allDay: event.allDay,
       );
     }).toList();
 
@@ -364,6 +367,12 @@ class CourseShareService {
 
         final domainStr = item['dom'] ?? item['domain'];
         final domain = EventDomain.fromString(domainStr?.toString());
+        final rawAllDay = item['ad'] ?? item['allDay'];
+        final allDay = !recurring && (rawAllDay == 1 || rawAllDay == true);
+        final rawEventColor = item['col'] ?? item['color'];
+        final eventColor = rawEventColor is num
+            ? Color(rawEventColor.toInt())
+            : null;
 
         sanitizedEvents.add(
           ScheduleEvent(
@@ -378,7 +387,9 @@ class CourseShareService {
             recurring: recurring,
             notes: notes,
             domain: domain,
-            color: color,
+            // Only a color of its own; otherwise it follows the course.
+            color: eventColor == color ? null : eventColor,
+            allDay: allDay,
           ),
         );
       }

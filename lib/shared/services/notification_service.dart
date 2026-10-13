@@ -46,7 +46,8 @@ class NotificationService {
     Course? course,
     int minutesBefore = 15,
   }) async {
-    if (!_isInitialized) return;
+    // All-day events have no start time to count back from.
+    if (!_isInitialized || event.allDay) return;
 
     try {
       final now = DateTime.now();

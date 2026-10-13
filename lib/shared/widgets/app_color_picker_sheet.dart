@@ -247,7 +247,7 @@ class _AppColorPickerSheetState extends State<AppColorPickerSheet> {
                           ),
                         ),
                         Text(
-                          l10n.translate('accent_color'),
+                          widget.title ?? l10n.translate('accent_color'),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),

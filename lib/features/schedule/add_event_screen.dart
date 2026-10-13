@@ -7,7 +7,9 @@ import 'package:rocis_schedule/shared/services/event_collision_service.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/widgets/app_button.dart';
 import 'package:rocis_schedule/shared/widgets/app_text_field.dart';
+import 'package:rocis_schedule/shared/widgets/color_swatch_picker.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
+import 'package:rocis_schedule/shared/utils/bidi.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +45,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
     Color(0xFF475569), // Slate
   ];
 
+  /// Swatches for giving a school event its own color.
+  static const List<Color> _academicColorPalette = [
+    Color(0xFFEF4444), // Red (exams)
+    Color(0xFFF59E0B), // Amber
+    Color(0xFF10B981), // Emerald
+    Color(0xFF0EA5E9), // Sky Blue
+    Color(0xFF8B5CF6), // Violet
+  ];
+
   static const List<Color> _personalColorPalette = [
     Color(0xFF8B5CF6), // Purple (Default Personal)
     Color(0xFFEC4899), // Pink
@@ -52,9 +63,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
     Color(0xFFF97316), // Orange
   ];
 
+  /// Academic events pick a semester first, then one of its courses.
+  String? _selectedSemesterId;
   String? _selectedCourseId;
+  final _locationFocus = FocusNode();
   EventType _selectedType = EventType.classType;
   DateTime _eventDate = DateTime.now();
+
+  /// Last day of a one-time event; later than [_eventDate] for multi-day
+  /// events such as holidays or trips.
+  DateTime _endDate = DateTime.now();
+  bool _allDay = false;
   TimeOfDay _startTimeOfDay = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTimeOfDay = const TimeOfDay(hour: 10, minute: 30);
   final List<int> _selectedDays = [];
@@ -76,8 +95,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
       _selectedCourseId = event.courseId.isEmpty ? null : event.courseId;
       _selectedType = event.type;
       _eventDate = event.startTime;
-      _startTimeOfDay = TimeOfDay.fromDateTime(event.startTime);
-      _endTimeOfDay = TimeOfDay.fromDateTime(event.endTime);
+      _endDate = event.recurring ? event.startTime : event.endTime;
+      _allDay = event.allDay;
+      if (!event.allDay) {
+        _startTimeOfDay = TimeOfDay.fromDateTime(event.startTime);
+        _endTimeOfDay = TimeOfDay.fromDateTime(event.endTime);
+      }
       _selectedDays.addAll(event.daysOfWeek);
       _recurring = event.recurring;
       return;
@@ -85,6 +108,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     final start = widget.initialStart;
     if (start != null) {
       _eventDate = start;
+      _endDate = start;
       _startTimeOfDay = TimeOfDay.fromDateTime(start);
       _endTimeOfDay = TimeOfDay(hour: (start.hour + 1) % 24, minute: 0);
       _selectedDays.add(start.weekday % 7);
@@ -107,7 +131,57 @@ class _AddEventScreenState extends State<AddEventScreen> {
     _titleController.dispose();
     _locationController.dispose();
     _notesController.dispose();
+    _locationFocus.dispose();
     super.dispose();
+  }
+
+  /// The semester shown and the course chosen within it. Until the user
+  /// picks, the semester is the edited course's, else the one the event's
+  /// date falls in, else the first that has courses.
+  ({
+    List<Semester> semesters,
+    String? semesterId,
+    List<Course> courses,
+    String? courseId,
+  })
+  _resolveCourse(CourseProvider provider) {
+    final semesters = provider.semestersWithCourses;
+    bool offered(String? id) => semesters.any((s) => s.id == id);
+    final chosenCourse = provider.courses
+        .where((c) => c.id == _selectedCourseId)
+        .firstOrNull;
+    final semesterId = offered(_selectedSemesterId)
+        ? _selectedSemesterId
+        : chosenCourse != null
+        ? CourseProvider.semesterIdOf(chosenCourse)
+        : offered(provider.semesterOn(_eventDate)?.id)
+        ? provider.semesterOn(_eventDate)!.id
+        : semesters.firstOrNull?.id;
+    final courses = provider.courses
+        .where((c) => CourseProvider.semesterIdOf(c) == semesterId)
+        .toList();
+    final courseId = courses.any((c) => c.id == _selectedCourseId)
+        ? _selectedCourseId
+        : courses.firstOrNull?.id;
+    return (
+      semesters: semesters,
+      semesterId: semesterId,
+      courses: courses,
+      courseId: courseId,
+    );
+  }
+
+  String _semesterName(Semester semester, AppLocalizations l10n) {
+    switch (semester.id) {
+      case 'semester_1':
+        return l10n.translate('first_semester');
+      case 'semester_2':
+        return l10n.translate('second_semester');
+      case 'semester_summer':
+        return l10n.translate('summer_semester');
+      default:
+        return semester.name;
+    }
   }
 
   void _cancelOrClose() {
@@ -128,19 +202,53 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  Future<void> _pickDate() async {
+  /// Start and end of the event as entered. All-day events run from the
+  /// first day's midnight to the last day's 23:59.
+  ({DateTime start, DateTime end}) _eventRange() {
+    if (_recurring) {
+      return (
+        start: _buildDateTime(_eventDate, _startTimeOfDay),
+        end: _buildDateTime(_eventDate, _endTimeOfDay),
+      );
+    }
+    if (_allDay) {
+      return (
+        start: DateUtils.dateOnly(_eventDate),
+        end: _buildDateTime(_endDate, const TimeOfDay(hour: 23, minute: 59)),
+      );
+    }
+    return (
+      start: _buildDateTime(_eventDate, _startTimeOfDay),
+      end: _buildDateTime(_endDate, _endTimeOfDay),
+    );
+  }
+
+  Future<void> _pickDate({bool isEnd = false}) async {
+    final current = isEnd ? _endDate : _eventDate;
+    final yearAgo = DateTime(DateTime.now().year - 1);
+    // Editing an old event must not start before the picker's range.
+    final earliest = current.isBefore(yearAgo) ? current : yearAgo;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _eventDate,
-      // Editing an old event must not start before the picker's range.
-      firstDate: _eventDate.isBefore(DateTime(DateTime.now().year - 1))
-          ? _eventDate
-          : DateTime(DateTime.now().year - 1),
+      initialDate: current,
+      firstDate: isEnd ? DateUtils.dateOnly(_eventDate) : earliest,
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
     );
-    if (picked != null) {
-      setState(() => _eventDate = picked);
-    }
+    if (picked == null) return;
+    setState(() {
+      if (isEnd) {
+        _endDate = picked;
+      } else {
+        // Moving the start keeps the event's length in days.
+        final days = DateTime.utc(_endDate.year, _endDate.month, _endDate.day)
+            .difference(
+              DateTime.utc(_eventDate.year, _eventDate.month, _eventDate.day),
+            )
+            .inDays;
+        _eventDate = picked;
+        _endDate = DateUtils.addDaysToDate(picked, days.clamp(0, 365));
+      }
+    });
   }
 
   Future<void> _pickTime(bool isStart) async {
@@ -152,7 +260,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
           _startTimeOfDay = picked;
           final startMinutes = picked.hour * 60 + picked.minute;
           final endMinutes = _endTimeOfDay.hour * 60 + _endTimeOfDay.minute;
-          if (endMinutes <= startMinutes) {
+          final sameDay =
+              _recurring || DateUtils.isSameDay(_eventDate, _endDate);
+          if (sameDay && endMinutes <= startMinutes) {
             _endTimeOfDay = TimeOfDay(
               hour: (picked.hour + 1) % 24,
               minute: picked.minute,
@@ -167,10 +277,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   Future<void> _saveEvent() async {
     final l10n = AppLocalizations.of(context)!;
-    final courses = context.read<CourseProvider>().courses;
     final isAcademic = _selectedDomain == EventDomain.academic;
-    final effectiveCourseId =
-        _selectedCourseId ?? (courses.isNotEmpty ? courses.first.id : null);
+    final effectiveCourseId = _resolveCourse(
+      context.read<CourseProvider>(),
+    ).courseId;
 
     if (!_formKey.currentState!.validate()) {
       return;
@@ -190,8 +300,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
       return;
     }
 
-    final startDateTime = _buildDateTime(_eventDate, _startTimeOfDay);
-    final endDateTime = _buildDateTime(_eventDate, _endTimeOfDay);
+    final range = _eventRange();
+    final startDateTime = range.start;
+    final endDateTime = range.end;
 
     if (endDateTime.isBefore(startDateTime) ||
         endDateTime.isAtSameMomentAs(startDateTime)) {
@@ -216,7 +327,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
         recurring: _recurring,
         daysOfWeek: _selectedDays,
         domain: _selectedDomain,
-        color: isAcademic ? null : _customColor,
+        color: _customColor,
+        allDay: !_recurring && _allDay,
       );
 
       await context.read<CourseProvider>().addEvent(event);
@@ -284,15 +396,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
     final theme = Theme.of(context);
     final isWide = MediaQuery.of(context).size.width >= 768;
 
-    final initialCourseId =
-        (_selectedCourseId != null &&
-            courses.any((c) => c.id == _selectedCourseId))
-        ? _selectedCourseId
-        : (courses.isNotEmpty ? courses.first.id : null);
+    final courseChoice = _resolveCourse(courseProvider);
+    final initialCourseId = courseChoice.courseId;
 
     final coursesMap = {for (var c in courses) c.id: c};
 
     // Construct candidate event for live collision detection
+    final range = _eventRange();
     final candidateEvent = ScheduleEvent(
       id: '',
       title: _titleController.text.trim(),
@@ -302,14 +412,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
       type: _selectedDomain == EventDomain.academic
           ? _selectedType
           : EventType.other,
-      startTime: _buildDateTime(_eventDate, _startTimeOfDay),
-      endTime: _buildDateTime(_eventDate, _endTimeOfDay),
+      startTime: range.start,
+      endTime: range.end,
       location: _locationController.text.trim(),
       notes: _notesController.text.trim(),
       recurring: _recurring,
       daysOfWeek: _selectedDays,
       domain: _selectedDomain,
       color: _customColor,
+      allDay: !_recurring && _allDay,
     );
 
     final otherEvents = courseProvider.events
@@ -322,6 +433,166 @@ class _AddEventScreenState extends State<AddEventScreen> {
     final hasWorkAcademic = EventCollisionService.hasWorkAcademicConflict(
       candidate: candidateEvent,
       existingEvents: otherEvents,
+    );
+
+    Widget wideField({
+      required String label,
+      required IconData icon,
+      required String value,
+      required VoidCallback onTap,
+    }) => InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 20),
+        ),
+        child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ),
+    );
+
+    Widget phoneTile({
+      required String label,
+      required IconData icon,
+      required String value,
+      required VoidCallback onTap,
+      Widget? trailing,
+    }) => ListTile(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      tileColor: theme.colorScheme.surface,
+      leading: Icon(icon, color: theme.colorScheme.primary),
+      title: Text(label),
+      subtitle: Text(
+        value,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      trailing: trailing,
+      onTap: onTap,
+    );
+
+    final semesterDropdown = DropdownButtonFormField<String>(
+      // Rebuilt when the default semester changes before the user picks.
+      key: ValueKey('semester_${courseChoice.semesterId}'),
+      isExpanded: true,
+      initialValue: courseChoice.semesterId,
+      decoration: InputDecoration(
+        labelText: l10n.translate('semester'),
+        prefixIcon: const Icon(Icons.calendar_month_rounded, size: 20),
+      ),
+      items: [
+        for (final semester in courseChoice.semesters)
+          DropdownMenuItem(
+            value: semester.id,
+            child: Text(
+              _semesterName(semester, l10n),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: (v) => setState(() {
+        _selectedSemesterId = v;
+        // The previous course belongs to another semester.
+        _selectedCourseId = null;
+      }),
+    );
+
+    final courseDropdown = DropdownButtonFormField<String>(
+      // A new semester brings a new list, so start the field over.
+      key: ValueKey('course_${courseChoice.semesterId}'),
+      isExpanded: true,
+      initialValue: initialCourseId,
+      decoration: InputDecoration(
+        labelText: l10n.translate('course'),
+        prefixIcon: const Icon(Icons.school_outlined, size: 20),
+      ),
+      items: [
+        for (final c in courseChoice.courses)
+          DropdownMenuItem(
+            value: c.id,
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  margin: const EdgeInsetsDirectional.only(end: 8),
+                  decoration: BoxDecoration(
+                    color: c.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Flexible(
+                  child: BidiText(
+                    c.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      onChanged: (v) => setState(() => _selectedCourseId = v),
+    );
+
+    final typeDropdown = DropdownButtonFormField<EventType>(
+      isExpanded: true,
+      initialValue: _selectedType,
+      decoration: InputDecoration(
+        labelText: l10n.translate('type'),
+        prefixIcon: const Icon(Icons.category_outlined, size: 20),
+      ),
+      items: EventType.values.map((v) {
+        return DropdownMenuItem(
+          value: v,
+          child: Text(_getEventTypeName(v, l10n)),
+        );
+      }).toList(),
+      onChanged: (v) {
+        if (v != null) setState(() => _selectedType = v);
+      },
+    );
+
+    // Places from earlier events, this course's first.
+    final locationField = RawAutocomplete<String>(
+      textEditingController: _locationController,
+      focusNode: _locationFocus,
+      optionsBuilder: (value) => courseProvider.locationSuggestions(
+        courseId: initialCourseId,
+        query: value.text,
+      ),
+      fieldViewBuilder: (context, controller, focusNode, onSubmitted) =>
+          AppTextField(
+            label: l10n.translate('location'),
+            hint: l10n.translate('hint_location'),
+            controller: controller,
+            focusNode: focusNode,
+            prefixIcon: Icons.location_on_outlined,
+          ),
+      optionsViewBuilder: (context, onSelected, options) => Align(
+        alignment: AlignmentDirectional.topStart,
+        child: Material(
+          elevation: 4,
+          borderRadius: BorderRadius.circular(12),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 240, maxWidth: 420),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              shrinkWrap: true,
+              children: [
+                for (final place in options)
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.place_outlined, size: 18),
+                    title: BidiText(place),
+                    onTap: () => onSelected(place),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
 
     final formContent = Form(
@@ -356,11 +627,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 HapticFeedback.selectionClick();
                 setState(() {
                   _selectedDomain = newSelection.first;
-                  if (_selectedDomain == EventDomain.work) {
-                    _customColor ??= _workColorPalette.first;
-                  } else if (_selectedDomain == EventDomain.personal) {
-                    _customColor ??= _personalColorPalette.first;
-                  }
+                  // Each kind starts from its own default: school events
+                  // follow the course, the others take their first swatch.
+                  _customColor = switch (_selectedDomain) {
+                    EventDomain.academic => null,
+                    EventDomain.work => _workColorPalette.first,
+                    EventDomain.personal => _personalColorPalette.first,
+                  };
                 });
               },
             ),
@@ -508,107 +781,40 @@ class _AddEventScreenState extends State<AddEventScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 3,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: initialCourseId,
-                      decoration: InputDecoration(
-                        labelText: l10n.translate('course'),
-                        prefixIcon: const Icon(Icons.school_outlined, size: 20),
-                      ),
-                      items: courses.map((c) {
-                        return DropdownMenuItem(
-                          value: c.id,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 10,
-                                height: 10,
-                                margin: const EdgeInsets.only(right: 8),
-                                decoration: BoxDecoration(
-                                  color: c.color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Text(c.name),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (v) => setState(() => _selectedCourseId = v),
-                    ),
-                  ),
+                  Expanded(flex: 2, child: semesterDropdown),
                   const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<EventType>(
-                      initialValue: _selectedType,
-                      decoration: InputDecoration(
-                        labelText: l10n.translate('type'),
-                        prefixIcon: const Icon(
-                          Icons.category_outlined,
-                          size: 20,
-                        ),
-                      ),
-                      items: EventType.values.map((v) {
-                        return DropdownMenuItem(
-                          value: v,
-                          child: Text(_getEventTypeName(v, l10n)),
-                        );
-                      }).toList(),
-                      onChanged: (v) {
-                        if (v != null) setState(() => _selectedType = v);
-                      },
-                    ),
-                  ),
+                  Expanded(flex: 3, child: courseDropdown),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 2, child: typeDropdown),
                 ],
               )
             else ...[
-              DropdownButtonFormField<String>(
-                initialValue: initialCourseId,
-                decoration: InputDecoration(
-                  labelText: l10n.translate('course'),
-                  prefixIcon: const Icon(Icons.school_outlined, size: 20),
-                ),
-                items: courses.map((c) {
-                  return DropdownMenuItem(
-                    value: c.id,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: c.color,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        Text(c.name),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (v) => setState(() => _selectedCourseId = v),
-              ),
+              semesterDropdown,
               const SizedBox(height: 16),
-              DropdownButtonFormField<EventType>(
-                initialValue: _selectedType,
-                decoration: InputDecoration(
-                  labelText: l10n.translate('type'),
-                  prefixIcon: const Icon(Icons.category_outlined, size: 20),
-                ),
-                items: EventType.values.map((v) {
-                  return DropdownMenuItem(
-                    value: v,
-                    child: Text(_getEventTypeName(v, l10n)),
-                  );
-                }).toList(),
-                onChanged: (v) {
-                  if (v != null) setState(() => _selectedType = v);
-                },
-              ),
+              courseDropdown,
+              const SizedBox(height: 16),
+              typeDropdown,
             ],
+            const SizedBox(height: 16),
+            Text(
+              l10n.translate('event_color'),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            // Follows the course unless the event gets a color of its own.
+            ColorSwatchPicker(
+              presets: _academicColorPalette,
+              selected: _customColor,
+              autoColor:
+                  courseChoice.courses
+                      .where((c) => c.id == initialCourseId)
+                      .firstOrNull
+                      ?.color ??
+                  theme.colorScheme.primary,
+              autoLabel: l10n.translate('follow_course_color'),
+              sheetTitle: l10n.translate('event_color'),
+              onChanged: (c) => setState(() => _customColor = c),
+            ),
           ] else if (_selectedDomain == EventDomain.work) ...[
             if (isWide)
               Row(
@@ -636,52 +842,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 10,
-                          children: _workColorPalette.map((color) {
-                            final isSelected = _customColor == color;
-                            return Semantics(
-                              button: true,
-                              selected: isSelected,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('color'),
-                              child: GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  setState(() => _customColor = color);
-                                },
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: isSelected
-                                        ? Border.all(
-                                            color: theme.colorScheme.onSurface,
-                                            width: 2.5,
-                                          )
-                                        : null,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.35),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: isSelected
-                                      ? const Icon(
-                                          Icons.check_rounded,
-                                          size: 18,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                        ColorSwatchPicker(
+                          presets: _workColorPalette,
+                          selected: _customColor,
+                          sheetTitle: l10n.translate('event_color'),
+                          onChanged: (c) => setState(() => _customColor = c),
                         ),
                       ],
                     ),
@@ -703,50 +868,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                children: _workColorPalette.map((color) {
-                  final isSelected = _customColor == color;
-                  return Semantics(
-                    button: true,
-                    selected: isSelected,
-                    label: AppLocalizations.of(context)!.translate('color'),
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() => _customColor = color);
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(
-                                  color: theme.colorScheme.onSurface,
-                                  width: 2.5,
-                                )
-                              : null,
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.35),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: isSelected
-                            ? const Icon(
-                                Icons.check_rounded,
-                                size: 18,
-                                color: Colors.white,
-                              )
-                            : null,
-                      ),
-                    ),
-                  );
-                }).toList(),
+              ColorSwatchPicker(
+                presets: _workColorPalette,
+                selected: _customColor,
+                sheetTitle: l10n.translate('event_color'),
+                onChanged: (c) => setState(() => _customColor = c),
               ),
             ],
           ] else ...[
@@ -776,52 +902,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 10,
-                          children: _personalColorPalette.map((color) {
-                            final isSelected = _customColor == color;
-                            return Semantics(
-                              button: true,
-                              selected: isSelected,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('color'),
-                              child: GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  setState(() => _customColor = color);
-                                },
-                                child: Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: color,
-                                    shape: BoxShape.circle,
-                                    border: isSelected
-                                        ? Border.all(
-                                            color: theme.colorScheme.onSurface,
-                                            width: 2.5,
-                                          )
-                                        : null,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.35),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: isSelected
-                                      ? const Icon(
-                                          Icons.check_rounded,
-                                          size: 18,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                        ColorSwatchPicker(
+                          presets: _personalColorPalette,
+                          selected: _customColor,
+                          sheetTitle: l10n.translate('event_color'),
+                          onChanged: (c) => setState(() => _customColor = c),
                         ),
                       ],
                     ),
@@ -843,50 +928,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 10,
-                children: _personalColorPalette.map((color) {
-                  final isSelected = _customColor == color;
-                  return Semantics(
-                    button: true,
-                    selected: isSelected,
-                    label: AppLocalizations.of(context)!.translate('color'),
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() => _customColor = color);
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(
-                                  color: theme.colorScheme.onSurface,
-                                  width: 2.5,
-                                )
-                              : null,
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.35),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: isSelected
-                            ? const Icon(
-                                Icons.check_rounded,
-                                size: 18,
-                                color: Colors.white,
-                              )
-                            : null,
-                      ),
-                    ),
-                  );
-                }).toList(),
+              ColorSwatchPicker(
+                presets: _personalColorPalette,
+                selected: _customColor,
+                sheetTitle: l10n.translate('event_color'),
+                onChanged: (c) => setState(() => _customColor = c),
               ),
             ],
           ],
@@ -919,137 +965,117 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
                   // If one-time event vs recurring
                   if (!_recurring) ...[
-                    if (isWide)
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        l10n.translate('all_day'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      value: _allDay,
+                      onChanged: (v) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _allDay = v);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    if (isWide) ...[
                       Row(
                         children: [
                           Expanded(
                             flex: 4,
-                            child: InkWell(
+                            child: wideField(
+                              label: l10n.translate('start_date'),
+                              icon: Icons.calendar_today_rounded,
+                              value: DateFormat.yMMMEd().format(_eventDate),
                               onTap: _pickDate,
-                              borderRadius: BorderRadius.circular(12),
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: l10n.translate('date'),
-                                  prefixIcon: const Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 20,
-                                  ),
-                                ),
-                                child: Text(
-                                  DateFormat.yMMMd().format(_eventDate),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 3,
-                            child: InkWell(
-                              onTap: () => _pickTime(true),
-                              borderRadius: BorderRadius.circular(12),
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: l10n.translate('start_time'),
-                                  prefixIcon: const Icon(
-                                    Icons.schedule_rounded,
-                                    size: 20,
-                                  ),
+                          if (!_allDay) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: wideField(
+                                label: l10n.translate('start_time'),
+                                icon: Icons.schedule_rounded,
+                                value: _formatTimeOfDay(
+                                  context,
+                                  _startTimeOfDay,
                                 ),
-                                child: Text(
-                                  _formatTimeOfDay(context, _startTimeOfDay),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                                onTap: () => _pickTime(true),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 3,
-                            child: InkWell(
-                              onTap: () => _pickTime(false),
-                              borderRadius: BorderRadius.circular(12),
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: l10n.translate('end_time'),
-                                  prefixIcon: const Icon(
-                                    Icons.timer_off_outlined,
-                                    size: 20,
-                                  ),
-                                ),
-                                child: Text(
-                                  _formatTimeOfDay(context, _endTimeOfDay),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                          ],
                         ],
-                      )
-                    else ...[
-                      ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        tileColor: theme.colorScheme.surface,
-                        leading: Icon(
-                          Icons.calendar_today_rounded,
-                          color: theme.colorScheme.primary,
-                        ),
-                        title: Text(l10n.translate('date')),
-                        subtitle: Text(
-                          DateFormat.yMMMMEEEEd().format(_eventDate),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        trailing: const Icon(Icons.edit_calendar_rounded),
-                        onTap: _pickDate,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
-                            child: ListTile(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              tileColor: theme.colorScheme.surface,
-                              leading: Icon(
-                                Icons.schedule_rounded,
-                                color: theme.colorScheme.primary,
-                              ),
-                              title: Text(l10n.translate('start_time')),
-                              subtitle: Text(
-                                _formatTimeOfDay(context, _startTimeOfDay),
-                              ),
-                              onTap: () => _pickTime(true),
+                            flex: 4,
+                            child: wideField(
+                              label: l10n.translate('end_date'),
+                              icon: Icons.event_rounded,
+                              value: DateFormat.yMMMEd().format(_endDate),
+                              onTap: () => _pickDate(isEnd: true),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ListTile(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          if (!_allDay) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: wideField(
+                                label: l10n.translate('end_time'),
+                                icon: Icons.timer_off_outlined,
+                                value: _formatTimeOfDay(context, _endTimeOfDay),
+                                onTap: () => _pickTime(false),
                               ),
-                              tileColor: theme.colorScheme.surface,
-                              leading: Icon(
-                                Icons.timer_off_outlined,
-                                color: theme.colorScheme.primary,
-                              ),
-                              title: Text(l10n.translate('end_time')),
-                              subtitle: Text(
-                                _formatTimeOfDay(context, _endTimeOfDay),
-                              ),
-                              onTap: () => _pickTime(false),
                             ),
-                          ),
+                          ],
                         ],
                       ),
+                    ] else ...[
+                      phoneTile(
+                        label: l10n.translate('start_date'),
+                        icon: Icons.calendar_today_rounded,
+                        value: DateFormat.yMMMMEEEEd().format(_eventDate),
+                        onTap: _pickDate,
+                        trailing: const Icon(Icons.edit_calendar_rounded),
+                      ),
+                      const SizedBox(height: 10),
+                      phoneTile(
+                        label: l10n.translate('end_date'),
+                        icon: Icons.event_rounded,
+                        value: DateFormat.yMMMMEEEEd().format(_endDate),
+                        onTap: () => _pickDate(isEnd: true),
+                        trailing: const Icon(Icons.edit_calendar_rounded),
+                      ),
+                      if (!_allDay) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: phoneTile(
+                                label: l10n.translate('start_time'),
+                                icon: Icons.schedule_rounded,
+                                value: _formatTimeOfDay(
+                                  context,
+                                  _startTimeOfDay,
+                                ),
+                                onTap: () => _pickTime(true),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: phoneTile(
+                                label: l10n.translate('end_time'),
+                                icon: Icons.timer_off_outlined,
+                                value: _formatTimeOfDay(context, _endTimeOfDay),
+                                onTap: () => _pickTime(false),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ] else ...[
                     // Recurring: Start & End time
@@ -1143,12 +1169,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
           // Location Field (for academic mode)
           if (_selectedDomain == EventDomain.academic) ...[
-            AppTextField(
-              label: l10n.translate('location'),
-              hint: l10n.translate('hint_location'),
-              controller: _locationController,
-              prefixIcon: Icons.location_on_outlined,
-            ),
+            locationField,
             const SizedBox(height: 16),
           ],
 

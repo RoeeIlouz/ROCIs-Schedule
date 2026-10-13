@@ -9,6 +9,8 @@ import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
+import 'package:rocis_schedule/shared/utils/bidi.dart';
+import 'package:rocis_schedule/shared/utils/event_time_format.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 
 class CommandPaletteItem {
@@ -229,7 +231,13 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         continue;
       }
 
-      final timeStr = DateFormat.Hm().format(event.startTime);
+      final timeStr = event.spansDays
+          ? formatEventTimeRange(
+              event,
+              AppLocalizations.of(context)!,
+              use24HourFormat: true,
+            )
+          : DateFormat.Hm().format(event.startTime);
       items.add(
         CommandPaletteItem(
           id: 'event_${event.id}',
@@ -239,7 +247,7 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
           icon: event.type == EventType.exam
               ? Icons.assignment_late_rounded
               : Icons.event_rounded,
-          iconColor: course?.color ?? theme.colorScheme.primary,
+          iconColor: event.colorFor(course) ?? theme.colorScheme.primary,
           section: 'Events',
           onSelect: () {
             Navigator.of(context).pop();
@@ -402,6 +410,10 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                           controller: _searchController,
                           focusNode: _inputFocusNode,
                           autofocus: true,
+                          // Rebuilt on every keystroke by _onSearchChanged.
+                          textDirection: textDirectionOf(
+                            _searchController.text,
+                          ),
                           style: GoogleFonts.outfit(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,

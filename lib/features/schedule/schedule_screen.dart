@@ -6,6 +6,8 @@ import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
+import 'package:rocis_schedule/shared/utils/bidi.dart';
+import 'package:rocis_schedule/shared/utils/event_time_format.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -99,6 +101,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           }
           return true;
         }).toList()..sort((a, b) {
+          // Holidays and other day-long events lead the day.
+          if (a.spansDays != b.spansDays) return a.spansDays ? -1 : 1;
           final timeA = a.startTime.hour * 60 + a.startTime.minute;
           final timeB = b.startTime.hour * 60 + b.startTime.minute;
           return timeA.compareTo(timeB);
@@ -668,14 +672,18 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     AppLocalizations l10n,
   ) {
     final theme = Theme.of(context);
-    final effectiveColor = (event.domain == EventDomain.academic)
-        ? (course?.color ?? theme.colorScheme.primary)
-        : (event.color ?? event.domain.defaultColor);
+    final effectiveColor = event.colorFor(course) ?? theme.colorScheme.primary;
+
+    final use24Hour = context.read<ThemeProvider>().use24HourFormat;
+    final secondary = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    final daySpan = formatDayOfSpan(event, _selectedDate, l10n);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsetsDirectional.fromSTEB(24, 16, 8, 0),
+        actionsPadding: const EdgeInsetsDirectional.fromSTEB(12, 0, 16, 12),
         title: Row(
           children: [
             Container(
@@ -688,13 +696,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
+              child: BidiText(
                 event.title.isNotEmpty ? event.title : (course?.name ?? ''),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close_rounded, size: 20),
+              tooltip: l10n.translate('close'),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => Navigator.pop(ctx),
             ),
           ],
         ),
@@ -730,7 +744,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               const SizedBox(height: 10),
             ],
             if (course != null) ...[
-              Text(
+              BidiText(
                 course.name,
                 style: TextStyle(
                   fontSize: 14,
@@ -743,14 +757,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.access_time_rounded,
+                  event.allDay
+                      ? Icons.wb_sunny_rounded
+                      : Icons.access_time_rounded,
                   size: 16,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: secondary,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  '${DateFormat.Hm().format(event.startTime)} - ${DateFormat.Hm().format(event.endTime)}',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
+                Flexible(
+                  child: Text(
+                    [
+                      formatEventTimeRange(
+                        event,
+                        l10n,
+                        use24HourFormat: use24Hour,
+                      ),
+                      ?daySpan,
+                    ].join(' · '),
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
                 ),
               ],
             ),
@@ -763,10 +788,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ? Icons.business_rounded
                         : Icons.place_outlined,
                     size: 16,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: secondary,
                   ),
                   const SizedBox(width: 8),
-                  Text(event.location),
+                  Flexible(child: BidiText(event.location)),
                 ],
               ),
             ],
@@ -786,7 +811,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ],
             if (event.notes.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text(
+              BidiText(
                 event.notes,
                 style: TextStyle(
                   fontSize: 13,
@@ -796,13 +821,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ],
           ],
         ),
+        // Two compact actions that fit one row on a phone: delete as an
+        // icon on the start side, edit on the end side. Close is the X.
+        actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: [
-          TextButton.icon(
-            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-            label: Text(
-              l10n.translate('delete'),
-              style: const TextStyle(color: Colors.red),
-            ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded),
+            color: Colors.red,
+            tooltip: l10n.translate('delete'),
+            visualDensity: VisualDensity.compact,
             onPressed: () async {
               Navigator.pop(ctx);
               final confirmed = await _showDeleteConfirmation(
@@ -826,16 +853,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             },
           ),
           FilledButton.tonalIcon(
-            icon: const Icon(Icons.edit_rounded, size: 18),
+            icon: const Icon(Icons.edit_rounded, size: 16),
             label: Text(l10n.translate('edit')),
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               context.push('/schedule/edit-event', extra: event);
             },
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.translate('close')),
           ),
         ],
       ),
@@ -1367,9 +1398,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final isDark = theme.brightness == Brightness.dark;
-    final effectiveColor = (event.domain == EventDomain.academic)
-        ? (course?.color ?? theme.colorScheme.primary)
-        : (event.color ?? event.domain.defaultColor);
+    final effectiveColor = event.colorFor(course) ?? theme.colorScheme.primary;
 
     return Dismissible(
       key: Key(event.id),
@@ -1447,7 +1476,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                                 const SizedBox(width: 6),
                               ],
                               Expanded(
-                                child: Text(
+                                child: BidiText(
                                   event.title,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -1458,7 +1487,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           ),
                           if (course != null) ...[
                             const SizedBox(height: 2),
-                            Text(
+                            BidiText(
                               course.name,
                               style: TextStyle(
                                 fontSize: 13,
@@ -1496,13 +1525,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        event.location,
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
+                      Flexible(
+                        child: BidiText(
+                          event.location,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
+                            fontSize: 13,
                           ),
-                          fontSize: 13,
                         ),
                       ),
                     ],
@@ -1511,27 +1542,53 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _buildChip(
-                      context,
-                      '${_formatTime(context, event.startTime)} – ${_formatTime(context, event.endTime)}',
-                      Icons.access_time_rounded,
-                      effectiveColor.withValues(alpha: isDark ? 0.2 : 0.12),
-                      isDark ? Colors.white : Colors.black87,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildChip(
-                      context,
-                      _getEventTypeName(event.type, l10n),
-                      Icons.label_outline_rounded,
-                      theme.colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _buildChip(
+                            context,
+                            formatEventTimeRange(
+                              event,
+                              l10n,
+                              use24HourFormat: context
+                                  .read<ThemeProvider>()
+                                  .use24HourFormat,
+                            ),
+                            event.allDay
+                                ? Icons.wb_sunny_rounded
+                                : Icons.access_time_rounded,
+                            effectiveColor.withValues(
+                              alpha: isDark ? 0.2 : 0.12,
+                            ),
+                            isDark ? Colors.white : Colors.black87,
+                          ),
+                          if (formatDayOfSpan(event, _selectedDate, l10n)
+                              case final daySpan?)
+                            _buildChip(
+                              context,
+                              daySpan,
+                              Icons.calendar_month_rounded,
+                              effectiveColor.withValues(
+                                alpha: isDark ? 0.2 : 0.12,
+                              ),
+                              isDark ? Colors.white : Colors.black87,
+                            ),
+                          _buildChip(
+                            context,
+                            _getEventTypeName(event.type, l10n),
+                            Icons.label_outline_rounded,
+                            theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                            theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          ),
+                        ],
                       ),
-                      theme.colorScheme.onSurface.withValues(alpha: 0.8),
                     ),
                     if (context
                         .watch<ThemeProvider>()
                         .enableTasksIntegration) ...[
-                      const Spacer(),
                       IconButton(
                         icon: Icon(
                           Icons.outbox_rounded,
@@ -1569,14 +1626,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         ),
       ),
     );
-  }
-
-  String _formatTime(BuildContext context, DateTime time) {
-    final themeProvider = context.read<ThemeProvider>();
-    if (themeProvider.use24HourFormat) {
-      return DateFormat.Hm().format(time);
-    }
-    return DateFormat.jm().format(time);
   }
 
   Future<bool?> _showDeleteConfirmation(

@@ -138,6 +138,9 @@ class GoogleCalendarEventBuilder {
       '${t.year.toString().padLeft(4, '0')}-${_two(t.month)}-${_two(t.day)}'
       'T${_two(t.hour)}:${_two(t.minute)}:${_two(t.second)}';
 
+  static String _localDate(DateTime t) =>
+      '${t.year.toString().padLeft(4, '0')}-${_two(t.month)}-${_two(t.day)}';
+
   static String _utcStamp(DateTime t) {
     final u = t.toUtc();
     return '${u.year.toString().padLeft(4, '0')}${_two(u.month)}${_two(u.day)}'
@@ -162,22 +165,26 @@ class GoogleCalendarEventBuilder {
         : event.startTime;
     final end = start.add(event.endTime.difference(event.startTime));
 
-    final color = event.domain == EventDomain.academic
-        ? course?.color
-        : (event.color ?? event.domain.defaultColor);
+    final color = event.colorFor(course);
 
     final body = <String, dynamic>{
       'summary': summary(event, course, labels),
       'description': description(event, course, semester, labels),
       if (event.location.trim().isNotEmpty) 'location': event.location.trim(),
-      'start': {'dateTime': _localDateTime(start), 'timeZone': timeZone},
-      'end': {'dateTime': _localDateTime(end), 'timeZone': timeZone},
+      // All-day events use dates; Google's end date is exclusive.
+      'start': event.allDay
+          ? {'date': _localDate(event.startDay)}
+          : {'dateTime': _localDateTime(start), 'timeZone': timeZone},
+      'end': event.allDay
+          ? {'date': _localDate(event.endDay.add(const Duration(days: 1)))}
+          : {'dateTime': _localDateTime(end), 'timeZone': timeZone},
       if (isWeekly) 'recurrence': [_rrule(event, semester)],
       if (color != null) 'colorId': nearestColorId(color),
+      // A minutes-before reminder would fire the evening before a holiday.
       'reminders': {
         'useDefault': false,
         'overrides': [
-          {'method': 'popup', 'minutes': reminderMinutes},
+          if (!event.allDay) {'method': 'popup', 'minutes': reminderMinutes},
         ],
       },
       'source': {

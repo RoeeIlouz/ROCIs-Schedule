@@ -282,9 +282,40 @@ class ScheduleEvent {
   final bool recurring;
   final String notes;
   final EventDomain domain;
+
+  /// The event's own color. Unset, school events follow their course's
+  /// color and work/personal events their category's.
   final Color? color;
 
+  /// The color the event is drawn in; null only for a school event without
+  /// a course (callers fall back to the theme).
+  Color? colorFor(Course? course) =>
+      color ??
+      (domain == EventDomain.academic ? course?.color : domain.defaultColor);
+
+  /// A one-time event that fills whole days (a holiday, a trip): it runs from
+  /// [startTime]'s day through [endTime]'s day and has no clock times.
+  final bool allDay;
+
   Duration get duration => endTime.difference(startTime);
+
+  DateTime get startDay => DateUtils.dateOnly(startTime);
+
+  /// The last day the event covers.
+  DateTime get endDay => DateUtils.dateOnly(endTime);
+
+  /// A one-time event whose end falls on a later day than its start.
+  bool get isMultiDay => !recurring && endDay.isAfter(startDay);
+
+  /// Shown as a bar above the hour grid rather than a block inside it.
+  bool get spansDays => !recurring && (allDay || isMultiDay);
+
+  /// Whether a one-time event covers [date]; recurring events are resolved
+  /// by the course provider, which knows semester bounds.
+  bool coversDay(DateTime date) {
+    final day = DateUtils.dateOnly(date);
+    return !day.isBefore(startDay) && !day.isAfter(endDay);
+  }
 
   /// The course's chosen icon, else the event type's for academic events;
   /// the domain's icon otherwise.
@@ -306,6 +337,7 @@ class ScheduleEvent {
     this.notes = '',
     this.domain = EventDomain.academic,
     this.color,
+    this.allDay = false,
   });
 
   ScheduleEvent copyWith({
@@ -322,6 +354,7 @@ class ScheduleEvent {
     EventDomain? domain,
     Color? color,
     bool clearColor = false,
+    bool? allDay,
   }) {
     return ScheduleEvent(
       id: id ?? this.id,
@@ -336,6 +369,7 @@ class ScheduleEvent {
       notes: notes ?? this.notes,
       domain: domain ?? this.domain,
       color: clearColor ? null : (color ?? this.color),
+      allDay: allDay ?? this.allDay,
     );
   }
 
@@ -353,6 +387,7 @@ class ScheduleEvent {
       'notes': notes,
       'domain': domain.name,
       'color': color?.toARGB32(),
+      'allDay': allDay ? 1 : 0,
     };
   }
 
@@ -404,6 +439,14 @@ class ScheduleEvent {
 
     final domain = EventDomain.fromString(map['domain']?.toString());
 
+    final rawAllDay = map['allDay'];
+    final bool isAllDay =
+        !isRecurring &&
+        (rawAllDay == 1 ||
+            rawAllDay == true ||
+            rawAllDay == '1' ||
+            rawAllDay == 'true');
+
     Color? parsedEventColor;
     final rawColor = map['color'];
     if (rawColor is int) {
@@ -432,6 +475,7 @@ class ScheduleEvent {
       notes: map['notes']?.toString() ?? '',
       domain: domain,
       color: parsedEventColor,
+      allDay: isAllDay,
     );
   }
 }

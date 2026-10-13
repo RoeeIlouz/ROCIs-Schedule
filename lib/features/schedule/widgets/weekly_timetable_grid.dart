@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
+import 'package:rocis_schedule/shared/utils/bidi.dart';
+import 'package:rocis_schedule/shared/utils/event_time_format.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 
 /// Side-by-side lanes for overlapping events: each event gets a lane index
@@ -50,6 +53,48 @@ Map<String, ({int lane, int lanes})> layoutEventLanes(
 }
 
 int _minuteOfDay(DateTime t) => t.hour * 60 + t.minute;
+
+/// Rows for the all-day band: each day-spanning event gets the first row
+/// that is free across all the week columns ([first]..[last], 0-6) it covers.
+@visibleForTesting
+List<({ScheduleEvent event, int first, int last, int row})> layoutSpanRows(
+  List<ScheduleEvent> events,
+  List<DateTime> weekDays,
+) {
+  final spans = <({ScheduleEvent event, int first, int last})>[];
+  for (final event in events) {
+    final first = weekDays.indexWhere(event.coversDay);
+    if (first < 0) continue;
+    final last = weekDays.lastIndexWhere(event.coversDay);
+    spans.add((event: event, first: first, last: last));
+  }
+  // Earlier and longer bars first, so they settle in the top rows.
+  spans.sort((a, b) {
+    final byFirst = a.first.compareTo(b.first);
+    return byFirst != 0
+        ? byFirst
+        : (b.last - b.first).compareTo(a.last - a.first);
+  });
+  final rowEnds = <int>[];
+  return [
+    for (final span in spans)
+      () {
+        var row = rowEnds.indexWhere((end) => end < span.first);
+        if (row < 0) {
+          row = rowEnds.length;
+          rowEnds.add(span.last);
+        } else {
+          rowEnds[row] = span.last;
+        }
+        return (
+          event: span.event,
+          first: span.first,
+          last: span.last,
+          row: row,
+        );
+      }(),
+  ];
+}
 
 class WeeklyTimetableGrid extends StatefulWidget {
   final List<ScheduleEvent> events;
@@ -124,10 +169,6 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
 
   static int _minuteOf(DateTime t) => t.hour * 60 + t.minute;
 
-  String _formatTime(DateTime t) => widget.use24HourFormat
-      ? DateFormat.Hm().format(t)
-      : DateFormat.jm().format(t);
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -135,9 +176,16 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
     final weekDays = _getWeekDays(widget.selectedDate);
     final now = DateTime.now();
 
+    // Holidays and other day-spanning events go in a band above the hours.
+    final spanRows = layoutSpanRows(
+      widget.events.where((e) => e.spansDays).toList(),
+      weekDays,
+    );
     final weekEvents = {
       for (final day in weekDays)
-        day: widget.events.where((e) => _isEventOnDay(e, day)).toList(),
+        day: widget.events
+            .where((e) => !e.spansDays && _isEventOnDay(e, day))
+            .toList(),
     };
     var startHour = _defaultStartHour;
     var endHour = _defaultEndHour;
@@ -276,6 +324,9 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
             ),
           ),
 
+          if (spanRows.isNotEmpty)
+            _buildAllDayBand(spanRows, gridLineColor, headerBgColor),
+
           // 2. Scrollable Time Grid Area
           Expanded(
             child: SingleChildScrollView(
@@ -408,7 +459,7 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                     course: course,
                                     height: blockHeight,
                                     compact: compact,
-                                    formatTime: _formatTime,
+                                    use24HourFormat: widget.use24HourFormat,
                                     onTap: () =>
                                         widget.onEventTap(event, course),
                                   ),
@@ -428,21 +479,94 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
       ),
     );
   }
+
+  /// Bars for all-day and multi-day events, each spanning the days it covers
+  /// this week. Scrolls when there are more than a few rows.
+  Widget _buildAllDayBand(
+    List<({ScheduleEvent event, int first, int last, int row})> spanRows,
+    Color gridLineColor,
+    Color backgroundColor,
+  ) {
+    final theme = Theme.of(context);
+    final compact = widget.compact;
+    final rowHeight = compact ? 20.0 : 24.0;
+    const rowGap = 2.0;
+    final rows = spanRows.map((s) => s.row).reduce(math.max) + 1;
+    final contentHeight = rows * (rowHeight + rowGap) + 4;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: 3.5 * (rowHeight + rowGap) + 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(bottom: BorderSide(color: gridLineColor)),
+      ),
+      child: SingleChildScrollView(
+        child: SizedBox(
+          height: contentHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: _timeColWidth,
+                child: Tooltip(
+                  message: AppLocalizations.of(context)!.translate('all_day'),
+                  child: Icon(
+                    Icons.wb_sunny_rounded,
+                    size: compact ? 13 : 15,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+              VerticalDivider(width: 1, thickness: 1, color: gridLineColor),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final dayWidth = constraints.maxWidth / 7;
+                    return Stack(
+                      children: [
+                        for (final span in spanRows)
+                          PositionedDirectional(
+                            top: 2 + span.row * (rowHeight + rowGap),
+                            start: span.first * dayWidth + 2,
+                            width: (span.last - span.first + 1) * dayWidth - 4,
+                            height: rowHeight,
+                            child: _EventBlock(
+                              event: span.event,
+                              course: widget.courses[span.event.courseId],
+                              height: rowHeight,
+                              compact: compact,
+                              use24HourFormat: widget.use24HourFormat,
+                              onTap: () => widget.onEventTap(
+                                span.event,
+                                widget.courses[span.event.courseId],
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 Color _eventColor(ScheduleEvent event, Course? course, ThemeData theme) =>
-    event.domain == EventDomain.academic
-    ? (course?.color ?? theme.colorScheme.primary)
-    : (event.color ?? event.domain.defaultColor);
+    event.colorFor(course) ?? theme.colorScheme.primary;
 
 /// One event in the grid. Tall blocks also show the start time and location;
-/// pressing and holding shows a preview until released.
+/// pressing and holding shows a preview until released, and so does resting
+/// the mouse on it (web and desktop).
 class _EventBlock extends StatefulWidget {
   final ScheduleEvent event;
   final Course? course;
   final double height;
   final bool compact;
-  final String Function(DateTime) formatTime;
+  final bool use24HourFormat;
   final VoidCallback onTap;
 
   const _EventBlock({
@@ -450,7 +574,7 @@ class _EventBlock extends StatefulWidget {
     required this.course,
     required this.height,
     required this.compact,
-    required this.formatTime,
+    required this.use24HourFormat,
     required this.onTap,
   });
 
@@ -460,12 +584,20 @@ class _EventBlock extends StatefulWidget {
 
 class _EventBlockState extends State<_EventBlock> {
   OverlayEntry? _peek;
+  Timer? _hoverTimer;
 
-  void _showPeek() {
+  /// Hovering waits a moment so sweeping the mouse across the grid doesn't
+  /// flash previews.
+  static const _hoverDelay = Duration(milliseconds: 450);
+
+  String _formatTime(DateTime t) =>
+      formatClockTime(t, use24HourFormat: widget.use24HourFormat);
+
+  void _showPeek({bool fromHover = false}) {
     final overlay = Overlay.maybeOf(context);
     final box = context.findRenderObject() as RenderBox?;
     if (overlay == null || box == null || !box.hasSize) return;
-    HapticFeedback.mediumImpact();
+    if (!fromHover) HapticFeedback.mediumImpact();
     final anchor =
         box.localToGlobal(
           Offset.zero,
@@ -478,13 +610,16 @@ class _EventBlockState extends State<_EventBlock> {
         anchor: anchor,
         event: widget.event,
         course: widget.course,
-        formatTime: widget.formatTime,
+        use24HourFormat: widget.use24HourFormat,
+        dimBackground: !fromHover,
       ),
     );
     overlay.insert(_peek!);
   }
 
   void _hidePeek() {
+    _hoverTimer?.cancel();
+    _hoverTimer = null;
     _peek
       ?..remove()
       ..dispose();
@@ -515,140 +650,162 @@ class _EventBlockState extends State<_EventBlock> {
               .clamp(1, 6)
         : 1;
     final secondaryColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    // All-day bars are a single line, shorter than any timed block.
+    final verticalPadding = height < 28 ? 2.0 : (compact ? 3.0 : 4.0);
+    final title = event.title.isNotEmpty ? event.title : (course?.name ?? '');
+    final layoutDirection = Directionality.of(context);
+    final layoutStart = layoutDirection == TextDirection.rtl
+        ? TextAlign.right
+        : TextAlign.left;
 
-    return GestureDetector(
-      onLongPressStart: (_) => _showPeek(),
-      onLongPressEnd: (_) => _hidePeek(),
-      onLongPressCancel: _hidePeek,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          mouseCursor: SystemMouseCursors.click,
-          borderRadius: BorderRadius.circular(8),
-          onTap: widget.onTap,
-          child: ClipRRect(
+    return MouseRegion(
+      onEnter: (_) {
+        _hoverTimer?.cancel();
+        _hoverTimer = Timer(_hoverDelay, () {
+          if (mounted) _showPeek(fromHover: true);
+        });
+      },
+      onExit: (_) => _hidePeek(),
+      child: GestureDetector(
+        onLongPressStart: (_) => _showPeek(),
+        onLongPressEnd: (_) => _hidePeek(),
+        onLongPressCancel: _hidePeek,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            mouseCursor: SystemMouseCursors.click,
             borderRadius: BorderRadius.circular(8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Color.alphaBlend(
-                  color.withValues(alpha: isDark ? 0.28 : 0.16),
-                  isDark ? const Color(0xFF18181B) : Colors.white,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: color.withValues(alpha: 0.35),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+            onTap: () {
+              _hidePeek();
+              widget.onTap();
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color.alphaBlend(
+                    color.withValues(alpha: isDark ? 0.28 : 0.16),
+                    isDark ? const Color(0xFF18181B) : Colors.white,
                   ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  PositionedDirectional(
-                    start: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 3.5,
-                    child: Container(color: color),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.35),
+                    width: 1,
                   ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(
-                      start: compact ? 5.5 : 7,
-                      end: compact ? 2 : 6,
-                      top: compact ? 3 : 4,
-                      bottom: compact ? 3 : 4,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isDark ? 0.3 : 0.05,
+                      ),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.middle,
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.only(
-                                    end: compact ? 2 : 3,
-                                  ),
-                                  child: Icon(
-                                    event.iconFor(course),
-                                    size: compact ? 9.5 : 11,
-                                    color: color,
-                                  ),
-                                ),
-                              ),
-                              TextSpan(
-                                text: event.title.isNotEmpty
-                                    ? event.title
-                                    : (course?.name ?? ''),
-                              ),
-                            ],
-                          ),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: compact ? 9.5 : 11,
-                            height: compact ? 1.2 : null,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
-                          ),
-                          maxLines: titleLines,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (showTime) ...[
-                          SizedBox(height: compact ? 1 : 2),
-                          Text(
-                            compact
-                                ? widget.formatTime(event.startTime)
-                                : '${widget.formatTime(event.startTime)} - ${widget.formatTime(event.endTime)}',
-                            style: TextStyle(
-                              fontSize: compact ? 8.5 : 10,
-                              color: color,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            softWrap: false,
-                            overflow: TextOverflow.fade,
-                          ),
-                        ],
-                        if (showLocation) ...[
-                          SizedBox(height: compact ? 1 : 2),
-                          Row(
-                            children: [
-                              if (!compact) ...[
-                                Icon(
-                                  Icons.place_outlined,
-                                  size: 10,
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.5,
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    PositionedDirectional(
+                      start: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 3.5,
+                      child: Container(color: color),
+                    ),
+                    Padding(
+                      padding: EdgeInsetsDirectional.only(
+                        start: compact ? 5.5 : 7,
+                        end: compact ? 2 : 6,
+                        top: verticalPadding,
+                        bottom: verticalPadding,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text.rich(
+                            TextSpan(
+                              children: [
+                                WidgetSpan(
+                                  alignment: PlaceholderAlignment.middle,
+                                  child: Padding(
+                                    padding: EdgeInsetsDirectional.only(
+                                      end: compact ? 2 : 3,
+                                    ),
+                                    child: Icon(
+                                      event.iconFor(course),
+                                      size: compact ? 9.5 : 11,
+                                      color: color,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 2),
+                                TextSpan(text: title),
                               ],
-                              Expanded(
-                                child: Text(
-                                  event.location,
-                                  style: TextStyle(
-                                    fontSize: compact ? 8.5 : 9.5,
-                                    color: secondaryColor,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                            ),
+                            // The title reads in its own direction (Hebrew
+                            // with English words, or the reverse) but stays
+                            // aligned with the grid.
+                            textDirection:
+                                textDirectionOf(title) ?? layoutDirection,
+                            textAlign: layoutStart,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: compact ? 9.5 : 11,
+                              height: compact ? 1.2 : null,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
+                            ),
+                            maxLines: titleLines,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          if (showTime) ...[
+                            SizedBox(height: compact ? 1 : 2),
+                            Text(
+                              compact
+                                  ? _formatTime(event.startTime)
+                                  : '${_formatTime(event.startTime)} - ${_formatTime(event.endTime)}',
+                              style: TextStyle(
+                                fontSize: compact ? 8.5 : 10,
+                                color: color,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.fade,
+                            ),
+                          ],
+                          if (showLocation) ...[
+                            SizedBox(height: compact ? 1 : 2),
+                            Row(
+                              children: [
+                                if (!compact) ...[
+                                  Icon(
+                                    Icons.place_outlined,
+                                    size: 10,
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(width: 2),
+                                ],
+                                Expanded(
+                                  child: BidiText(
+                                    event.location,
+                                    style: TextStyle(
+                                      fontSize: compact ? 8.5 : 9.5,
+                                      color: secondaryColor,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -658,19 +815,24 @@ class _EventBlockState extends State<_EventBlock> {
   }
 }
 
-/// The press-and-hold preview: a card beside the held event with its full
-/// details. It ignores touches, so releasing the finger always dismisses it.
+/// The press-and-hold (or hover) preview: a card beside the event with its
+/// full details. It ignores pointers, so releasing the finger or moving the
+/// mouse away always dismisses it.
 class _EventPeek extends StatelessWidget {
   final Rect anchor;
   final ScheduleEvent event;
   final Course? course;
-  final String Function(DateTime) formatTime;
+  final bool use24HourFormat;
+
+  /// Dims the screen behind the card; off for hover, where it would flicker.
+  final bool dimBackground;
 
   const _EventPeek({
     required this.anchor,
     required this.event,
     required this.course,
-    required this.formatTime,
+    required this.use24HourFormat,
+    this.dimBackground = true,
   });
 
   @override
@@ -701,7 +863,7 @@ class _EventPeek extends StatelessWidget {
           Icon(icon, size: 16, color: secondary),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
+            child: BidiText(
               text,
               maxLines: maxLines,
               overflow: TextOverflow.ellipsis,
@@ -737,7 +899,7 @@ class _EventPeek extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    BidiText(
                       title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -763,8 +925,8 @@ class _EventPeek extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           detail(
-            Icons.access_time_rounded,
-            '${formatTime(event.startTime)} - ${formatTime(event.endTime)}',
+            event.allDay ? Icons.wb_sunny_rounded : Icons.access_time_rounded,
+            formatEventTimeRange(event, l10n, use24HourFormat: use24HourFormat),
           ),
           if (event.location.isNotEmpty)
             detail(
@@ -799,9 +961,10 @@ class _EventPeek extends StatelessWidget {
         return IgnorePointer(
           child: Stack(
             children: [
-              Positioned.fill(
-                child: ColoredBox(color: Colors.black.withValues(alpha: 0.2)),
-              ),
+              if (dimBackground)
+                Positioned.fill(
+                  child: ColoredBox(color: Colors.black.withValues(alpha: 0.2)),
+                ),
               Positioned(
                 left: left,
                 width: width,

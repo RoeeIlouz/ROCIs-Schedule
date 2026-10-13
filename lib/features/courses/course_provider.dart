@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:ui' show Color;
+
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show DateUtils;
 import 'package:rocis_schedule/core/dev/screenshot_seed.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
@@ -88,6 +89,64 @@ class CourseProvider extends ChangeNotifier {
     return null;
   }
 
+  /// The semester a course belongs to; courses saved without one count as
+  /// the first semester, as in [getFilteredCourses].
+  static String semesterIdOf(Course course) => course.semester ?? 'semester_1';
+
+  /// Semesters that have at least one course, in the user's order. A course
+  /// pointing at a semester that no longer exists still gets an entry, so it
+  /// stays reachable.
+  List<Semester> get semestersWithCourses {
+    final used = {for (final c in _courses) semesterIdOf(c)};
+    return [
+      for (final s in _semesters)
+        if (used.remove(s.id)) s,
+      for (final id in used) Semester(id: id, name: id),
+    ];
+  }
+
+  /// The semester whose dates include [date], if any has dates set.
+  Semester? semesterOn(DateTime date) {
+    final day = dayKeyOf(date)!;
+    for (final s in _semesters) {
+      final bounds = _semesterBounds[s.id];
+      if (bounds?.start == null || bounds?.end == null) continue;
+      if (day >= bounds!.start! && day <= bounds.end!) return s;
+    }
+    return null;
+  }
+
+  /// Places typed into earlier events, for the location field: [courseId]'s
+  /// own places first, then the most used. Matches [query] anywhere, ignoring
+  /// case, and leaves out an exact match (nothing left to complete).
+  List<String> locationSuggestions({
+    String? courseId,
+    String query = '',
+    int limit = 6,
+  }) {
+    final q = query.trim().toLowerCase();
+    final spelling = <String, String>{};
+    final uses = <String, int>{};
+    final ownCourse = <String>{};
+    for (final event in _events) {
+      final place = event.location.trim();
+      if (place.isEmpty) continue;
+      final key = place.toLowerCase();
+      spelling.putIfAbsent(key, () => place);
+      uses[key] = (uses[key] ?? 0) + 1;
+      if (courseId != null && event.courseId == courseId) ownCourse.add(key);
+    }
+    final keys =
+        uses.keys.where((k) => k != q && (q.isEmpty || k.contains(q))).toList()
+          ..sort((a, b) {
+            final own =
+                (ownCourse.contains(b) ? 1 : 0) -
+                (ownCourse.contains(a) ? 1 : 0);
+            return own != 0 ? own : uses[b]!.compareTo(uses[a]!);
+          });
+    return [for (final k in keys.take(limit)) spelling[k]!];
+  }
+
   /// Semester bounds as yyyymmdd ints, rebuilt only when semesters change.
   /// Per-day checks run for every event on every visible day, and building
   /// local DateTimes there costs a timezone lookup each.
@@ -109,7 +168,7 @@ class CourseProvider extends ChangeNotifier {
     DateTime date,
     Map<String, Course> courses,
   ) {
-    if (!event.recurring) return DateUtils.isSameDay(event.startTime, date);
+    if (!event.recurring) return event.coversDay(date);
     if (!event.daysOfWeek.contains(date.weekday % 7)) return false;
 
     final semesterId = courses[event.courseId]?.semester;
@@ -175,13 +234,32 @@ class CourseProvider extends ChangeNotifier {
   }
 
   Future<void> updateCourse(Course course) async {
+    final previous = _courses.where((c) => c.id == course.id).firstOrNull;
     await _dbService.insertCourse(course);
     _upsert(_courses, course, (c) => c.id);
+    if (previous != null && previous.color != course.color) {
+      await _releaseCourseColor(course.id, previous.color);
+    }
     _cloud(_firestoreService.saveCourse(userId, course));
     notifyListeners();
   }
 
   Future<void> addCourse(Course course) => updateCourse(course);
+
+  /// School events used to store a copy of their course's color (shared
+  /// course imports did). When the course is recolored, such copies are
+  /// cleared so the events follow the course; real per-event colors stay.
+  Future<void> _releaseCourseColor(String courseId, Color oldColor) async {
+    for (var i = 0; i < _events.length; i++) {
+      final event = _events[i];
+      if (event.courseId != courseId || event.color != oldColor) continue;
+      if (event.domain != EventDomain.academic) continue;
+      final released = event.copyWith(clearColor: true);
+      _events[i] = released;
+      await _dbService.insertEvent(released);
+      _cloud(_firestoreService.saveEvent(userId, released));
+    }
+  }
 
   Future<void> addCourseFromSync(Course course) async {
     await _dbService.insertCourse(course);

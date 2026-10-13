@@ -6,6 +6,7 @@ import 'package:rocis_schedule/features/courses/widgets/semester_dates_sheet.dar
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/widgets/app_button.dart';
 import 'package:rocis_schedule/shared/widgets/app_text_field.dart';
+import 'package:rocis_schedule/shared/widgets/color_swatch_picker.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
@@ -367,47 +368,13 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: _colors.map((color) {
-              final isSelected = _selectedColor == color;
-              return InkWell(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedColor = color);
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: isSelected
-                        ? Border.all(
-                            color: theme.colorScheme.onSurface,
-                            width: 2.5,
-                          )
-                        : null,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.35),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: isSelected
-                      ? const Icon(
-                          Icons.check_rounded,
-                          size: 20,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-              );
-            }).toList(),
+          ColorSwatchPicker(
+            presets: _colors,
+            selected: _selectedColor,
+            sheetTitle: l10n.translate('course_color'),
+            onChanged: (c) {
+              if (c != null) setState(() => _selectedColor = c);
+            },
           ),
           const SizedBox(height: 24),
 

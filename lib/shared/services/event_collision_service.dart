@@ -5,6 +5,10 @@ import 'package:rocis_schedule/shared/models/schedule_models.dart';
 class EventCollisionService {
   /// Determines if two events overlap in both day-of-occurrence and time.
   static bool doEventsOverlap(ScheduleEvent a, ScheduleEvent b) {
+    // Holidays and other day-spanning events sit above the hour grid and
+    // never clash with timed events.
+    if (a.spansDays || b.spansDays) return false;
+
     // 1. Day comparison
     bool daysOverlap = false;
 

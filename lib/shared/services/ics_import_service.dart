@@ -64,14 +64,34 @@ class IcsImportService {
       } else if (line == 'END:VEVENT') {
         inEvent = false;
         if (summary.isNotEmpty && dtStartStr.isNotEmpty) {
-          final startTime = _parseDateTime(dtStartStr);
-          final endTime = dtEndStr.isNotEmpty
+          var startTime = _parseDateTime(dtStartStr);
+          var endTime = dtEndStr.isNotEmpty
               ? _parseDateTime(dtEndStr)
               : startTime.add(const Duration(hours: 1));
 
           final daysOfWeek = _parseDaysOfWeek(rruleStr, startTime);
           final isRecurring =
               rruleStr.contains('FREQ=WEEKLY') || daysOfWeek.isNotEmpty;
+
+          // A date without a time (DTSTART;VALUE=DATE) is an all-day event;
+          // its DTEND is the day after the last one.
+          final allDay = !isRecurring && _isDateOnly(dtStartStr);
+          if (allDay) {
+            startTime = DateUtils.dateOnly(startTime);
+            var lastDay = dtEndStr.isNotEmpty
+                ? DateUtils.dateOnly(
+                    _parseDateTime(dtEndStr),
+                  ).subtract(const Duration(days: 1))
+                : startTime;
+            if (lastDay.isBefore(startTime)) lastDay = startTime;
+            endTime = DateTime(
+              lastDay.year,
+              lastDay.month,
+              lastDay.day,
+              23,
+              59,
+            );
+          }
           final eventType = _detectEventType(summary);
 
           final rawKey = _extractCourseKey(summary);
@@ -104,6 +124,7 @@ class IcsImportService {
               daysOfWeek: daysOfWeek,
               recurring: isRecurring,
               notes: description,
+              allDay: allDay,
             ),
           );
         }
@@ -128,6 +149,9 @@ class IcsImportService {
 
     return IcsImportResult(courses: coursesMap.values.toList(), events: events);
   }
+
+  static bool _isDateOnly(String raw) =>
+      !raw.contains('T') && raw.replaceAll('-', '').trim().length == 8;
 
   static DateTime _parseDateTime(String raw) {
     try {
@@ -271,6 +295,8 @@ class IcsImportService {
       return '$y$m${d}T$h$min$s';
     }
 
+    String formatIcsDay(DateTime dt) => formatIcsDate(dt).substring(0, 8);
+
     const dayCodes = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
     for (final event in events) {
@@ -297,8 +323,15 @@ class IcsImportService {
           : event.startTime;
       final end = start.add(event.endTime.difference(event.startTime));
 
-      buffer.writeln('DTSTART:${formatIcsDate(start)}');
-      buffer.writeln('DTEND:${formatIcsDate(end)}');
+      if (event.allDay) {
+        // All-day dates; DTEND is exclusive, so the day after the last one.
+        final afterLast = DateUtils.addDaysToDate(event.endDay, 1);
+        buffer.writeln('DTSTART;VALUE=DATE:${formatIcsDay(event.startDay)}');
+        buffer.writeln('DTEND;VALUE=DATE:${formatIcsDay(afterLast)}');
+      } else {
+        buffer.writeln('DTSTART:${formatIcsDate(start)}');
+        buffer.writeln('DTEND:${formatIcsDate(end)}');
+      }
       if (isWeekly) {
         final byDays = event.daysOfWeek
             .map((d) => dayCodes[d.clamp(0, 6)])

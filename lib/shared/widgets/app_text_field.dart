@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rocis_schedule/shared/utils/bidi.dart';
 
 class AppTextField extends StatelessWidget {
   final String label;
@@ -9,6 +10,7 @@ class AppTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
   final int maxLines;
+  final FocusNode? focusNode;
 
   const AppTextField({
     super.key,
@@ -20,6 +22,7 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.prefixIcon,
     this.maxLines = 1,
+    this.focusNode,
   });
 
   @override
@@ -34,15 +37,22 @@ class AppTextField extends StatelessWidget {
           ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          obscureText: isPassword,
-          keyboardType: keyboardType,
-          validator: validator,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        // Free text follows its own direction, so Hebrew typed into an
+        // English UI (or English into a Hebrew one) reads correctly.
+        BidiFieldBuilder(
+          controller: isPassword ? null : controller,
+          builder: (context, direction) => TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            obscureText: isPassword,
+            keyboardType: keyboardType,
+            validator: validator,
+            maxLines: maxLines,
+            textDirection: direction,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+            ),
           ),
         ),
       ],

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/features/courses/widgets/semester_dates_sheet.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
+import 'package:rocis_schedule/shared/utils/event_time_format.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
@@ -1102,6 +1103,18 @@ class _CourseListScreenState extends State<CourseListScreen> {
   String _formatEventTime(BuildContext context, ScheduleEvent event) {
     final themeProvider = context.read<ThemeProvider>();
     final use24Hour = themeProvider.use24HourFormat;
+    if (event.spansDays) {
+      final range = formatEventTimeRange(
+        event,
+        AppLocalizations.of(context)!,
+        use24HourFormat: use24Hour,
+      );
+      if (event.isMultiDay) return range;
+      final date = MaterialLocalizations.of(
+        context,
+      ).formatShortDate(event.startTime);
+      return '$date   $range';
+    }
 
     String start;
     String end;
@@ -1119,7 +1132,10 @@ class _CourseListScreenState extends State<CourseListScreen> {
       final weekdayNames = l10n.locale.languageCode == 'he'
           ? ['א\'', 'ב\'', 'ג\'', 'ד\'', 'ה\'', 'ו\'', 'ש\'']
           // 2023-01-01 was a Sunday.
-          : [for (var i = 0; i < 7; i++) DateFormat.E().format(DateTime(2023, 1, 1 + i))];
+          : [
+              for (var i = 0; i < 7; i++)
+                DateFormat.E().format(DateTime(2023, 1, 1 + i)),
+            ];
       final days = event.daysOfWeek
           .map((day) => weekdayNames[((day % 7) + 7) % 7])
           .join(', ');
