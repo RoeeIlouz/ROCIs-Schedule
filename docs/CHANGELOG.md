@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10+16] - 2026-10-14
+
+### Added
+- Exam countdown & study plan, timetable conflict detector, smart GPA simulator, Android home screen widget, on-device OCR timetable scanner, and specular glassmorphism
+
 ## [0.0.9+15] - 2026-10-13 (Patch 1)
 
 ### Added
