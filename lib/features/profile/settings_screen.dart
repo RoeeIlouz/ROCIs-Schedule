@@ -19,6 +19,7 @@ import 'package:rocis_schedule/features/profile/widgets/about_app_dialog.dart';
 import 'package:rocis_schedule/features/profile/widgets/delete_account_dialog.dart';
 import 'package:rocis_schedule/features/profile/widgets/google_calendar_tile.dart';
 import 'package:rocis_schedule/shared/services/google_calendar_sync_service.dart';
+import 'package:rocis_schedule/shared/services/schedule_widget_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -443,6 +444,24 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ]),
             ],
+
+            // HOME SCREEN WIDGET SECTION
+            _buildSectionHeader(context, l10n.translate('widget_quick_glance')),
+            _buildSectionCard(context, [
+              ListTile(
+                leading: _buildLeadingIcon(
+                  context,
+                  Icons.widgets_rounded,
+                  const Color(0xFF10B981),
+                ),
+                title: Text(l10n.translate('pin_widget_to_home')),
+                subtitle: Text(l10n.translate('widget_up_next_class')),
+                trailing: const Icon(Icons.add_to_home_screen_rounded, size: 20),
+                onTap: () async {
+                  await ScheduleWidgetService.requestPinWidget();
+                },
+              ),
+            ]),
 
             // 6. DATA & TIMETABLE SECTION
             _buildSectionHeader(context, l10n.translate('data_and_storage')),

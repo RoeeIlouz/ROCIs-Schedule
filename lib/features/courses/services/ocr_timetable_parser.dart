@@ -199,7 +199,7 @@ class OcrTimetableParser {
             ? DateTime(now.year, now.month, now.day, times.endHour, times.endMinute)
             : startDt.add(const Duration(minutes: 90));
 
-        final resolvedDays = dayOfWeek != null ? [dayOfWeek] : <int>[0];
+        final resolvedDays = [dayOfWeek];
 
         final event = ScheduleEvent(
           id: _uuid.v4(),

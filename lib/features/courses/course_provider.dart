@@ -7,6 +7,7 @@ import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 import 'package:rocis_schedule/shared/services/ics_import_service.dart';
+import 'package:rocis_schedule/shared/services/schedule_widget_service.dart';
 
 class CourseProvider extends ChangeNotifier {
   final LocalDbService _dbService;
@@ -184,6 +185,19 @@ class CourseProvider extends ChangeNotifier {
   void notifyListeners() {
     _semesterBoundsCache = null;
     super.notifyListeners();
+    _syncWidget();
+  }
+
+  void _syncWidget() {
+    if (_courses.isNotEmpty || _events.isNotEmpty) {
+      final coursesMap = {for (final c in _courses) c.id: c};
+      unawaited(
+        ScheduleWidgetService.updateScheduleWidget(
+          events: _events,
+          courses: coursesMap,
+        ),
+      );
+    }
   }
 
   /// Loads the local cache for an instant first frame. Cloud changes arrive

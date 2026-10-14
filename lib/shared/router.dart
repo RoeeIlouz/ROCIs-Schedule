@@ -84,7 +84,18 @@ class AppRouter {
       GoRoute(
         path: '/schedule/add',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AddEventScreen(),
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is Map<String, dynamic>) {
+            return AddEventScreen(
+              initialStart: extra['initialStart'] as DateTime?,
+              initialCourseId: extra['initialCourseId'] as String?,
+              initialType: extra['initialType'] as EventType?,
+              initialTitle: extra['initialTitle'] as String?,
+            );
+          }
+          return const AddEventScreen();
+        },
       ),
       GoRoute(
         path: '/schedule/add-event',

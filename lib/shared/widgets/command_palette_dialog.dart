@@ -13,6 +13,8 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/utils/bidi.dart';
 import 'package:rocis_schedule/shared/utils/event_time_format.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
+import 'package:rocis_schedule/features/courses/widgets/gpa_simulator_sheet.dart';
+import 'package:rocis_schedule/shared/services/schedule_widget_service.dart';
 
 class CommandPaletteItem {
   final String id;
@@ -143,6 +145,32 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         onSelect: () {
           Navigator.of(context).pop();
           showScanTimetableDialog(context);
+        },
+      ),
+      CommandPaletteItem(
+        id: 'action_gpa_simulator',
+        title: l10n.translate('gpa_simulator'),
+        subtitle: l10n.translate('target_gpa_desc'),
+        icon: Icons.auto_graph_rounded,
+        iconColor: const Color(0xFF0EA5E9),
+        shortcut: 'G',
+        section: 'Actions',
+        onSelect: () {
+          Navigator.of(context).pop();
+          showGpaSimulatorSheet(context);
+        },
+      ),
+      CommandPaletteItem(
+        id: 'action_pin_widget',
+        title: l10n.translate('pin_widget_to_home'),
+        subtitle: l10n.translate('widget_quick_glance'),
+        icon: Icons.widgets_rounded,
+        iconColor: const Color(0xFF10B981),
+        shortcut: 'W',
+        section: 'Actions',
+        onSelect: () {
+          Navigator.of(context).pop();
+          ScheduleWidgetService.requestPinWidget();
         },
       ),
       CommandPaletteItem(

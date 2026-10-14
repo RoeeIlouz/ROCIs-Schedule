@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/shared/services/cross_app_bridge_service.dart';
 import 'package:rocis_schedule/features/schedule/widgets/weekly_timetable_grid.dart';
 import 'package:rocis_schedule/features/schedule/widgets/schedule_empty_states.dart';
+import 'package:rocis_schedule/features/schedule/widgets/exam_countdown_sheet.dart';
 import 'package:rocis_schedule/shared/widgets/account_button.dart';
 
 class ScheduleScreen extends StatefulWidget {
@@ -1310,63 +1311,66 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           return Container(
             width: 260,
             margin: const EdgeInsets.only(right: 12),
-            child: GlassContainer(
-              tintColor: errorColor,
-              borderRadius: BorderRadius.circular(16),
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: errorColor.withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
+            child: GestureDetector(
+              onTap: () => showExamCountdownSheet(context, exam, course),
+              child: GlassContainer(
+                tintColor: errorColor,
+                borderRadius: BorderRadius.circular(16),
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: errorColor.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.assignment_late_rounded,
+                        color: errorColor,
+                        size: 20,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.assignment_late_rounded,
-                      color: errorColor,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          exam.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (course != null)
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Text(
-                            course.name,
-                            style: TextStyle(
-                              color: course.color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                            exam.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
                             ),
                             maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        const SizedBox(height: 2),
-                        Text(
-                          timeText,
-                          style: TextStyle(
-                            color: errorColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                          if (course != null)
+                            Text(
+                              course.name,
+                              style: TextStyle(
+                                color: course.color,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                            ),
+                          const SizedBox(height: 2),
+                          Text(
+                            timeText,
+                            style: TextStyle(
+                              color: errorColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

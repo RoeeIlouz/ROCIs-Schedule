@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/features/courses/services/ocr_timetable_parser.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
-import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 
 class OcrImportReviewSheet extends StatefulWidget {

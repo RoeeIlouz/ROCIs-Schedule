@@ -21,7 +21,23 @@ class AddEventScreen extends StatefulWidget {
   /// Pre-fills a new event's date and start hour (e.g. a tapped grid slot).
   final DateTime? initialStart;
 
-  const AddEventScreen({super.key, this.eventToEdit, this.initialStart});
+  /// Optional pre-selected course ID
+  final String? initialCourseId;
+
+  /// Optional pre-selected event type
+  final EventType? initialType;
+
+  /// Optional pre-filled title
+  final String? initialTitle;
+
+  const AddEventScreen({
+    super.key,
+    this.eventToEdit,
+    this.initialStart,
+    this.initialCourseId,
+    this.initialType,
+    this.initialTitle,
+  });
 
   @override
   State<AddEventScreen> createState() => _AddEventScreenState();
@@ -105,6 +121,20 @@ class _AddEventScreenState extends State<AddEventScreen> {
       _recurring = event.recurring;
       return;
     }
+
+    if (widget.initialTitle != null) {
+      _titleController.text = widget.initialTitle!;
+    }
+    if (widget.initialCourseId != null) {
+      _selectedCourseId = widget.initialCourseId;
+    }
+    if (widget.initialType != null) {
+      _selectedType = widget.initialType!;
+      if (widget.initialType == EventType.study) {
+        _recurring = false;
+      }
+    }
+
     final start = widget.initialStart;
     if (start != null) {
       _eventDate = start;

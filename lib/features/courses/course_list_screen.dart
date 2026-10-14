@@ -11,6 +11,7 @@ import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
 import 'package:rocis_schedule/features/courses/widgets/scan_timetable_dialog.dart';
+import 'package:rocis_schedule/features/courses/widgets/gpa_simulator_sheet.dart';
 import 'package:rocis_schedule/features/courses/screens/course_qr_scanner_screen.dart';
 import 'package:rocis_schedule/features/courses/widgets/share_course_qr_sheet.dart';
 import 'package:intl/intl.dart';
@@ -513,6 +514,48 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  showGpaSimulatorSheet(
+                    context,
+                    semesterId: _selectedSemesterFilter,
+                  );
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_graph_rounded,
+                        size: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        l10n.translate('gpa_simulator'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

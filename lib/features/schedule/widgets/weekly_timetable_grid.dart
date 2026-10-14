@@ -460,6 +460,7 @@ class _WeeklyTimetableGridState extends State<WeeklyTimetableGrid> {
                                     height: blockHeight,
                                     compact: compact,
                                     use24HourFormat: widget.use24HourFormat,
+                                    hasConflict: layout.lanes > 1,
                                     onTap: () =>
                                         widget.onEventTap(event, course),
                                   ),
@@ -567,6 +568,7 @@ class _EventBlock extends StatefulWidget {
   final double height;
   final bool compact;
   final bool use24HourFormat;
+  final bool hasConflict;
   final VoidCallback onTap;
 
   const _EventBlock({
@@ -575,6 +577,7 @@ class _EventBlock extends StatefulWidget {
     required this.height,
     required this.compact,
     required this.use24HourFormat,
+    this.hasConflict = false,
     required this.onTap,
   });
 
@@ -612,6 +615,7 @@ class _EventBlockState extends State<_EventBlock> {
         course: widget.course,
         use24HourFormat: widget.use24HourFormat,
         dimBackground: !fromHover,
+        hasConflict: widget.hasConflict,
       ),
     );
     overlay.insert(_peek!);
@@ -711,6 +715,23 @@ class _EventBlockState extends State<_EventBlock> {
                       width: 3.5,
                       child: Container(color: color),
                     ),
+                    if (widget.hasConflict)
+                      PositionedDirectional(
+                        top: 2,
+                        end: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(1.5),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade700,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.priority_high_rounded,
+                            size: compact ? 7.5 : 9,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     Padding(
                       padding: EdgeInsetsDirectional.only(
                         start: compact ? 5.5 : 7,
@@ -826,6 +847,7 @@ class _EventPeek extends StatelessWidget {
 
   /// Dims the screen behind the card; off for hover, where it would flicker.
   final bool dimBackground;
+  final bool hasConflict;
 
   const _EventPeek({
     required this.anchor,
@@ -833,6 +855,7 @@ class _EventPeek extends StatelessWidget {
     required this.course,
     required this.use24HourFormat,
     this.dimBackground = true,
+    this.hasConflict = false,
   });
 
   @override
@@ -939,6 +962,39 @@ class _EventPeek extends StatelessWidget {
             detail(Icons.person_outline_rounded, course.instructor),
           if (event.notes.isNotEmpty)
             detail(Icons.notes_rounded, event.notes, maxLines: 4),
+          if (hasConflict) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.amber.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: Colors.amber.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.translate('schedule_conflicts_detected'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.amber.shade800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
