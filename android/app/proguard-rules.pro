@@ -36,3 +36,10 @@
 -keep class com.google.android.gms.common.api.** { *; }
 -keep class com.google.android.gms.common.internal.safeparcel.** { *; }
 -dontwarn com.google.android.gms.**
+
+# Google ML Kit Text Recognition
+-dontwarn com.google.mlkit.vision.text.**
+-dontwarn com.google_mlkit_text_recognition.**
+-keep class com.google.mlkit.vision.text.** { *; }
+-keep class com.google_mlkit_text_recognition.** { *; }
+
