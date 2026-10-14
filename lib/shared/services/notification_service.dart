@@ -33,7 +33,7 @@ class NotificationService {
         iOS: iosSettings,
       );
 
-      await _notificationsPlugin.initialize(initSettings);
+      await _notificationsPlugin.initialize(settings: initSettings);
       _isInitialized = true;
       debugPrint('NotificationService: Initialized successfully');
     } catch (e) {
@@ -86,11 +86,11 @@ class NotificationService {
           : courseName;
 
       await _notificationsPlugin.zonedSchedule(
-        notificationId,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
-        const NotificationDetails(
+        id: notificationId,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'rocis_schedule_channel',
             'Class & Exam Reminders',
@@ -105,8 +105,6 @@ class NotificationService {
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
       );
       debugPrint('NotificationService: Scheduled event reminder for ${event.title} at $scheduledDate');
     } catch (e) {
@@ -132,11 +130,11 @@ class NotificationService {
       final body = courseName.isNotEmpty ? 'Course: $courseName' : 'Make sure to finish on time!';
 
       await _notificationsPlugin.zonedSchedule(
-        notificationId,
-        title,
-        body,
-        tz.TZDateTime.from(scheduledDate, tz.local),
-        const NotificationDetails(
+        id: notificationId,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'rocis_schedule_assignments',
             'Assignment Reminders',
@@ -151,8 +149,6 @@ class NotificationService {
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (e) {
       debugPrint('NotificationService: Failed to schedule assignment reminder: $e');
@@ -162,7 +158,7 @@ class NotificationService {
   Future<void> cancelReminder(int id) async {
     if (!_isInitialized) return;
     try {
-      await _notificationsPlugin.cancel(id);
+      await _notificationsPlugin.cancel(id: id);
     } catch (_) {}
   }
 

@@ -10,6 +10,7 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/command_palette_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
+import 'package:rocis_schedule/features/courses/widgets/scan_timetable_dialog.dart';
 import 'package:rocis_schedule/features/courses/screens/course_qr_scanner_screen.dart';
 import 'package:rocis_schedule/features/courses/widgets/share_course_qr_sheet.dart';
 import 'package:intl/intl.dart';
@@ -99,6 +100,12 @@ class _CourseListScreenState extends State<CourseListScreen> {
                         onPressed: () => context.push('/courses/add'),
                         icon: const Icon(Icons.add),
                         label: Text(l10n.translate('add_course')),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () => showScanTimetableDialog(context),
+                        icon: const Icon(Icons.document_scanner_rounded),
+                        label: Text(l10n.translate('scan_timetable')),
                       ),
                       const SizedBox(height: 8),
                       TextButton.icon(
@@ -267,6 +274,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 ),
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.document_scanner_rounded),
+                    tooltip: l10n.translate('scan_timetable'),
+                    onPressed: () => showScanTimetableDialog(context),
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.qr_code_scanner_rounded),
                     tooltip: l10n.translate('scan_course_qr'),
                     onPressed: () => CourseQrScannerScreen.open(context),
@@ -348,6 +360,19 @@ class _CourseListScreenState extends State<CourseListScreen> {
             child: _buildSemesterFilterStrip(context, provider, l10n, theme),
           ),
           const SizedBox(width: 16),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.document_scanner_rounded, size: 16),
+            label: Text(l10n.translate('scan_timetable')),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => showScanTimetableDialog(context),
+          ),
+          const SizedBox(width: 8),
           OutlinedButton.icon(
             icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
             label: Text(l10n.translate('scan_course_qr')),

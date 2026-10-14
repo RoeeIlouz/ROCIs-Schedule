@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
+import 'package:rocis_schedule/features/courses/widgets/scan_timetable_dialog.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
@@ -129,6 +130,19 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         onSelect: () {
           Navigator.of(context).pop();
           context.push('/courses/add');
+        },
+      ),
+      CommandPaletteItem(
+        id: 'action_scan_timetable',
+        title: l10n.translate('scan_timetable'),
+        subtitle: l10n.translate('scan_timetable_desc'),
+        icon: Icons.document_scanner_rounded,
+        iconColor: const Color(0xFF8B5CF6),
+        shortcut: 'S',
+        section: 'Actions',
+        onSelect: () {
+          Navigator.of(context).pop();
+          showScanTimetableDialog(context);
         },
       ),
       CommandPaletteItem(
