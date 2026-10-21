@@ -17,6 +17,8 @@ import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/app_color_picker_sheet.dart';
 import 'package:rocis_schedule/features/profile/widgets/about_app_dialog.dart';
 import 'package:rocis_schedule/features/profile/widgets/delete_account_dialog.dart';
+import 'package:rocis_schedule/features/courses/services/course_notes_folder_service.dart';
+import 'package:rocis_schedule/features/profile/widgets/notes_folder_tiles.dart';
 import 'package:rocis_schedule/features/profile/widgets/google_calendar_tile.dart';
 import 'package:rocis_schedule/shared/services/google_calendar_sync_service.dart';
 import 'package:rocis_schedule/shared/services/schedule_widget_service.dart';
@@ -502,6 +504,7 @@ class SettingsScreen extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => showIcsImportDialog(context),
               ),
+              if (CourseNotesFolderService.isSupported) const NotesFolderTiles(),
               ListTile(
                 leading: _buildLeadingIcon(
                   context,

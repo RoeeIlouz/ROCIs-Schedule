@@ -13,6 +13,7 @@ import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
 import 'package:rocis_schedule/features/courses/widgets/scan_timetable_dialog.dart';
 import 'package:rocis_schedule/features/courses/widgets/gpa_simulator_sheet.dart';
 import 'package:rocis_schedule/features/courses/screens/course_qr_scanner_screen.dart';
+import 'package:rocis_schedule/features/courses/widgets/course_notes_sheet.dart';
 import 'package:rocis_schedule/features/courses/widgets/share_course_qr_sheet.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -813,6 +814,17 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                 course: course,
                                 events: events,
                               );
+                            } else if (value == 'notes') {
+                              final events = context
+                                  .read<CourseProvider>()
+                                  .events
+                                  .where((e) => e.courseId == course.id)
+                                  .toList();
+                              CourseNotesSheet.show(
+                                context,
+                                course: course,
+                                events: events,
+                              );
                             } else if (value == 'edit') {
                               context.push('/courses/edit', extra: course);
                             } else if (value == 'delete') {
@@ -827,6 +839,16 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   const Icon(Icons.qr_code_2_rounded, size: 18),
                                   const SizedBox(width: 10),
                                   Text(l10n.translate('share_course_qr')),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'notes',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.note_add_outlined, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text(l10n.translate('notes_send_to_app')),
                                 ],
                               ),
                             ),
