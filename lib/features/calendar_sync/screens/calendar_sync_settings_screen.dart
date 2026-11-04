@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:rocis_schedule/features/calendar_sync/models/feed_entry.dart';
 import 'package:rocis_schedule/features/calendar_sync/screens/afeka_login_screen.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/calendar_sync_service.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/sync_config.dart';
@@ -95,15 +96,28 @@ class _CalendarSyncSettingsScreenState
         provider,
         _store,
         cancelledLabel: l10n.translate('calendar_sync_cancelled'),
+        autoCreateCourses: false,
       );
       final result = await service.run(
         source,
         LocalSyncNotifier(l10n.translate),
       );
       if (_kind == SyncKind.publicIcs) await SyncScheduler.registerPeriodic();
-      final candidates = result.summary?.replaceCandidates ?? const [];
+      var summary = result.summary;
+      if (summary != null && summary.unmappedCourses.isNotEmpty && mounted) {
+        final chosen = await _mapCourses(provider, summary.unmappedCourses);
+        if (chosen != null) {
+          final map = await _store.loadCourseMap(source.id)
+            ..addAll(chosen);
+          await _store.saveCourseMap(source.id, map);
+          final again = await service.run(source, _SilentNotifier());
+          summary = again.summary ?? summary;
+        }
+      }
+      final candidates = summary?.replaceCandidates ?? const [];
       if (candidates.isNotEmpty && mounted) {
         await _offerReplace(service, candidates.map((e) => e.id).toList());
+        await _store.setReplaceHandled(source.id);
       }
       messenger.showSnackBar(
         SnackBar(
@@ -120,6 +134,59 @@ class _CalendarSyncSettingsScreenState
       if (mounted) setState(() => _busy = false);
       await _load();
     }
+  }
+
+  /// Asks which of the user's courses each calendar course belongs to.
+  /// Returns calendar name -> course id ('' = new course), or null if dismissed.
+  Future<Map<String, String>?> _mapCourses(
+    CourseProvider provider,
+    List<String> names,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final chosen = {for (final n in names) n: ''};
+    return showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(l10n.translate('calendar_sync_map_title')),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.translate('calendar_sync_map_body')),
+                for (final n in names) ...[
+                  const SizedBox(height: 12),
+                  Text(n, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  DropdownButton<String>(
+                    isExpanded: true,
+                    value: chosen[n],
+                    items: [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(l10n.translate('calendar_sync_map_new')),
+                      ),
+                      for (final c in provider.courses)
+                        DropdownMenuItem(
+                          value: c.id,
+                          child: Text(c.name, overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (v) => setLocal(() => chosen[n] = v ?? ''),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, chosen),
+              child: Text(l10n.translate('apply')),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _offerReplace(CalendarSyncService svc, List<String> ids) async {
@@ -219,4 +286,13 @@ class _CalendarSyncSettingsScreenState
       ),
     );
   }
+}
+
+/// Used for the re-run after the user maps courses: nothing to announce.
+class _SilentNotifier implements SyncNotifier {
+  @override
+  Future<void> changes(List<SyncChange> changes) async {}
+
+  @override
+  Future<void> loginExpired() async {}
 }

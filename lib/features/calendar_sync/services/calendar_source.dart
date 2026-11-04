@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:rocis_schedule/features/calendar_sync/services/feed_parser.dart';
@@ -70,7 +71,10 @@ Future<FetchResult> _get(
       if (res.statusCode != 200) {
         return FetchFailed('http ${res.statusCode}');
       }
-      if (FeedParser.looksLikeCalendar(res.body)) return FetchOk(res.body);
+      // Calendars are UTF-8; the server may omit the charset, in which case
+      // `res.body` would decode the Hebrew as Latin-1.
+      final body = utf8.decode(res.bodyBytes, allowMalformed: true);
+      if (FeedParser.looksLikeCalendar(body)) return FetchOk(body);
       return loginOnHtml
           ? const FetchNeedsLogin()
           : const FetchFailed('response is not a calendar');

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -111,6 +112,20 @@ void main() {
       }),
     ).fetch();
     expect(seen['other.example.com'], isNull);
+  });
+
+  test('UTF-8 body without a charset header is decoded as UTF-8', () async {
+    final hebrew = '$_ics\nSUMMARY:אלגברה ליניארית';
+    final r = await afeka(
+      MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(hebrew),
+          200,
+          headers: {'content-type': 'text/calendar'},
+        ),
+      ),
+    ).fetch();
+    expect((r as FetchOk).body, contains('אלגברה ליניארית'));
   });
 
   test('public source accepts a calendar and rejects html', () async {

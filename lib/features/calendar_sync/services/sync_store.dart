@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SyncStore {
   static String _snapKey(String id) => 'calsync.snapshot.$id';
   static String _lastKey(String id) => 'calsync.last.$id';
+  static String _verKey(String id) => 'calsync.ver.$id';
   static String _loginKey(String id) => 'calsync.needsLogin.$id';
 
   Future<List<SyncKeyed>> loadSnapshot(String sourceId) async {
@@ -29,6 +30,48 @@ class SyncStore {
       jsonEncode(list.map(_toJson).toList()),
     );
     await prefs.setString(_lastKey(sourceId), DateTime.now().toIso8601String());
+    await prefs.setInt(_verKey(sourceId), formatVersion);
+  }
+
+  /// Calendar course name (normalized) to the user's course id; an empty id
+  /// means "create a new course".
+  Future<Map<String, String>> loadCourseMap(String sourceId) async {
+    final raw = (await SharedPreferences.getInstance()).getString(
+      'calsync.map.$sourceId',
+    );
+    if (raw == null) return {};
+    try {
+      return (jsonDecode(raw) as Map).cast<String, String>();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> saveCourseMap(String sourceId, Map<String, String> map) async =>
+      (await SharedPreferences.getInstance()).setString(
+        'calsync.map.$sourceId',
+        jsonEncode(map),
+      );
+
+  /// Whether the user already answered "replace your weekly sessions?".
+  Future<bool> replaceHandled(String sourceId) async =>
+      (await SharedPreferences.getInstance()).getBool(
+        'calsync.replaced.$sourceId',
+      ) ??
+      false;
+
+  Future<void> setReplaceHandled(String sourceId) async =>
+      (await SharedPreferences.getInstance()).setBool(
+        'calsync.replaced.$sourceId',
+        true,
+      );
+
+  /// Snapshots saved before [formatVersion] 2 were decoded as Latin-1.
+  static const formatVersion = 2;
+
+  Future<bool> isLegacy(String sourceId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_verKey(sourceId)) != formatVersion;
   }
 
   Future<DateTime?> lastSync(String sourceId) async {

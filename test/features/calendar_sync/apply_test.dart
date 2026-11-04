@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -71,6 +72,71 @@ void main() {
       expect(p.events.single.courseId, 'mine');
     },
   );
+
+  Course mine(String id, String name) => Course(
+    id: id,
+    name: name,
+    code: 'C',
+    instructor: 'My Lecturer',
+    color: const Color(0xFF222222),
+    credits: 5,
+    grade: 80,
+  );
+
+  test(
+    'a partial name match joins the existing course, nothing created',
+    () async {
+      final p = await freshProvider('cs_fuzzy');
+      await p.addCourse(mine('alg', 'אלגברה'));
+      await CalendarSyncService(
+        p,
+        SyncStore(),
+        autoCreateCourses: false,
+      ).applyEntries('afeka', [lecture('אלגברה ליניארית', mon)]);
+      expect(p.courses, hasLength(1));
+      final c = p.courses.single;
+      expect(
+        [c.name, c.instructor, c.credits, c.grade],
+        ['אלגברה', 'My Lecturer', 5, 80],
+      );
+      expect(p.events.single.courseId, 'alg');
+    },
+  );
+
+  test(
+    'ambiguous or missing matches wait for the user, nothing is created',
+    () async {
+      final p = await freshProvider('cs_unmapped');
+      await p.addCourse(mine('a1', 'פיזיקה א'));
+      await p.addCourse(mine('a2', 'פיזיקה ב'));
+      final svc = CalendarSyncService(p, SyncStore(), autoCreateCourses: false);
+      final s = await svc.applyEntries('afeka', [
+        lecture('פיזיקה', mon),
+        lecture('כימיה', mon),
+      ]);
+      expect(s.unmappedCourses.toSet(), {'פיזיקה', 'כימיה'});
+      expect(p.courses, hasLength(2));
+      expect(p.events, isEmpty);
+    },
+  );
+
+  test('saved mapping picks the chosen course or creates a new one', () async {
+    final p = await freshProvider('cs_map');
+    await p.addCourse(mine('a1', 'Calculus'));
+    final store = SyncStore();
+    await store.saveCourseMap('afeka', {'חשבון': 'a1', 'כימיה': ''});
+    final svc = CalendarSyncService(p, store, autoCreateCourses: false);
+    final s = await svc.applyEntries('afeka', [
+      lecture('חשבון', mon),
+      lecture('כימיה', mon),
+    ]);
+    expect(s.unmappedCourses, isEmpty);
+    expect(p.courses.map((c) => c.name).toSet(), {'Calculus', 'כימיה'});
+    expect(
+      p.events.where((e) => e.courseId == 'a1' && e.title == 'Calculus'),
+      hasLength(1),
+    );
+  });
 
   test('creates a course for an unmatched name', () async {
     final p = await freshProvider('cs_create');
@@ -177,6 +243,23 @@ void main() {
       lecture('פיזיקה', mon, desc: 'סוג מפגש: תרגול'),
     ]);
     expect(p.events, hasLength(2));
+  });
+
+  test('legacy garbled import is removed and redone as a first run', () async {
+    final p = await freshProvider('cs_legacy');
+    final svc = CalendarSyncService(p, SyncStore());
+    final garbled = latin1.decode(utf8.encode('פיזיקה'));
+    await svc.applyEntries('afeka', [lecture(garbled, mon)]);
+    expect(p.courses.single.name, garbled);
+    // Simulate an install from before the UTF-8 fix (no format version).
+    await (await SharedPreferences.getInstance()).remove('calsync.ver.afeka');
+
+    final summary = await svc.applyEntries('afeka', [lecture('פיזיקה', mon)]);
+
+    expect(summary.isFirstRun, isTrue);
+    expect(p.courses.map((c) => c.name), ['פיזיקה']);
+    expect(p.events, hasLength(1));
+    expect(p.events.single.title, 'פיזיקה');
   });
 
   test('first run offers weekly sessions as replace candidates', () async {

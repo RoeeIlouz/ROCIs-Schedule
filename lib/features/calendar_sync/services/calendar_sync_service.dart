@@ -22,7 +22,12 @@ class SyncSummary {
     required this.changes,
     required this.isFirstRun,
     this.replaceCandidates = const [],
+    this.unmappedCourses = const [],
   });
+
+  /// Calendar course names with no matching course yet; their sessions are
+  /// held back until the user maps them (see [SyncStore.saveCourseMap]).
+  final List<String> unmappedCourses;
 }
 
 /// Where sync results are shown to the user.
@@ -47,11 +52,28 @@ class CalendarSyncService {
   final SyncStore _store;
   final String cancelledLabel;
 
+  /// When false (the app), a course name that matches none of the user's
+  /// courses is not created behind their back; see [SyncSummary.unmappedCourses].
+  final bool autoCreateCourses;
+
   CalendarSyncService(
     this._provider,
     this._store, {
     this.cancelledLabel = 'Cancelled',
+    this.autoCreateCourses = true,
   });
+
+  /// The one course whose name contains, or is contained in, [name]; null
+  /// when none or several do (ambiguous matches are left to the user).
+  static Course? _fuzzyMatch(String name, List<Course> courses) {
+    final n = name.toLowerCase();
+    if (n.length < 3) return null;
+    final hits = courses.where((c) {
+      final other = AfekaClassifier.normalizeName(c.name).toLowerCase();
+      return other.length >= 3 && (other.contains(n) || n.contains(other));
+    }).toList();
+    return hits.length == 1 ? hits.single : null;
+  }
 
   static const _cancelledColor = Color(0xFF9E9E9E);
   static const _palette = [
@@ -96,45 +118,83 @@ class CalendarSyncService {
       current.add(SyncKeyed(FeedDiffer.keyFor(info, entry), entry, info));
     }
 
-    final previous = await _store.loadSnapshot(sourceId);
-    final isFirstRun = previous.isEmpty;
-    final changes = FeedDiffer.diff(previous, current);
-
-    final currentIds = _ids(sourceId, current);
-    final previousIds = _ids(sourceId, previous).toSet();
-
-    // Courses: match by normalized name, else create.
+    // Courses are matched to the user's existing ones, never overwritten:
+    // saved mapping, then identical name, then a course this sync made, then
+    // one unambiguous partial name match. A name that matches none is created
+    // only if the user said so (or [autoCreateCourses]); otherwise its
+    // entries wait in [SyncSummary.unmappedCourses] for the user to choose.
+    final mapping = await _store.loadCourseMap(sourceId);
+    final byId = {for (final c in _provider.courses) c.id: c};
     final byName = <String, Course>{
       for (final c in _provider.courses)
         AfekaClassifier.normalizeName(c.name): c,
     };
     final matchedExisting = <String>{};
     final newCourses = <Course>[];
-    Course courseFor(String rawName) {
-      final name = AfekaClassifier.normalizeName(rawName);
-      final found = byName[name];
-      if (found != null) {
-        matchedExisting.add(found.id);
-        return found;
-      }
+    Course create(String name) {
       final created = Course(
         id: _courseId(sourceId, name),
         name: name,
         code: '',
         instructor: '',
-        color: _palette[(byName.length) % _palette.length],
+        color: _palette[byName.length % _palette.length],
         credits: 0,
       );
       byName[name] = created;
+      byId[created.id] = created;
       newCourses.add(created);
       return created;
     }
+
+    Course? resolve(String rawName) {
+      final name = AfekaClassifier.normalizeName(rawName);
+      final mapped = mapping[name];
+      Course? found = (mapped != null && mapped.isNotEmpty)
+          ? byId[mapped]
+          : null;
+      found ??= byName[name] ?? byId[_courseId(sourceId, name)];
+      if (found != null) {
+        if (!newCourses.any((c) => c.id == found!.id)) {
+          matchedExisting.add(found.id);
+        }
+        return found;
+      }
+      if (mapped == '') return create(name);
+      final fuzzy = _fuzzyMatch(name, _provider.courses);
+      if (fuzzy != null) {
+        matchedExisting.add(fuzzy.id);
+        return fuzzy;
+      }
+      return autoCreateCourses ? create(name) : null;
+    }
+
+    final unmapped = <String>{};
+    current.removeWhere((k) {
+      if (resolve(k.info.courseName) != null) return false;
+      unmapped.add(AfekaClassifier.normalizeName(k.info.courseName));
+      return true;
+    });
+
+    var previous = await _store.loadSnapshot(sourceId);
+    // A snapshot written before the UTF-8 fix holds unreadable text: remove
+    // what it created and start over as a first run.
+    final legacy = previous.isNotEmpty && await _store.isLegacy(sourceId);
+    final legacyPrevious = legacy ? previous : const <SyncKeyed>[];
+    if (legacy) previous = const [];
+    final isFirstRun = previous.isEmpty;
+    final changes = FeedDiffer.diff(previous, current);
+
+    final currentIds = _ids(sourceId, current);
+    final previousIds = {
+      ..._ids(sourceId, previous),
+      ..._ids(sourceId, legacyPrevious),
+    };
 
     final existingById = {for (final e in _provider.events) e.id: e};
     final upserts = <ScheduleEvent>[];
     for (var i = 0; i < current.length; i++) {
       final k = current[i];
-      final course = courseFor(k.info.courseName);
+      final course = resolve(k.info.courseName)!;
       final existing = existingById[currentIds[i]];
       final cancelled = k.info.cancelled;
       final wanted = ScheduleEvent(
@@ -161,7 +221,7 @@ class CalendarSyncService {
         if (!currentIdSet.contains(id) && existingById.containsKey(id)) id,
     ];
 
-    final candidates = isFirstRun
+    final candidates = !await _store.replaceHandled(sourceId)
         ? _provider.events
               .where(
                 (e) =>
@@ -179,10 +239,23 @@ class CalendarSyncService {
     );
     await _store.saveSnapshot(sourceId, current);
 
+    // Courses the legacy snapshot created and nothing uses any more.
+    for (final k in legacyPrevious) {
+      final id = _courseId(
+        sourceId,
+        AfekaClassifier.normalizeName(k.info.courseName),
+      );
+      final exists = _provider.courses.any((c) => c.id == id);
+      if (exists && !_provider.events.any((e) => e.courseId == id)) {
+        await _provider.deleteCourse(id);
+      }
+    }
+
     return SyncSummary(
       changes: changes,
       isFirstRun: isFirstRun,
       replaceCandidates: candidates,
+      unmappedCourses: unmapped.toList(),
     );
   }
 

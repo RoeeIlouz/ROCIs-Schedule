@@ -86,6 +86,7 @@ class SyncScheduler {
         provider,
         SyncStore(),
         cancelledLabel: l10n.translate('calendar_sync_cancelled'),
+        autoCreateCourses: false,
       );
       await service.run(source, LocalSyncNotifier(l10n.translate));
     } catch (e) {
@@ -109,6 +110,7 @@ class SyncScheduler {
         provider,
         SyncStore(),
         cancelledLabel: l10n.translate('calendar_sync_cancelled'),
+        autoCreateCourses: false,
       ).run(source, LocalSyncNotifier(l10n.translate));
     } catch (e) {
       debugPrint('SyncScheduler: syncIfDue failed: $e');
