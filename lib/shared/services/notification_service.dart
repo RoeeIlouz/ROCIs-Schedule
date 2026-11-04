@@ -155,6 +155,36 @@ class NotificationService {
     }
   }
 
+  /// Shows a notification right away. A fixed [id] makes a repeat replace the
+  /// previous one instead of stacking.
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (!_isInitialized) return;
+    try {
+      await _notificationsPlugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'rocis_calendar_sync_channel',
+            'Calendar sync',
+            channelDescription: 'Timetable changes found by calendar sync',
+            importance: Importance.high,
+            priority: Priority.high,
+            styleInformation: BigTextStyleInformation(''),
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('NotificationService: showNow failed: $e');
+    }
+  }
+
   Future<void> cancelReminder(int id) async {
     if (!_isInitialized) return;
     try {

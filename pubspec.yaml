@@ -77,6 +77,9 @@ dependencies:
   pdf: ^3.13.1
   share_plus: ^13.3.1
   saf: ^2.1.2
+  flutter_inappwebview: ^6.1.5
+  flutter_secure_storage: ^11.2.0
+  workmanager: ^0.10.10
 
 dependency_overrides:
   timezone: ^0.11.0
