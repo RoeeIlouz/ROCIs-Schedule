@@ -28,6 +28,7 @@
 - **GPA tracker** with weighted credits (decimal credits like 1.5 or 3.5 work) on a 4.0 scale.
 - **Assignments** with due dates and priorities, and a one-tap hand-off to [ROCIs Tasks](https://github.com/RoeeIlouz/ROCIsTasks-Public).
 - **.ics import** from Canvas, Moodle, Blackboard or Google Calendar, with automatic lecture / exam / lab detection.
+- **Live calendar sync**: paste your Afeka (or any) calendar link under Settings, and courses and schedule stay in sync. It refreshes when you open the app, adds new classes, updates changed ones and removes cancelled ones. Courses, grades and events you made yourself are never touched.
 - **Course sharing** by QR code or link, so a whole class can import the same course.
 - **8 languages**, including Hebrew and Arabic with full right-to-left layout.
 

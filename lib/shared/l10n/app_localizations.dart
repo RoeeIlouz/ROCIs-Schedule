@@ -101,6 +101,26 @@ class AppLocalizations {
       'paste': 'Paste',
       'ics_imported': 'Imported {courses} courses and {events} events',
       'ics_nothing_found': 'No courses or events found in this file',
+      'calendar_sync_title': 'Sync calendar link',
+      'calendar_sync_desc':
+          'Paste your Afeka calendar link (the updating one). Your courses and schedule stay in sync with it. Anything you add yourself is left alone.',
+      'calendar_sync': 'Connect and sync',
+      'calendar_sync_now': 'Sync now',
+      'calendar_sync_stop': 'Stop syncing',
+      'calendar_sync_stopped':
+          'Stopped syncing. Items already synced were kept.',
+      'calendar_sync_last': 'Last synced: {time}',
+      'calendar_sync_done':
+          'Calendar synced: {added} added, {updated} updated, {removed} removed',
+      'calendar_sync_up_to_date': 'Calendar is already up to date',
+      'calendar_sync_invalid_url':
+          'That is not a valid calendar link. It should start with https:// or webcal://',
+      'calendar_sync_network_error':
+          "Couldn't reach the calendar. Check the link and your connection.",
+      'calendar_sync_not_calendar':
+          "That link didn't return a calendar (.ics) file.",
+      'calendar_sync_empty':
+          'The calendar has no events, so nothing was changed.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'Welcome Back',
       'login_subtitle': 'Manage your academic life seamlessly and stay ahead',
@@ -502,6 +522,23 @@ class AppLocalizations {
       'paste': 'הדבקה',
       'ics_imported': 'יובאו {courses} קורסים ו-{events} אירועים',
       'ics_nothing_found': 'לא נמצאו קורסים או אירועים בקובץ',
+      'calendar_sync_title': 'סנכרון קישור יומן',
+      'calendar_sync_desc':
+          'הדביקו את קישור היומן של אפקה (המתעדכן). הקורסים ומערכת השעות יישארו מסונכרנים איתו. מה שהוספתם בעצמכם לא ייגע.',
+      'calendar_sync': 'התחברות וסנכרון',
+      'calendar_sync_now': 'סנכרון עכשיו',
+      'calendar_sync_stop': 'הפסקת סנכרון',
+      'calendar_sync_stopped': 'הסנכרון הופסק. פריטים שכבר סונכרנו נשמרו.',
+      'calendar_sync_last': 'סונכרן לאחרונה: {time}',
+      'calendar_sync_done':
+          'היומן סונכרן: {added} נוספו, {updated} עודכנו, {removed} הוסרו',
+      'calendar_sync_up_to_date': 'היומן כבר מעודכן',
+      'calendar_sync_invalid_url':
+          'זה לא קישור יומן תקין. הוא צריך להתחיל ב-https:// או webcal://',
+      'calendar_sync_network_error':
+          'לא ניתן להגיע ליומן. בדקו את הקישור ואת החיבור.',
+      'calendar_sync_not_calendar': 'הקישור לא החזיר קובץ יומן (.ics).',
+      'calendar_sync_empty': 'ביומן אין אירועים, ולכן לא שונה דבר.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'ברוך שובך',
       'login_subtitle': 'ניהול כל חיי הלימודים שלך במקום אחד בצורה חלקה',
@@ -906,6 +943,32 @@ class AppLocalizations {
       'ics_imported': 'Se importaron {courses} cursos y {events} eventos',
       'ics_nothing_found':
           'No se encontraron cursos ni eventos en este archivo',
+      'calendar_sync_title':
+          'Sincronizar enlace de calendario',
+      'calendar_sync_desc':
+          'Pega el enlace de tu calendario de Afeka (el que se actualiza). Tus cursos y horario se mantienen sincronizados. Lo que añadas tú no se toca.',
+      'calendar_sync':
+          'Conectar y sincronizar',
+      'calendar_sync_now':
+          'Sincronizar ahora',
+      'calendar_sync_stop':
+          'Dejar de sincronizar',
+      'calendar_sync_stopped':
+          'Sincronización detenida. Los elementos ya sincronizados se conservaron.',
+      'calendar_sync_last':
+          'Última sincronización: {time}',
+      'calendar_sync_done':
+          'Calendario sincronizado: {added} añadidos, {updated} actualizados, {removed} eliminados',
+      'calendar_sync_up_to_date':
+          'El calendario ya está actualizado',
+      'calendar_sync_invalid_url':
+          'Ese no es un enlace de calendario válido. Debe empezar por https:// o webcal://',
+      'calendar_sync_network_error':
+          'No se pudo acceder al calendario. Revisa el enlace y tu conexión.',
+      'calendar_sync_not_calendar':
+          'El enlace no devolvió un archivo de calendario (.ics).',
+      'calendar_sync_empty':
+          'El calendario no tiene eventos, así que no se cambió nada.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'Bienvenido de nuevo',
       'login_subtitle': 'Gestiona tu vida académica sin problemas',
@@ -1314,6 +1377,32 @@ class AppLocalizations {
       'paste': 'Einfügen',
       'ics_imported': '{courses} Kurse und {events} Termine importiert',
       'ics_nothing_found': 'Keine Kurse oder Termine in dieser Datei gefunden',
+      'calendar_sync_title':
+          'Kalenderlink synchronisieren',
+      'calendar_sync_desc':
+          'Füge den Link zu deinem Afeka-Kalender (den aktualisierten) ein. Deine Kurse und dein Stundenplan bleiben damit synchron. Was du selbst hinzufügst, bleibt unberührt.',
+      'calendar_sync':
+          'Verbinden und synchronisieren',
+      'calendar_sync_now':
+          'Jetzt synchronisieren',
+      'calendar_sync_stop':
+          'Synchronisierung beenden',
+      'calendar_sync_stopped':
+          'Synchronisierung beendet. Bereits synchronisierte Einträge wurden behalten.',
+      'calendar_sync_last':
+          'Zuletzt synchronisiert: {time}',
+      'calendar_sync_done':
+          'Kalender synchronisiert: {added} hinzugefügt, {updated} aktualisiert, {removed} entfernt',
+      'calendar_sync_up_to_date':
+          'Der Kalender ist bereits aktuell',
+      'calendar_sync_invalid_url':
+          'Das ist kein gültiger Kalenderlink. Er sollte mit https:// oder webcal:// beginnen.',
+      'calendar_sync_network_error':
+          'Der Kalender ist nicht erreichbar. Prüfe den Link und deine Verbindung.',
+      'calendar_sync_not_calendar':
+          'Der Link hat keine Kalenderdatei (.ics) geliefert.',
+      'calendar_sync_empty':
+          'Der Kalender enthält keine Termine, daher wurde nichts geändert.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'Willkommen zurück',
       'login_subtitle': 'Organisiere deinen Studienalltag mühelos',
@@ -1722,6 +1811,32 @@ class AppLocalizations {
       'paste': 'Coller',
       'ics_imported': '{courses} cours et {events} événements importés',
       'ics_nothing_found': 'Aucun cours ni événement trouvé dans ce fichier',
+      'calendar_sync_title':
+          'Synchroniser un lien de calendrier',
+      'calendar_sync_desc':
+          "Collez le lien de votre calendrier Afeka (celui qui se met à jour). Vos cours et votre emploi du temps restent synchronisés. Ce que vous ajoutez vous-même n'est pas modifié.",
+      'calendar_sync':
+          'Connecter et synchroniser',
+      'calendar_sync_now':
+          'Synchroniser maintenant',
+      'calendar_sync_stop':
+          'Arrêter la synchronisation',
+      'calendar_sync_stopped':
+          'Synchronisation arrêtée. Les éléments déjà synchronisés ont été conservés.',
+      'calendar_sync_last':
+          'Dernière synchronisation : {time}',
+      'calendar_sync_done':
+          'Calendrier synchronisé : {added} ajoutés, {updated} mis à jour, {removed} supprimés',
+      'calendar_sync_up_to_date':
+          'Le calendrier est déjà à jour',
+      'calendar_sync_invalid_url':
+          'Ce lien de calendrier n’est pas valide. Il doit commencer par https:// ou webcal://',
+      'calendar_sync_network_error':
+          'Impossible d’accéder au calendrier. Vérifiez le lien et votre connexion.',
+      'calendar_sync_not_calendar':
+          'Ce lien n’a pas renvoyé de fichier de calendrier (.ics).',
+      'calendar_sync_empty':
+          'Le calendrier ne contient aucun événement, rien n’a donc été modifié.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'Bon retour',
       'login_subtitle':
@@ -2129,6 +2244,32 @@ class AppLocalizations {
       'paste': 'لصق',
       'ics_imported': 'تم استيراد {courses} مواد و{events} أحداث',
       'ics_nothing_found': 'لم يتم العثور على مواد أو أحداث في هذا الملف',
+      'calendar_sync_title':
+          'مزامنة رابط التقويم',
+      'calendar_sync_desc':
+          'الصق رابط تقويم أفيكا (المحدَّث). ستبقى موادك وجدولك متزامنة معه. ما تضيفه بنفسك لن يتغير.',
+      'calendar_sync':
+          'اتصال ومزامنة',
+      'calendar_sync_now':
+          'زامن الآن',
+      'calendar_sync_stop':
+          'إيقاف المزامنة',
+      'calendar_sync_stopped':
+          'تم إيقاف المزامنة. تم الاحتفاظ بالعناصر التي تمت مزامنتها.',
+      'calendar_sync_last':
+          'آخر مزامنة: {time}',
+      'calendar_sync_done':
+          'تمت مزامنة التقويم: {added} أضيفت، {updated} حُدّثت، {removed} أزيلت',
+      'calendar_sync_up_to_date':
+          'التقويم محدَّث بالفعل',
+      'calendar_sync_invalid_url':
+          'هذا ليس رابط تقويم صالحًا. يجب أن يبدأ بـ https:// أو webcal://',
+      'calendar_sync_network_error':
+          'تعذّر الوصول إلى التقويم. تحقق من الرابط ومن اتصالك.',
+      'calendar_sync_not_calendar':
+          'لم يُرجع الرابط ملف تقويم (.ics).',
+      'calendar_sync_empty':
+          'لا توجد أحداث في التقويم، لذلك لم يتغير شيء.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'مرحباً بعودتك',
       'login_subtitle': 'نظم حياتك الجامعية وحافظ على تفوقك بكل سهولة',
@@ -2527,6 +2668,32 @@ class AppLocalizations {
       'paste': 'चिपकाएं',
       'ics_imported': '{courses} कोर्स और {events} इवेंट आयात किए गए',
       'ics_nothing_found': 'इस फ़ाइल में कोई कोर्स या इवेंट नहीं मिला',
+      'calendar_sync_title':
+          'कैलेंडर लिंक सिंक करें',
+      'calendar_sync_desc':
+          'अपने Afeka कैलेंडर का लिंक (जो अपडेट होता रहता है) चिपकाएँ। आपके कोर्स और शेड्यूल उसके साथ सिंक रहेंगे। आपके अपने जोड़े हुए आइटम नहीं छुए जाएँगे।',
+      'calendar_sync':
+          'कनेक्ट करें और सिंक करें',
+      'calendar_sync_now':
+          'अभी सिंक करें',
+      'calendar_sync_stop':
+          'सिंक बंद करें',
+      'calendar_sync_stopped':
+          'सिंक बंद कर दिया गया। पहले से सिंक हुए आइटम रखे गए हैं।',
+      'calendar_sync_last':
+          'पिछला सिंक: {time}',
+      'calendar_sync_done':
+          'कैलेंडर सिंक हुआ: {added} जोड़े गए, {updated} अपडेट हुए, {removed} हटाए गए',
+      'calendar_sync_up_to_date':
+          'कैलेंडर पहले से अप-टू-डेट है',
+      'calendar_sync_invalid_url':
+          'यह मान्य कैलेंडर लिंक नहीं है। यह https:// या webcal:// से शुरू होना चाहिए।',
+      'calendar_sync_network_error':
+          'कैलेंडर तक नहीं पहुँचा जा सका। लिंक और अपना कनेक्शन जाँचें।',
+      'calendar_sync_not_calendar':
+          'लिंक से कैलेंडर फ़ाइल (.ics) नहीं मिली।',
+      'calendar_sync_empty':
+          'कैलेंडर में कोई इवेंट नहीं है, इसलिए कुछ नहीं बदला गया।',
       'app_title': 'ROCIs Schedule',
       'welcome': 'वापसी पर स्वागत है',
       'login_subtitle':
@@ -2935,6 +3102,32 @@ class AppLocalizations {
       'paste': 'Klistra in',
       'ics_imported': 'Importerade {courses} kurser och {events} händelser',
       'ics_nothing_found': 'Inga kurser eller händelser hittades i filen',
+      'calendar_sync_title':
+          'Synkronisera kalenderlänk',
+      'calendar_sync_desc':
+          'Klistra in länken till din Afeka-kalender (den som uppdateras). Dina kurser och ditt schema hålls synkade med den. Det du lagt till själv rörs inte.',
+      'calendar_sync':
+          'Anslut och synkronisera',
+      'calendar_sync_now':
+          'Synkronisera nu',
+      'calendar_sync_stop':
+          'Sluta synkronisera',
+      'calendar_sync_stopped':
+          'Synkroniseringen stoppades. Redan synkade objekt behölls.',
+      'calendar_sync_last':
+          'Senast synkad: {time}',
+      'calendar_sync_done':
+          'Kalendern synkades: {added} tillagda, {updated} uppdaterade, {removed} borttagna',
+      'calendar_sync_up_to_date':
+          'Kalendern är redan uppdaterad',
+      'calendar_sync_invalid_url':
+          'Det är inte en giltig kalenderlänk. Den ska börja med https:// eller webcal://',
+      'calendar_sync_network_error':
+          'Kunde inte nå kalendern. Kontrollera länken och din anslutning.',
+      'calendar_sync_not_calendar':
+          'Länken gav ingen kalenderfil (.ics).',
+      'calendar_sync_empty':
+          'Kalendern har inga händelser, så ingenting ändrades.',
       'app_title': 'ROCIs Schedule',
       'welcome': 'Välkommen tillbaka',
       'login_subtitle':

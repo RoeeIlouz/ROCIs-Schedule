@@ -5,6 +5,14 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Live calendar sync: paste your Afeka calendar link in Settings and your courses and schedule stay in sync with it (on app open, on resume, or with "Sync now"). New classes are added, changed ones updated, cancelled ones removed. Your own courses, grades and events are never touched.
+
+### Fixed
+- Calendar import now converts UTC times to your time zone, reads properties that carry parameters (e.g. `SUMMARY;LANGUAGE=he:`), unescapes `\,` and `\n` in titles, and skips cancelled events.
+
 ## [0.0.10+16] - 2026-10-14
 
 ### Added

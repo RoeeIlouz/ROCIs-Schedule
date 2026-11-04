@@ -12,6 +12,7 @@ import 'package:rocis_schedule/shared/services/sync_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
 import 'package:rocis_schedule/shared/services/cross_app_bridge_service.dart';
 import 'package:rocis_schedule/shared/services/ics_import_service.dart';
+import 'package:rocis_schedule/shared/widgets/calendar_subscription_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
 import 'package:rocis_schedule/shared/widgets/glass_container.dart';
 import 'package:rocis_schedule/shared/widgets/app_color_picker_sheet.dart';
@@ -501,6 +502,16 @@ class SettingsScreen extends StatelessWidget {
                 title: Text(l10n.translate('import_timetable')),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => showIcsImportDialog(context),
+              ),
+              ListTile(
+                leading: _buildLeadingIcon(
+                  context,
+                  Icons.sync_rounded,
+                  Colors.teal,
+                ),
+                title: Text(l10n.translate('calendar_sync_title')),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => showCalendarSubscriptionDialog(context),
               ),
               ListTile(
                 leading: _buildLeadingIcon(

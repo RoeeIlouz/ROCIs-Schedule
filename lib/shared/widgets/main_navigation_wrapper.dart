@@ -28,7 +28,8 @@ class MainNavigationWrapper extends StatefulWidget {
   State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
 }
 
-class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
+class _MainNavigationWrapperState extends State<MainNavigationWrapper>
+    with WidgetsBindingObserver {
   late PageController _pageController;
   int _currentIndex = 0;
 
@@ -51,6 +52,26 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
     super.initState();
     _currentIndex = _getIndexFromRoute(widget.initialRoute);
     _pageController = PageController(initialPage: _currentIndex);
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoSyncCalendar());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _autoSyncCalendar();
+  }
+
+  /// Keeps a subscribed calendar link current when the app opens or returns
+  /// to the foreground. Quiet: the manual sync reports errors.
+  Future<void> _autoSyncCalendar() async {
+    if (!mounted) return;
+    try {
+      await context.read<CourseProvider>().syncCalendarSubscription(
+        onlyIfStale: true,
+      );
+    } catch (e) {
+      debugPrint('Calendar auto-sync skipped: $e');
+    }
   }
 
   @override
@@ -102,6 +123,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
   }

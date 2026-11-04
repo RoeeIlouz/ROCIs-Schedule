@@ -21,7 +21,16 @@ class IcsImportService {
     Color(0xFFEC4899), // Pink
   ];
 
-  static IcsImportResult parseIcsContent(String icsContent) {
+  /// Parses [icsContent] into courses and events.
+  ///
+  /// By default every event and course gets a random id (a one-off import).
+  /// With [idPrefix], ids are derived from the calendar's own event UIDs, so
+  /// parsing the same calendar again yields the same ids. A live calendar
+  /// sync relies on that to update items in place instead of duplicating.
+  static IcsImportResult parseIcsContent(
+    String icsContent, {
+    String? idPrefix,
+  }) {
     final coursesMap = <String, Course>{};
     final events = <ScheduleEvent>[];
     const uuid = Uuid();
@@ -49,6 +58,9 @@ class IcsImportService {
     String dtStartStr = '';
     String dtEndStr = '';
     String rruleStr = '';
+    String uid = '';
+    String recurrenceId = '';
+    bool cancelled = false;
 
     for (var rawLine in unfoldedLines) {
       final line = rawLine.trim();
@@ -61,9 +73,12 @@ class IcsImportService {
         dtStartStr = '';
         dtEndStr = '';
         rruleStr = '';
+        uid = '';
+        recurrenceId = '';
+        cancelled = false;
       } else if (line == 'END:VEVENT') {
         inEvent = false;
-        if (summary.isNotEmpty && dtStartStr.isNotEmpty) {
+        if (!cancelled && summary.isNotEmpty && dtStartStr.isNotEmpty) {
           var startTime = _parseDateTime(dtStartStr);
           var endTime = dtEndStr.isNotEmpty
               ? _parseDateTime(dtEndStr)
@@ -102,7 +117,9 @@ class IcsImportService {
             final colorIndex = coursesMap.length % _palette.length;
             final courseCode = _extractCourseCode(summary);
             coursesMap[courseKey] = Course(
-              id: 'c_${uuid.v4().substring(0, 8)}',
+              id: idPrefix != null
+                  ? '${idPrefix}c_${_stableHash(courseKey)}'
+                  : 'c_${uuid.v4().substring(0, 8)}',
               name: courseKey,
               code: courseCode,
               instructor: description.isNotEmpty ? description : '',
@@ -114,7 +131,9 @@ class IcsImportService {
           final course = coursesMap[courseKey]!;
           events.add(
             ScheduleEvent(
-              id: 'e_${uuid.v4().substring(0, 8)}',
+              id: idPrefix != null
+                  ? '${idPrefix}e_${_stableHash(uid.isNotEmpty ? '$uid|$recurrenceId' : '$summary|$dtStartStr|$rruleStr')}'
+                  : 'e_${uuid.v4().substring(0, 8)}',
               title: summary,
               courseId: course.id,
               type: eventType,
@@ -129,26 +148,65 @@ class IcsImportService {
           );
         }
       } else if (inEvent) {
-        if (line.startsWith('SUMMARY:')) {
-          summary = line.substring(8).trim();
-        } else if (line.startsWith('LOCATION:')) {
-          location = line.substring(9).trim();
-        } else if (line.startsWith('DESCRIPTION:')) {
-          description = line.substring(12).trim();
-        } else if (line.startsWith('DTSTART')) {
-          final idx = line.indexOf(':');
-          if (idx != -1) dtStartStr = line.substring(idx + 1).trim();
-        } else if (line.startsWith('DTEND')) {
-          final idx = line.indexOf(':');
-          if (idx != -1) dtEndStr = line.substring(idx + 1).trim();
-        } else if (line.startsWith('RRULE:')) {
-          rruleStr = line.substring(6).trim();
+        // "NAME;PARAM=x:value": parameters (LANGUAGE, TZID, VALUE) are
+        // allowed on any property, so match on the bare name.
+        final colon = _valueColon(line);
+        if (colon == -1) continue;
+        final name = line.substring(0, colon).split(';').first.toUpperCase();
+        final value = line.substring(colon + 1);
+        switch (name) {
+          case 'SUMMARY':
+            summary = _unescapeIcsText(value.trim());
+          case 'LOCATION':
+            location = _unescapeIcsText(value.trim());
+          case 'DESCRIPTION':
+            description = _unescapeIcsText(value.trim());
+          case 'DTSTART':
+            dtStartStr = value.trim();
+          case 'DTEND':
+            dtEndStr = value.trim();
+          case 'RRULE':
+            rruleStr = value.trim();
+          case 'UID':
+            uid = value.trim();
+          case 'RECURRENCE-ID':
+            recurrenceId = value.trim();
+          case 'STATUS':
+            cancelled = value.trim().toUpperCase() == 'CANCELLED';
         }
       }
     }
 
     return IcsImportResult(courses: coursesMap.values.toList(), events: events);
   }
+
+  /// Index of the colon that separates a property's name and parameters
+  /// from its value, ignoring colons inside quoted parameter values.
+  static int _valueColon(String line) {
+    var quoted = false;
+    for (var i = 0; i < line.length; i++) {
+      final ch = line[i];
+      if (ch == '"') {
+        quoted = !quoted;
+      } else if (ch == ':' && !quoted) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /// Reverses RFC 5545 TEXT escaping (see [escapeIcsText]).
+  static String _unescapeIcsText(String value) => value.replaceAllMapped(
+    RegExp(r'\\([\\;,nN])'),
+    (m) => (m[1] == 'n' || m[1] == 'N') ? '\n' : m[1]!,
+  );
+
+  /// A short deterministic id fragment for [input]: the same text always
+  /// gives the same fragment (UUID v5, which also works on web).
+  static String _stableHash(String input) => const Uuid()
+      .v5(Namespace.url.value, input)
+      .replaceAll('-', '')
+      .substring(0, 20);
 
   static bool _isDateOnly(String raw) =>
       !raw.contains('T') && raw.replaceAll('-', '').trim().length == 8;
@@ -178,6 +236,17 @@ class IcsImportService {
           if (timePart.length >= 6) {
             second = int.parse(timePart.substring(4, 6));
           }
+        }
+        // A trailing Z means UTC; show it in the device's own time zone.
+        if (raw.trim().endsWith('Z')) {
+          return DateTime.utc(
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+          ).toLocal();
         }
         return DateTime(year, month, day, hour, minute, second);
       }
