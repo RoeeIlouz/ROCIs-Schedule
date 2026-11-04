@@ -56,14 +56,18 @@ void main() {
 
   test('room change reports old -> new', () {
     final r = FeedDiffer.diff(
-        [k('א', mon9, location: '101')], [k('א', mon9, location: '202')]);
+      [k('א', mon9, location: '101')],
+      [k('א', mon9, location: '202')],
+    );
     expect(r.single.kind, ChangeKind.roomChanged);
     expect(r.single.detail, '101 -> 202');
   });
 
   test('lecturer change is reported', () {
     final r = FeedDiffer.diff(
-        [k('א', mon9, lecturer: 'מר א')], [k('א', mon9, lecturer: 'מר ב')]);
+      [k('א', mon9, lecturer: 'מר א')],
+      [k('א', mon9, lecturer: 'מר ב')],
+    );
     expect(r.single.kind, ChangeKind.lecturerChanged);
   });
 
@@ -82,8 +86,10 @@ void main() {
   });
 
   test('empty current with non-empty previous throws FeedLooksEmpty', () {
-    expect(() => FeedDiffer.diff([k('א', mon9)], []),
-        throwsA(isA<FeedLooksEmpty>()));
+    expect(
+      () => FeedDiffer.diff([k('א', mon9)], []),
+      throwsA(isA<FeedLooksEmpty>()),
+    );
   });
 
   test('empty previous (first run) with entries is not an error', () {

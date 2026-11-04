@@ -23,15 +23,17 @@ class FeedParser {
         if (p == null) continue;
         final start = _date(p['DTSTART']);
         if (start == null) continue;
-        out.add(FeedEntry(
-          uid: p['UID'] ?? '',
-          summary: _text(p['SUMMARY'] ?? ''),
-          description: _text(p['DESCRIPTION'] ?? ''),
-          location: _text(p['LOCATION'] ?? ''),
-          start: start,
-          end: _date(p['DTEND']) ?? start.add(const Duration(hours: 1)),
-          transparent: (p['TRANSP'] ?? '').toUpperCase() == 'TRANSPARENT',
-        ));
+        out.add(
+          FeedEntry(
+            uid: p['UID'] ?? '',
+            summary: _text(p['SUMMARY'] ?? ''),
+            description: _text(p['DESCRIPTION'] ?? ''),
+            location: _text(p['LOCATION'] ?? ''),
+            start: start,
+            end: _date(p['DTEND']) ?? start.add(const Duration(hours: 1)),
+            transparent: (p['TRANSP'] ?? '').toUpperCase() == 'TRANSPARENT',
+          ),
+        );
       } else if (props != null) {
         final colon = line.indexOf(':');
         if (colon <= 0) continue;
@@ -63,8 +65,9 @@ class FeedParser {
   /// `20261025T090000` (wall clock), `...Z` (UTC) or `20261025` (date only).
   static DateTime? _date(String? raw) {
     if (raw == null) return null;
-    final m = RegExp(r'^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?$')
-        .firstMatch(raw.trim());
+    final m = RegExp(
+      r'^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?$',
+    ).firstMatch(raw.trim());
     if (m == null) return null;
     int g(int i) => int.parse(m.group(i) ?? '0');
     if (m.group(7) == 'Z') {

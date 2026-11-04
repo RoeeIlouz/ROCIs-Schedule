@@ -4,8 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/feed_parser.dart';
 
 void main() {
-  final ics = File('test/features/calendar_sync/fixtures/synthetic_feed.ics')
-      .readAsStringSync();
+  final ics = File(
+    'test/features/calendar_sync/fixtures/synthetic_feed.ics',
+  ).readAsStringSync();
 
   test('parses all VEVENTs', () {
     expect(FeedParser.parse(ics), hasLength(5));
@@ -31,11 +32,14 @@ void main() {
 
   test('looksLikeCalendar rejects html and accepts calendars', () {
     expect(FeedParser.looksLikeCalendar('<html>login</html>'), isFalse);
-    expect(FeedParser.looksLikeCalendar('BEGIN:VCALENDAR\nEND:VCALENDAR'),
-        isTrue);
     expect(
-        FeedParser.looksLikeCalendar('\uFEFF  \nBEGIN:VCALENDAR\nEND:VCALENDAR'),
-        isTrue);
+      FeedParser.looksLikeCalendar('BEGIN:VCALENDAR\nEND:VCALENDAR'),
+      isTrue,
+    );
+    expect(
+      FeedParser.looksLikeCalendar('\uFEFF  \nBEGIN:VCALENDAR\nEND:VCALENDAR'),
+      isTrue,
+    );
   });
 
   test('garbage parses to empty list', () {

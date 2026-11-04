@@ -16,7 +16,10 @@ class AfekaClassifier {
   static Classified classify(FeedEntry e) {
     if (e.transparent) {
       return const Classified(
-          courseName: '', lecturer: '', kind: EntryKind.skip);
+        courseName: '',
+        lecturer: '',
+        kind: EntryKind.skip,
+      );
     }
 
     var title = normalizeName(e.summary);
