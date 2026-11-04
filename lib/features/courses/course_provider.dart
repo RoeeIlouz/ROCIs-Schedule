@@ -309,6 +309,35 @@ class CourseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Applies a calendar-sync batch: creates missing courses, upserts the
+  /// events and deletes [deleteIds], with one UI notification.
+  Future<void> applySyncBatch({
+    required List<Course> courses,
+    required List<ScheduleEvent> upserts,
+    required List<String> deleteIds,
+  }) async {
+    for (final course in courses) {
+      await _dbService.insertCourse(course);
+      _upsert(_courses, course, (c) => c.id);
+    }
+    for (final event in upserts) {
+      await _dbService.insertEvent(event);
+      _upsert(_events, event, (e) => e.id);
+    }
+    for (final id in deleteIds) {
+      await _dbService.deleteEvent(id);
+      _events.removeWhere((e) => e.id == id);
+      _cloud(_firestoreService.deleteEvent(userId, id));
+    }
+    if (courses.isNotEmpty) {
+      _cloud(_firestoreService.uploadCourses(userId, courses));
+    }
+    if (upserts.isNotEmpty) {
+      _cloud(_firestoreService.uploadEvents(userId, upserts));
+    }
+    notifyListeners();
+  }
+
   /// Deletes a course and its events (the cloud side also removes them).
   Future<void> deleteCourse(String id) async {
     await _dbService.deleteCourse(id);

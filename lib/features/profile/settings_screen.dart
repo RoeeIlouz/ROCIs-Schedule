@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rocis_schedule/features/calendar_sync/screens/calendar_sync_settings_screen.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
@@ -447,6 +448,27 @@ class SettingsScreen extends StatelessWidget {
               ]),
             ],
 
+            // CALENDAR SYNC SECTION (Afeka / public .ics feed)
+            if (!kIsWeb) ...[
+              _buildSectionHeader(context, l10n.translate('calendar_sync')),
+              _buildSectionCard(context, [
+                ListTile(
+                  leading: _buildLeadingIcon(
+                    context,
+                    Icons.sync_rounded,
+                    Colors.teal,
+                  ),
+                  title: Text(l10n.translate('calendar_sync')),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const CalendarSyncSettingsScreen(),
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+
             // HOME SCREEN WIDGET SECTION
             _buildSectionHeader(context, l10n.translate('widget_quick_glance')),
             _buildSectionCard(context, [
@@ -458,7 +480,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 title: Text(l10n.translate('pin_widget_to_home')),
                 subtitle: Text(l10n.translate('widget_up_next_class')),
-                trailing: const Icon(Icons.add_to_home_screen_rounded, size: 20),
+                trailing: const Icon(
+                  Icons.add_to_home_screen_rounded,
+                  size: 20,
+                ),
                 onTap: () async {
                   await ScheduleWidgetService.requestPinWidget();
                 },
@@ -504,7 +529,8 @@ class SettingsScreen extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => showIcsImportDialog(context),
               ),
-              if (CourseNotesFolderService.isSupported) const NotesFolderTiles(),
+              if (CourseNotesFolderService.isSupported)
+                const NotesFolderTiles(),
               ListTile(
                 leading: _buildLeadingIcon(
                   context,

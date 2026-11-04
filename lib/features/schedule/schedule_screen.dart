@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:rocis_schedule/features/calendar_sync/services/sync_scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
@@ -40,6 +42,13 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   void initState() {
     super.initState();
     _loadMobileViewPreference();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || kIsWeb) return;
+      SyncScheduler.syncIfDue(
+        context.read<CourseProvider>(),
+        AppLocalizations.of(context)!,
+      );
+    });
   }
 
   Future<void> _loadMobileViewPreference() async {
