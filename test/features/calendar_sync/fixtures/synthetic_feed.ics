@@ -1,0 +1,48 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+X-WR-TIMEZONE:Asia/Jerusalem
+BEGIN:VEVENT
+DTSTART;TZID=Asia/Jerusalem:20261025T090000
+DTEND;TZID=Asia/Jerusalem:20261025T105000
+UID:a1
+DESCRIPTION:סוג מפגש: סופי-הרצאה+תרגול חדר לימוד: (מתקיים) קורס
+LOCATION:101 בניין א
+SUMMARY:אלגברה ליניארית ד"ר לוי דנה
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+DTSTART;TZID=Asia/Jerusalem:20261026T120000
+DTEND;TZID=Asia/Jerusalem:20261026T135000
+UID:a2
+DESCRIPTION:סוג מפגש: תרגול חדר לימוד: (מתקיים) קורס
+LOCATION:מפ"ט אתרוג מפ"ט
+SUMMARY:אלגברה ליניארית מר כהן יוסי
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+DTSTART;TZID=Asia/Jerusalem:20261027T090000
+DTEND;TZID=Asia/Jerusalem:20261027T105000
+UID:a3
+DESCRIPTION:סוג מפגש: תרגול
+  חדר לימוד: (מתקיים) קורס
+LOCATION:200 בניין ב
+SUMMARY:פיזיקה-מכניקה מר אבי גולן ** השיעור מבוטל **
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+DTSTART;TZID=Asia/Jerusalem:20261230T090000
+DTEND;TZID=Asia/Jerusalem:20261230T120000
+UID:a4
+DESCRIPTION:מבחן מועד 1 בחינה.חדר לימוד : .רשום למבחן
+SUMMARY:מבחן מועד 1 בחינה אלגברה ליניארית
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+DTSTART;TZID=Asia/Jerusalem:20261205T080000
+DTEND;TZID=Asia/Jerusalem:20261205T180000
+UID:a5
+DESCRIPTION:חגי ישראל ומועדיו
+SUMMARY:חנוכה
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
