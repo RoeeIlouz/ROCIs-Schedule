@@ -3,7 +3,9 @@ import 'dart:ui' show Color;
 import 'package:uuid/uuid.dart';
 import 'package:rocis_schedule/features/calendar_sync/models/feed_entry.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/afeka_classifier.dart';
+import 'package:rocis_schedule/features/calendar_sync/services/calendar_source.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/feed_differ.dart';
+import 'package:rocis_schedule/features/calendar_sync/services/feed_parser.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/sync_store.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
@@ -21,6 +23,20 @@ class SyncSummary {
     required this.isFirstRun,
     this.replaceCandidates = const [],
   });
+}
+
+/// Where sync results are shown to the user.
+abstract class SyncNotifier {
+  Future<void> changes(List<SyncChange> changes);
+  Future<void> loginExpired();
+}
+
+enum SyncRunStatus { ok, needsLogin, failed }
+
+class SyncRunResult {
+  final SyncRunStatus status;
+  final SyncSummary? summary;
+  const SyncRunResult(this.status, [this.summary]);
 }
 
 /// Applies a parsed calendar feed to the schedule. Events it creates are
@@ -168,6 +184,36 @@ class CalendarSyncService {
       isFirstRun: isFirstRun,
       replaceCandidates: candidates,
     );
+  }
+
+  /// Fetches [source], applies the result and tells [notifier] what changed.
+  /// A failed fetch or an empty feed never touches the schedule.
+  Future<SyncRunResult> run(
+    CalendarSource source,
+    SyncNotifier notifier,
+  ) async {
+    final result = await source.fetch();
+    switch (result) {
+      case FetchNeedsLogin():
+        if (!await _store.needsLogin(source.id)) {
+          await _store.setNeedsLogin(source.id, true);
+          await notifier.loginExpired();
+        }
+        return const SyncRunResult(SyncRunStatus.needsLogin);
+      case FetchFailed():
+        return const SyncRunResult(SyncRunStatus.failed);
+      case FetchOk(:final body):
+        try {
+          final summary = await applyEntries(source.id, FeedParser.parse(body));
+          await _store.setNeedsLogin(source.id, false);
+          if (!summary.isFirstRun && summary.changes.isNotEmpty) {
+            await notifier.changes(summary.changes);
+          }
+          return SyncRunResult(SyncRunStatus.ok, summary);
+        } on FeedLooksEmpty {
+          return const SyncRunResult(SyncRunStatus.failed);
+        }
+    }
   }
 
   /// Deletes the weekly sessions the user agreed to replace.
