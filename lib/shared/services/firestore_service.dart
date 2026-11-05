@@ -196,6 +196,75 @@ class FirestoreService {
     }
   }
 
+  DocumentReference<Map<String, dynamic>> _attachmentDoc(
+    FirebaseFirestore db,
+    String uid,
+    String assignmentId,
+    String attachmentId,
+  ) => _userCollection(
+    db,
+    uid,
+    'assignments',
+  ).doc(assignmentId).collection('attachments').doc(attachmentId);
+
+  /// Stores attachment [data] (already compressed) beside its assignment.
+  Future<void> saveAttachment(
+    String uid,
+    String assignmentId,
+    AssignmentAttachment meta,
+    Uint8List data,
+  ) async {
+    final db = _dbFor(uid);
+    if (db == null) return;
+    try {
+      await _attachmentDoc(db, uid, assignmentId, meta.id).set({
+        ...meta.toMap(),
+        'data': Blob(data),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      debugPrint('Firestore Error (Attachment Save): $e');
+      rethrow;
+    }
+  }
+
+  /// Stored bytes of an attachment, or null if absent or unreachable.
+  Future<Uint8List?> loadAttachment(
+    String uid,
+    String assignmentId,
+    String attachmentId,
+  ) async {
+    final db = _dbFor(uid);
+    if (db == null) return null;
+    try {
+      final doc = await _attachmentDoc(
+        db,
+        uid,
+        assignmentId,
+        attachmentId,
+      ).get();
+      final data = doc.data()?['data'];
+      return data is Blob ? data.bytes : null;
+    } catch (e) {
+      debugPrint('Firestore Error (Attachment Load): $e');
+      return null;
+    }
+  }
+
+  Future<void> deleteAttachment(
+    String uid,
+    String assignmentId,
+    String attachmentId,
+  ) async {
+    final db = _dbFor(uid);
+    if (db == null) return;
+    try {
+      await _attachmentDoc(db, uid, assignmentId, attachmentId).delete();
+    } catch (e) {
+      debugPrint('Firestore Error (Attachment Delete): $e');
+    }
+  }
+
   Future<void> deleteAssignment(String uid, String id) async {
     final db = _dbFor(uid);
     if (db == null) return;

@@ -1,8 +1,15 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
+import 'package:rocis_schedule/features/assignments/attachment_compressor.dart';
+import 'package:rocis_schedule/features/assignments/attachment_viewer.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
+import 'package:rocis_schedule/shared/models/schedule_models.dart';
+import 'package:rocis_schedule/shared/services/guest_data_migrator.dart';
 import 'package:rocis_schedule/shared/widgets/app_button.dart';
 import 'package:rocis_schedule/shared/widgets/app_text_field.dart';
 import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
@@ -29,6 +36,20 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
   AssignmentPriority _priority = AssignmentPriority.medium;
   bool _isLoading = false;
 
+  /// The lecture this assignment was given in (event + the session's date).
+  String? _lectureEventId;
+  DateTime? _lectureDate;
+
+  /// Attachments already saved, ones picked in this session, and saved ones
+  /// the user removed. Changes only apply when the form is saved.
+  late List<AssignmentAttachment> _attachments;
+  final List<PreparedAttachment> _added = [];
+  final List<AssignmentAttachment> _removed = [];
+  int _preparing = 0;
+
+  /// Files bigger than this are refused before being read into memory.
+  static const _maxPickBytes = 25 * 1024 * 1024;
+
   bool get _isEditing => widget.assignmentToEdit != null;
 
   @override
@@ -41,7 +62,10 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
       _selectedCourseId = assignment.courseId;
       _selectedDate = assignment.dueDate;
       _priority = assignment.priority;
+      _lectureEventId = assignment.lectureEventId;
+      _lectureDate = assignment.lectureDate;
     }
+    _attachments = [...?assignment?.attachments];
   }
 
   @override
@@ -77,8 +101,283 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
 
   static DateTime _earliest(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
 
+  void _onCourseChanged(String? courseId) {
+    setState(() {
+      if (courseId != _selectedCourseId) {
+        // A lecture belongs to one course; drop the link when it changes.
+        _lectureEventId = null;
+        _lectureDate = null;
+      }
+      _selectedCourseId = courseId;
+    });
+  }
+
+  ScheduleEvent? _lectureEvent(CourseProvider provider) {
+    final id = _lectureEventId;
+    if (id == null) return null;
+    for (final e in provider.events) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
+  Future<void> _pickLecture() async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final courseId = _selectedCourseId;
+    if (courseId == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.translate('select_course_error'))),
+      );
+      return;
+    }
+    final provider = context.read<CourseProvider>();
+    final events = provider.getEventsByCourse(courseId);
+    if (events.isEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.translate('no_lectures_for_course'))),
+      );
+      return;
+    }
+
+    final choice = await showModalBottomSheet<({ScheduleEvent? event})>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(
+                l10n.translate('choose_lecture'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            for (final e in events)
+              ListTile(
+                leading: const Icon(Icons.event_rounded),
+                title: Text(e.title),
+                subtitle: Text(_eventSummary(e)),
+                selected: e.id == _lectureEventId,
+                onTap: () => Navigator.pop(sheetContext, (event: e)),
+              ),
+            if (_lectureEventId != null)
+              ListTile(
+                leading: const Icon(Icons.close_rounded),
+                title: Text(l10n.translate('no_lecture_linked')),
+                onTap: () => Navigator.pop(sheetContext, (event: null)),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    final event = choice.event;
+    if (event == null) {
+      setState(() {
+        _lectureEventId = null;
+        _lectureDate = null;
+      });
+      return;
+    }
+
+    // Only days the lecture actually takes place can be picked.
+    final courseMap = {for (final c in provider.courses) c.id: c};
+    bool occurs(DateTime d) => provider.occursOn(event, d, courseMap);
+    final today = DateUtils.dateOnly(DateTime.now());
+    final first = today.subtract(const Duration(days: 365));
+
+    DateTime? initial;
+    final previous = _lectureEventId == event.id ? _lectureDate : null;
+    if (previous != null &&
+        !previous.isBefore(first) &&
+        !previous.isAfter(today) &&
+        occurs(previous)) {
+      initial = DateUtils.dateOnly(previous);
+    } else {
+      for (var i = 0; i <= 365; i++) {
+        final d = today.subtract(Duration(days: i));
+        if (occurs(d)) {
+          initial = d;
+          break;
+        }
+      }
+    }
+    if (initial == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.translate('no_lecture_dates'))),
+      );
+      return;
+    }
+
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: today,
+      selectableDayPredicate: occurs,
+      helpText: l10n.translate('lecture_date_help'),
+    );
+    if (date == null || !mounted) return;
+    setState(() {
+      _lectureEventId = event.id;
+      _lectureDate = date;
+    });
+  }
+
+  String _eventSummary(ScheduleEvent e) {
+    final time =
+        '${DateFormat.Hm().format(e.startTime)}-${DateFormat.Hm().format(e.endTime)}';
+    if (e.recurring && e.daysOfWeek.isNotEmpty) {
+      // daysOfWeek: 0 = Sunday, and 2023-01-01 was a Sunday.
+      final days = (e.daysOfWeek.toList()..sort())
+          .map((d) => DateFormat.E().format(DateTime(2023, 1, 1 + (d % 7))))
+          .join(', ');
+      return '$days  $time';
+    }
+    return '${DateFormat.MMMEd().format(e.startTime)}  $time';
+  }
+
+  String _lectureLabel(CourseProvider provider, AppLocalizations l10n) {
+    final date = _lectureDate;
+    if (_lectureEventId == null || date == null) {
+      return l10n.translate('no_lecture_linked');
+    }
+    final title = _lectureEvent(provider)?.title;
+    final when = DateFormat.MMMEd().format(date);
+    return title == null || title.isEmpty ? when : '$title  ·  $when';
+  }
+
+  static const _maxAttachments = 10;
+
+  int get _attachmentTotal => _attachments.length + _added.length;
+
+  Future<void> _addPhotos(ImageSource source) async {
+    final l10n = AppLocalizations.of(context)!;
+    final picker = ImagePicker();
+    try {
+      final List<XFile> picked;
+      if (source == ImageSource.camera) {
+        final shot = await picker.pickImage(source: source);
+        picked = shot == null ? const [] : [shot];
+      } else {
+        picked = await picker.pickMultiImage();
+      }
+      for (final file in picked) {
+        if (!_fitsAttachmentCount(l10n)) break;
+        await _prepareAttachment(l10n, file.name, await file.readAsBytes());
+      }
+    } catch (_) {
+      _showMessage(l10n.translate('attachment_failed'));
+    }
+  }
+
+  Future<void> _addFiles() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final picked = await FilePicker.pickFiles();
+      for (final file in picked) {
+        if (!_fitsAttachmentCount(l10n)) break;
+        final length = await file.length();
+        if (length != null && length > _maxPickBytes) {
+          _showMessage(
+            l10n
+                .translate('attachment_too_large')
+                .replaceAll('{name}', file.name),
+          );
+          continue;
+        }
+        await _prepareAttachment(l10n, file.name, await file.readAsBytes());
+      }
+    } catch (_) {
+      _showMessage(l10n.translate('attachment_failed'));
+    }
+  }
+
+  bool _fitsAttachmentCount(AppLocalizations l10n) {
+    if (_attachmentTotal + _preparing < _maxAttachments) return true;
+    _showMessage(
+      l10n
+          .translate('attachment_limit_reached')
+          .replaceAll('{max}', '$_maxAttachments'),
+    );
+    return false;
+  }
+
+  Future<void> _prepareAttachment(
+    AppLocalizations l10n,
+    String name,
+    Uint8List bytes,
+  ) async {
+    if (bytes.length > _maxPickBytes) {
+      _showMessage(
+        l10n.translate('attachment_too_large').replaceAll('{name}', name),
+      );
+      return;
+    }
+    setState(() => _preparing++);
+    try {
+      final prepared = await prepareAttachment(name: name, bytes: bytes);
+      if (!mounted) return;
+      setState(() => _added.add(prepared));
+    } on AttachmentTooLargeException catch (e) {
+      _showMessage(
+        l10n.translate('attachment_too_large').replaceAll('{name}', e.fileName),
+      );
+    } catch (_) {
+      _showMessage(l10n.translate('attachment_failed'));
+    } finally {
+      if (mounted) setState(() => _preparing--);
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _openAttachment(AssignmentAttachment meta) {
+    final added = _added.where((p) => p.meta.id == meta.id).firstOrNull;
+    final saved = widget.assignmentToEdit;
+    final Future<Uint8List?> bytes;
+    if (added != null) {
+      bytes = Future.value(restoreAttachmentBytes(meta, added.data));
+    } else if (saved != null) {
+      bytes = context.read<AssignmentProvider>().loadAttachmentBytes(
+        saved,
+        meta,
+      );
+    } else {
+      bytes = Future.value(null);
+    }
+    showAttachment(context, meta, bytes);
+  }
+
+  void _removeAttachment(AssignmentAttachment meta) {
+    setState(() {
+      final addedIndex = _added.indexWhere((p) => p.meta.id == meta.id);
+      if (addedIndex >= 0) {
+        _added.removeAt(addedIndex);
+      } else {
+        _attachments.removeWhere((a) => a.id == meta.id);
+        _removed.add(meta);
+      }
+    });
+  }
+
   Future<void> _saveAssignment() async {
     final l10n = AppLocalizations.of(context)!;
+    if (_preparing > 0) {
+      _showMessage(l10n.translate('attachment_processing'));
+      return;
+    }
     if (!_formKey.currentState!.validate() || _selectedCourseId == null) {
       if (_selectedCourseId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,9 +397,16 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
         description: _descriptionController.text.trim(),
         dueDate: _selectedDate,
         priority: _priority,
+        lectureEventId: _lectureEventId,
+        lectureDate: _lectureDate,
+        attachments: _attachments,
       );
 
-      await context.read<AssignmentProvider>().addAssignment(assignment);
+      await context.read<AssignmentProvider>().saveWithAttachments(
+        assignment,
+        added: _added,
+        removed: _removed,
+      );
       if (mounted) {
         if (context.canPop()) {
           context.pop();
@@ -187,7 +493,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                         ),
                       );
                     }).toList(),
-                    onChanged: (v) => setState(() => _selectedCourseId = v),
+                    onChanged: _onCourseChanged,
                     validator: (v) => v == null
                         ? l10n.translate('select_course_error')
                         : null,
@@ -243,7 +549,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                   ),
                 );
               }).toList(),
-              onChanged: (v) => setState(() => _selectedCourseId = v),
+              onChanged: _onCourseChanged,
               validator: (v) =>
                   v == null ? l10n.translate('select_course_error') : null,
             ),
@@ -267,6 +573,10 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
               ),
             ),
           ],
+          const SizedBox(height: 20),
+
+          // Lecture this assignment was given in
+          _buildLectureTile(l10n),
           const SizedBox(height: 20),
 
           // Priority Section
@@ -317,6 +627,9 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
             controller: _descriptionController,
             maxLines: 4,
           ),
+          const SizedBox(height: 20),
+
+          _buildAttachmentsSection(l10n, theme),
           const SizedBox(height: 32),
 
           // Action Buttons
@@ -471,6 +784,119 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
         padding: const EdgeInsets.all(24),
         child: formContent,
       ),
+    );
+  }
+
+  Widget _buildLectureTile(AppLocalizations l10n) {
+    final provider = context.watch<CourseProvider>();
+    final linked = _lectureEventId != null && _lectureDate != null;
+    return InkWell(
+      onTap: _pickLecture,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: l10n.translate('given_in_lecture'),
+          prefixIcon: const Icon(Icons.event_rounded, size: 20),
+          suffixIcon: linked
+              ? IconButton(
+                  tooltip: l10n.translate('no_lecture_linked'),
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () => setState(() {
+                    _lectureEventId = null;
+                    _lectureDate = null;
+                  }),
+                )
+              : const Icon(Icons.arrow_drop_down, size: 22),
+        ),
+        child: Text(
+          _lectureLabel(provider, l10n),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: linked ? null : Theme.of(context).hintColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentsSection(AppLocalizations l10n, ThemeData theme) {
+    final items = [..._attachments, ..._added.map((p) => p.meta)];
+    final canCamera =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.translate('attachments'),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        for (final meta in items)
+          Card(
+            elevation: 0,
+            margin: const EdgeInsets.only(bottom: 6),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.5,
+            ),
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                meta.isImage
+                    ? Icons.photo_library_outlined
+                    : Icons.upload_file_rounded,
+              ),
+              title: Text(meta.name, overflow: TextOverflow.ellipsis),
+              subtitle: Text('${(meta.size / 1024).ceil()} KB'),
+              onTap: () => _openAttachment(meta),
+              trailing: IconButton(
+                tooltip: l10n.translate('remove'),
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: () => _removeAttachment(meta),
+              ),
+            ),
+          ),
+        if (context.read<AssignmentProvider>().uid ==
+            GuestDataMigrator.guestUserId)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.translate('attachments_guest_warning'),
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        if (_preparing > 0)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(),
+          ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () => _addPhotos(ImageSource.gallery),
+              icon: const Icon(Icons.photo_library_rounded, size: 18),
+              label: Text(l10n.translate('add_photo')),
+            ),
+            if (canCamera)
+              OutlinedButton.icon(
+                onPressed: () => _addPhotos(ImageSource.camera),
+                icon: const Icon(Icons.camera_alt_rounded, size: 18),
+                label: Text(l10n.translate('take_photo')),
+              ),
+            OutlinedButton.icon(
+              onPressed: _addFiles,
+              icon: const Icon(Icons.upload_file_rounded, size: 18),
+              label: Text(l10n.translate('add_file')),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

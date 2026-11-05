@@ -780,6 +780,46 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                                   ),
                           ),
                         ),
+                        if (assignment.hasLecture) ...[
+                          const SizedBox(width: 10),
+                          Icon(
+                            Icons.school_outlined,
+                            size: 13,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            DateFormat.MMMd().format(assignment.lectureDate!),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (assignment.attachments.isNotEmpty) ...[
+                          const SizedBox(width: 10),
+                          Icon(
+                            Icons.upload_file_rounded,
+                            size: 13,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${assignment.attachments.length}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

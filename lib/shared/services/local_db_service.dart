@@ -41,7 +41,7 @@ class LocalDbService {
     }
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -111,6 +111,30 @@ class LocalDbService {
         await db.execute('ALTER TABLE events ADD COLUMN allDay INTEGER');
       } catch (_) {}
     }
+    if (oldVersion < 9) {
+      for (final column in const [
+        'lectureEventId TEXT',
+        'lectureDate TEXT',
+        'attachments TEXT',
+      ]) {
+        try {
+          await db.execute('ALTER TABLE assignments ADD COLUMN $column');
+        } catch (_) {}
+      }
+      await _createAttachmentBlobsTable(db);
+    }
+  }
+
+  /// Local copy of attachment bytes. Deliberately has no foreign key to
+  /// assignments: saving an assignment uses REPLACE, which would cascade.
+  Future<void> _createAttachmentBlobsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS assignment_attachment_blobs(
+        id TEXT PRIMARY KEY,
+        assignmentId TEXT,
+        data BLOB
+      )
+    ''');
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -148,6 +172,7 @@ class LocalDbService {
     ''');
 
     await _createAssignmentsTable(db);
+    await _createAttachmentBlobsTable(db);
     await _createSemestersTable(db);
     await _createIndices(db);
   }
@@ -173,6 +198,9 @@ class LocalDbService {
         dueDate TEXT,
         isCompleted INTEGER,
         priority INTEGER,
+        lectureEventId TEXT,
+        lectureDate TEXT,
+        attachments TEXT,
         FOREIGN KEY (courseId) REFERENCES courses (id) ON DELETE CASCADE
       )
     ''');
@@ -250,8 +278,57 @@ class LocalDbService {
     if (db == null) return;
     await db.insert(
       'assignments',
-      assignment.toMap(),
+      assignment.toDbMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> saveAttachmentBlob(
+    String id,
+    String assignmentId,
+    Uint8List data,
+  ) async {
+    final db = await database;
+    if (db == null) return;
+    await db.insert('assignment_attachment_blobs', {
+      'id': id,
+      'assignmentId': assignmentId,
+      'data': data,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<Uint8List?> getAttachmentBlob(String id) async {
+    final db = await database;
+    if (db == null) return null;
+    final rows = await db.query(
+      'assignment_attachment_blobs',
+      columns: ['data'],
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    final data = rows.first['data'];
+    return data is Uint8List ? data : null;
+  }
+
+  Future<void> deleteAttachmentBlob(String id) async {
+    final db = await database;
+    if (db == null) return;
+    await db.delete(
+      'assignment_attachment_blobs',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteAttachmentBlobsFor(String assignmentId) async {
+    final db = await database;
+    if (db == null) return;
+    await db.delete(
+      'assignment_attachment_blobs',
+      where: 'assignmentId = ?',
+      whereArgs: [assignmentId],
     );
   }
 
@@ -295,6 +372,7 @@ class LocalDbService {
   Future<void> clearAll() async {
     final db = await database;
     if (db == null) return;
+    await db.delete('assignment_attachment_blobs');
     await db.delete('assignments');
     await db.delete('events');
     await db.delete('courses');

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:rocis_schedule/features/assignments/attachment_compressor.dart';
 import 'package:rocis_schedule/shared/models/assignment_model.dart';
 import 'package:rocis_schedule/shared/services/local_db_service.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
@@ -45,6 +48,58 @@ class AssignmentProvider extends ChangeNotifier {
     _firestore.updateAssignment(uid, assignment);
   }
 
+  /// Saves [assignment] together with attachment changes.
+  ///
+  /// [added] are stored locally and uploaded; [removed] are deleted from both.
+  /// The assignment's own attachment list is rebuilt from what's left plus
+  /// what was added, so callers pass the assignment with its current list.
+  Future<void> saveWithAttachments(
+    Assignment assignment, {
+    List<PreparedAttachment> added = const [],
+    List<AssignmentAttachment> removed = const [],
+  }) async {
+    final removedIds = removed.map((a) => a.id).toSet();
+    for (final meta in removed) {
+      await _db.deleteAttachmentBlob(meta.id);
+      // Don't await: offline, the cloud write waits for connectivity.
+      unawaited(_firestore.deleteAttachment(uid, assignment.id, meta.id));
+    }
+    for (final prepared in added) {
+      await _db.saveAttachmentBlob(
+        prepared.meta.id,
+        assignment.id,
+        prepared.data,
+      );
+      unawaited(
+        _firestore
+            .saveAttachment(uid, assignment.id, prepared.meta, prepared.data)
+            .catchError((Object e) {
+              debugPrint('Attachment upload failed: $e');
+            }),
+      );
+    }
+    final merged = [
+      ...assignment.attachments.where((a) => !removedIds.contains(a.id)),
+      ...added.map((p) => p.meta),
+    ];
+    await addAssignment(assignment.copyWith(attachments: merged));
+  }
+
+  /// Original bytes of [meta]: from this device if cached, else downloaded
+  /// (and cached for next time). Null when unavailable offline.
+  Future<Uint8List?> loadAttachmentBytes(
+    Assignment assignment,
+    AssignmentAttachment meta,
+  ) async {
+    var stored = await _db.getAttachmentBlob(meta.id);
+    if (stored == null) {
+      stored = await _firestore.loadAttachment(uid, assignment.id, meta.id);
+      if (stored == null) return null;
+      await _db.saveAttachmentBlob(meta.id, assignment.id, stored);
+    }
+    return restoreAttachmentBytes(meta, stored);
+  }
+
   /// Add assignment from sync without triggering another sync
   /// Used when downloading data from Firestore
   Future<void> addAssignmentFromSync(Assignment assignment) async {
@@ -75,11 +130,19 @@ class AssignmentProvider extends ChangeNotifier {
   }
 
   Future<void> deleteAssignment(String id) async {
+    final doomed = _assignments.where((a) => a.id == id).toList();
     await _db.deleteAssignment(id);
+    await _db.deleteAttachmentBlobsFor(id);
     _assignments.removeWhere((a) => a.id == id);
     notifyListeners();
 
-    // Background sync
+    // Background sync. Firestore doesn't cascade into subcollections, so the
+    // attachment documents are removed explicitly.
+    for (final assignment in doomed) {
+      for (final meta in assignment.attachments) {
+        unawaited(_firestore.deleteAttachment(uid, id, meta.id));
+      }
+    }
     _firestore.deleteAssignment(uid, id);
   }
 
@@ -99,6 +162,7 @@ class AssignmentProvider extends ChangeNotifier {
     }
     for (final id in deletedIds) {
       await _db.deleteAssignment(id);
+      await _db.deleteAttachmentBlobsFor(id);
     }
     _assignments.removeWhere((a) => deletedIds.contains(a.id));
     notifyListeners();

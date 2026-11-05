@@ -20,6 +20,16 @@ service cloud.firestore {
 
       match /assignments/{assignmentId} {
         allow read, write: if isOwner(userId);
+
+        // Compressed files attached to the assignment. The app caps each at
+        // 700 KB; the rule enforces a hard ceiling under the 1 MiB document
+        // limit so a client bug can't store something that can't be read back.
+        match /attachments/{attachmentId} {
+          allow read, delete: if isOwner(userId);
+          allow create, update: if isOwner(userId)
+            && request.resource.data.data is bytes
+            && request.resource.data.data.size() <= 800000;
+        }
       }
 
       match /semesters/{semesterId} {
