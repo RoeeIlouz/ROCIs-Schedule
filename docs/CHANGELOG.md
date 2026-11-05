@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10+20] - 2026-11-06 (Patch 1)
+
+### Added
+- Open a class to see the assignments given in it and add a new one with the course and lecture already filled in.
+
 ## [0.0.10+20] - 2026-11-05
 
 ### Added

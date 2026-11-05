@@ -153,6 +153,48 @@ void main() {
       expect(find.text('Problem set 3'), findsOneWidget);
     });
 
+    testWidgets('AddAssignmentScreen opened from a lecture pre-fills it', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.625;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final courses = await _providerWithCourse();
+      await courses.addEvent(
+        ScheduleEvent(
+          id: 'e1',
+          courseId: 'c1',
+          title: 'Algorithms Lecture',
+          type: EventType.classType,
+          startTime: DateTime(2026, 10, 4, 10),
+          endTime: DateTime(2026, 10, 4, 12),
+          daysOfWeek: const [0],
+          recurring: true,
+        ),
+      );
+
+      await tester.pumpWidget(
+        createTestableWidget(
+          AddAssignmentScreen(
+            prefill: AssignmentPrefill(
+              courseId: 'c1',
+              lectureEventId: 'e1',
+              lectureDate: DateTime(2026, 11, 1, 14, 30),
+            ),
+          ),
+          courseProvider: courses,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add Assignment'), findsWidgets);
+      expect(find.text('Algorithms'), findsOneWidget);
+      // Lecture title and the session date, with the time of day dropped.
+      expect(find.text('Algorithms Lecture  ·  Sun, Nov 1'), findsOneWidget);
+    });
+
     testWidgets('AddEventScreen in edit mode pre-fills the event', (
       tester,
     ) async {

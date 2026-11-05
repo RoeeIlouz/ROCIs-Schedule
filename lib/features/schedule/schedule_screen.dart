@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:rocis_schedule/features/calendar_sync/services/sync_scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rocis_schedule/features/assignments/add_assignment_screen.dart'
+    show AssignmentPrefill;
+import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/models/schedule_models.dart';
 import 'package:rocis_schedule/shared/theme/theme_provider.dart';
@@ -688,6 +691,24 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     final secondary = theme.colorScheme.onSurface.withValues(alpha: 0.6);
     final daySpan = formatDayOfSpan(event, _selectedDate, l10n);
 
+    // The session being viewed: a recurring class meets on the selected day,
+    // a one-off event on its own date. Assignments are tied to that session.
+    final lectureDay = DateUtils.dateOnly(
+      event.recurring ? _selectedDate : event.startTime,
+    );
+    final lectureAssignments =
+        context
+            .read<AssignmentProvider>()
+            .assignments
+            .where(
+              (a) =>
+                  a.lectureEventId == event.id &&
+                  a.lectureDate != null &&
+                  DateUtils.isSameDay(a.lectureDate, lectureDay),
+            )
+            .toList()
+          ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -827,6 +848,77 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   fontSize: 13,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                 ),
+              ),
+            ],
+            if (course != null && event.domain == EventDomain.academic) ...[
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Text(
+                l10n.translate('lecture_assignments'),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              for (final a in lectureAssignments)
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.push('/assignments/edit', extra: a);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Icon(
+                          a.isCompleted
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          size: 16,
+                          color: secondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: BidiText(
+                            a.title,
+                            style: TextStyle(
+                              fontSize: 13,
+                              decoration: a.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat.MMMd().format(a.dueDate),
+                          style: TextStyle(fontSize: 12, color: secondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              TextButton.icon(
+                icon: const Icon(Icons.assignment_add, size: 16),
+                label: Text(l10n.translate('add_assignment')),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  context.push(
+                    '/assignments/add',
+                    extra: AssignmentPrefill(
+                      courseId: course.id,
+                      lectureEventId: event.id,
+                      lectureDate: lectureDay,
+                    ),
+                  );
+                },
               ),
             ],
           ],

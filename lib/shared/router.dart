@@ -79,7 +79,11 @@ class AppRouter {
       GoRoute(
         path: '/assignments/add',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AddAssignmentScreen(),
+        builder: (context, state) => AddAssignmentScreen(
+          prefill: state.extra is AssignmentPrefill
+              ? state.extra as AssignmentPrefill
+              : null,
+        ),
       ),
       GoRoute(
         path: '/schedule/add',

@@ -16,11 +16,28 @@ import 'package:rocis_schedule/shared/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
+/// Values a new assignment starts with, e.g. when it is created from a
+/// lecture: that lecture's course, event and session date.
+class AssignmentPrefill {
+  final String courseId;
+  final String? lectureEventId;
+  final DateTime? lectureDate;
+
+  const AssignmentPrefill({
+    required this.courseId,
+    this.lectureEventId,
+    this.lectureDate,
+  });
+}
+
 class AddAssignmentScreen extends StatefulWidget {
   /// The assignment to edit; null to create a new one.
   final Assignment? assignmentToEdit;
 
-  const AddAssignmentScreen({super.key, this.assignmentToEdit});
+  /// Starting values for a new assignment. Ignored when editing.
+  final AssignmentPrefill? prefill;
+
+  const AddAssignmentScreen({super.key, this.assignmentToEdit, this.prefill});
 
   @override
   State<AddAssignmentScreen> createState() => _AddAssignmentScreenState();
@@ -64,6 +81,12 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
       _priority = assignment.priority;
       _lectureEventId = assignment.lectureEventId;
       _lectureDate = assignment.lectureDate;
+    } else if (widget.prefill case final prefill?) {
+      _selectedCourseId = prefill.courseId;
+      if (prefill.lectureEventId != null && prefill.lectureDate != null) {
+        _lectureEventId = prefill.lectureEventId;
+        _lectureDate = DateUtils.dateOnly(prefill.lectureDate!);
+      }
     }
     _attachments = [...?assignment?.attachments];
   }

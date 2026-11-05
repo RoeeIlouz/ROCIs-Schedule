@@ -1,3 +1,13 @@
+## Assignments From The Lecture Page - 2026-11-06 (Patch 1 on 0.0.10+20)
+
+#### Problems & User Requirements
+* Assignments could only be created from the Assignments tab, so linking one to the lecture it was given in meant picking the lecture by hand.
+
+#### Solutions Applied
+* **Lecture dialog (`schedule_screen.dart`)**: academic classes with a course list the assignments given in that session (matched on event id and session date) and have an Add assignment button.
+* **Prefill (`add_assignment_screen.dart`, `router.dart`)**: new `AssignmentPrefill` passed as the route extra sets the course, lecture and session date. A recurring class uses the selected day, a one-off event its own date.
+* Dart-only, no new dependencies or icons, so it shipped as a Shorebird patch. Covered by a widget test in `form_validation_test.dart`.
+
 ## Multi-day Events, Semester Picker, Colors, Bidi Text - 2026-10-13 (Patch 1 on 0.0.9+15)
 
 #### Problems & Root Causes
