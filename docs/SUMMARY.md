@@ -1,3 +1,13 @@
+## Unfinished Assignment Reminders - 2026-11-06 (Patch 2 on 0.0.10+20)
+
+#### Problems & User Requirements
+* Nothing reminded the user about assignments they had not finished.
+
+#### Solutions Applied
+* **Planner (`assignment_reminder_service.dart`)**: one notice per day at 09:00 for the next 14 days while any assignment is not done (overdue ones included). Text names the count and the soonest-due assignment (today, tomorrow, in N days, overdue). Rebuilt when assignments, the setting or the language change, and on launch.
+* **Wiring**: `ProxyProvider2` in `main.dart`; `NotificationService.scheduleAssignmentDigest` uses inexact alarms (no exact-alarm permission) and `requestPermission` asks for the Android 13 notification permission when the switch is turned on. Setting `assignmentReminders` in `ThemeProvider`, default on, switch under Settings, Notifications.
+* Dart-only, no new dependencies or icons, so it shipped as a Shorebird patch. Covered by `assignment_reminder_test.dart`.
+
 ## Assignments From The Lecture Page - 2026-11-06 (Patch 1 on 0.0.10+20)
 
 #### Problems & User Requirements

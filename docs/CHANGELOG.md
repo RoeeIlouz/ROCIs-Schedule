@@ -5,6 +5,11 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10+20] - 2026-11-06 (Patch 2)
+
+### Added
+- Daily reminder at 09:00 while you have unfinished assignments, such as "3 unfinished assignments" with the one due soonest. Turn it off in Settings, Notifications.
+
 ## [0.0.10+20] - 2026-11-06 (Patch 1)
 
 ### Added

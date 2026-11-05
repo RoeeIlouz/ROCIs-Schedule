@@ -155,6 +155,53 @@ class NotificationService {
     }
   }
 
+  /// Asks for the notification permission Android 13+ needs. Safe to call
+  /// repeatedly; returns false when denied or unavailable.
+  Future<bool> requestPermission() async {
+    if (!_isInitialized) return false;
+    try {
+      final android = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      return await android?.requestNotificationsPermission() ?? true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Schedules a one-off notice for the unfinished-assignments reminder.
+  /// Inexact on purpose: a reminder a few minutes late needs no alarm permission.
+  Future<void> scheduleAssignmentDigest({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime when,
+  }) async {
+    if (!_isInitialized || !when.isAfter(DateTime.now())) return;
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(when, tz.local),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'rocis_schedule_assignment_digest',
+            'Unfinished assignments',
+            channelDescription: 'Daily reminder about assignments not done yet',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint('NotificationService: digest schedule failed: $e');
+    }
+  }
+
   /// Shows a notification right away. A fixed [id] makes a repeat replace the
   /// previous one instead of stacking.
   Future<void> showNow({

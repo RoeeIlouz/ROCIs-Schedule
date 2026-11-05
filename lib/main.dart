@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -11,6 +12,7 @@ import 'package:rocis_schedule/shared/theme/theme_provider.dart';
 import 'package:rocis_schedule/shared/router.dart';
 import 'package:rocis_schedule/features/auth/auth_service.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
+import 'package:rocis_schedule/features/assignments/assignment_reminder_service.dart';
 import 'package:rocis_schedule/features/assignments/assignment_provider.dart';
 import 'package:rocis_schedule/features/tasks/synced_tasks_provider.dart';
 import 'package:rocis_schedule/shared/services/firestore_service.dart';
@@ -84,6 +86,26 @@ class MyApp extends StatelessWidget {
             final uid = auth.effectiveUserId;
             if (previous != null && previous.uid == uid) return previous;
             return AssignmentProvider(uid)..loadAssignments();
+          },
+        ),
+        // Keeps the daily unfinished-assignments notices in step with the data.
+        ProxyProvider2<
+          AssignmentProvider,
+          ThemeProvider,
+          AssignmentReminderService
+        >(
+          lazy: false,
+          create: (_) => AssignmentReminderService(),
+          update: (_, assignments, theme, service) {
+            final s = service ?? AssignmentReminderService();
+            unawaited(
+              s.sync(
+                assignments: assignments.assignments,
+                enabled: theme.assignmentReminders,
+                locale: theme.locale,
+              ),
+            );
+            return s;
           },
         ),
         ChangeNotifierProxyProvider<AuthService, SyncedTasksProvider>(

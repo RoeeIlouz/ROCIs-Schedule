@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:rocis_schedule/features/courses/course_provider.dart';
 import 'package:rocis_schedule/shared/services/sync_service.dart';
 import 'package:rocis_schedule/shared/services/notification_service.dart';
+import 'package:rocis_schedule/features/assignments/assignment_reminder_service.dart';
 import 'package:rocis_schedule/shared/services/cross_app_bridge_service.dart';
 import 'package:rocis_schedule/shared/services/ics_import_service.dart';
 import 'package:rocis_schedule/shared/widgets/ics_import_dialog.dart';
@@ -331,7 +332,25 @@ class SettingsScreen extends StatelessWidget {
                   await themeProvider.setEnableReminders(v);
                   if (!v) {
                     await NotificationService().cancelAll();
+                    // cancelAll also clears the assignment notices.
+                    if (context.mounted) {
+                      await context.read<AssignmentReminderService>().resync();
+                    }
                   }
+                },
+              ),
+              SwitchListTile(
+                secondary: _buildLeadingIcon(
+                  context,
+                  Icons.notifications_active_outlined,
+                  Colors.deepOrange,
+                ),
+                title: Text(l10n.translate('assignment_reminders')),
+                subtitle: Text(l10n.translate('assignment_reminders_desc')),
+                value: themeProvider.assignmentReminders,
+                onChanged: (v) async {
+                  await themeProvider.setAssignmentReminders(v);
+                  if (v) await NotificationService().requestPermission();
                 },
               ),
               if (themeProvider.enableReminders)
