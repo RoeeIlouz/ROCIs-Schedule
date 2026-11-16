@@ -468,7 +468,8 @@ class SettingsScreen extends StatelessWidget {
             ],
 
             // CALENDAR SYNC SECTION (Afeka / public .ics feed)
-            if (!kIsWeb) ...[
+            // On the web the screen offers a file import instead of sign-in.
+            ...[
               _buildSectionHeader(context, l10n.translate('calendar_sync')),
               _buildSectionCard(context, [
                 ListTile(

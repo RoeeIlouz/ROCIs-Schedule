@@ -1,4 +1,10 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:rocis_schedule/features/calendar_sync/services/feed_differ.dart';
+import 'package:rocis_schedule/features/calendar_sync/services/feed_parser.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:rocis_schedule/features/calendar_sync/models/feed_entry.dart';
@@ -103,21 +109,16 @@ class _CalendarSyncSettingsScreenState
         LocalSyncNotifier(l10n.translate),
       );
       if (_kind == SyncKind.publicIcs) await SyncScheduler.registerPeriodic();
-      var summary = result.summary;
-      if (summary != null && summary.unmappedCourses.isNotEmpty && mounted) {
-        final chosen = await _mapCourses(provider, summary.unmappedCourses);
-        if (chosen != null) {
-          final map = await _store.loadCourseMap(source.id)
-            ..addAll(chosen);
-          await _store.saveCourseMap(source.id, map);
-          final again = await service.run(source, _SilentNotifier());
-          summary = again.summary ?? summary;
-        }
-      }
-      final candidates = summary?.replaceCandidates ?? const [];
-      if (candidates.isNotEmpty && mounted) {
-        await _offerReplace(service, candidates.map((e) => e.id).toList());
-        await _store.setReplaceHandled(source.id);
+      final first = result.summary;
+      if (first != null) {
+        await _finishApply(
+          provider,
+          service,
+          source.id,
+          first,
+          () async =>
+              (await service.run(source, _SilentNotifier())).summary ?? first,
+        );
       }
       messenger.showSnackBar(
         SnackBar(
@@ -129,6 +130,87 @@ class _CalendarSyncSettingsScreenState
             SyncRunStatus.failed => l10n.translate('calendar_sync_failed'),
           }),
         ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+      await _load();
+    }
+  }
+
+  /// After an apply: lets the user match calendar courses that matched none of
+  /// theirs (then re-applies via [rerun]) and offers to replace their weekly
+  /// sessions once. Returns the summary of the last apply.
+  Future<SyncSummary> _finishApply(
+    CourseProvider provider,
+    CalendarSyncService service,
+    String sourceId,
+    SyncSummary summary,
+    Future<SyncSummary> Function() rerun,
+  ) async {
+    var s = summary;
+    if (s.unmappedCourses.isNotEmpty && mounted) {
+      final chosen = await _mapCourses(provider, s.unmappedCourses);
+      if (chosen != null) {
+        final map = await _store.loadCourseMap(sourceId)
+          ..addAll(chosen);
+        await _store.saveCourseMap(sourceId, map);
+        s = await rerun();
+      }
+    }
+    if (s.replaceCandidates.isNotEmpty && mounted) {
+      await _offerReplace(
+        service,
+        s.replaceCandidates.map((e) => e.id).toList(),
+      );
+      await _store.setReplaceHandled(sourceId);
+    }
+    return s;
+  }
+
+  /// Web: there is no in-app sign-in, so the user imports the calendar file
+  /// they downloaded from Afeka (or any .ics). Same matching and change
+  /// handling as the phone's sync; uses the Afeka source id so ids agree with
+  /// a phone that syncs the same calendar.
+  Future<void> _importFile(CourseProvider provider) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final files = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['ics'],
+    );
+    if (files.isEmpty) return;
+    final bytes = await files.first.readAsBytes();
+    final body = utf8.decode(bytes, allowMalformed: true);
+    if (!FeedParser.looksLikeCalendar(body)) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.translate('calendar_sync_failed'))),
+      );
+      return;
+    }
+    final entries = FeedParser.parse(body);
+    const sourceId = 'afeka';
+    setState(() => _busy = true);
+    try {
+      final service = CalendarSyncService(
+        provider,
+        _store,
+        cancelledLabel: l10n.translate('calendar_sync_cancelled'),
+        autoCreateCourses: false,
+      );
+      final first = await service.applyEntries(sourceId, entries);
+      await _finishApply(
+        provider,
+        service,
+        sourceId,
+        first,
+        () => service.applyEntries(sourceId, entries),
+      );
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.translate('calendar_sync_done'))),
+      );
+    } on FeedLooksEmpty {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.translate('calendar_sync_failed'))),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -229,63 +311,89 @@ class _CalendarSyncSettingsScreenState
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          SegmentedButton<SyncKind>(
-            segments: [
-              ButtonSegment(
-                value: SyncKind.afeka,
-                label: Text(l10n.translate('calendar_sync_afeka')),
-              ),
-              ButtonSegment(
-                value: SyncKind.publicIcs,
-                label: Text(l10n.translate('calendar_sync_public')),
-              ),
-            ],
-            selected: {_kind},
-            onSelectionChanged: (s) => setState(() => _kind = s.first),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _url,
-            keyboardType: TextInputType.url,
-            autocorrect: false,
-            obscureText: _kind == SyncKind.afeka,
-            decoration: InputDecoration(
-              labelText: l10n.translate('calendar_sync_feed_url'),
-              border: const OutlineInputBorder(),
+          if (kIsWeb)
+            ..._webBody(l10n, provider, last)
+          else ...[
+            SegmentedButton<SyncKind>(
+              segments: [
+                ButtonSegment(
+                  value: SyncKind.afeka,
+                  label: Text(l10n.translate('calendar_sync_afeka')),
+                ),
+                ButtonSegment(
+                  value: SyncKind.publicIcs,
+                  label: Text(l10n.translate('calendar_sync_public')),
+                ),
+              ],
+              selected: {_kind},
+              onSelectionChanged: (s) => setState(() => _kind = s.first),
             ),
-          ),
-          const SizedBox(height: 16),
-          if (_kind == SyncKind.afeka)
-            FilledButton.icon(
-              onPressed: _busy ? null : () => _signIn(provider),
-              icon: const Icon(Icons.login_rounded),
-              label: Text(l10n.translate('calendar_sync_sign_in')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _url,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              obscureText: _kind == SyncKind.afeka,
+              decoration: InputDecoration(
+                labelText: l10n.translate('calendar_sync_feed_url'),
+                border: const OutlineInputBorder(),
+              ),
             ),
-          const SizedBox(height: 8),
-          FilledButton.tonalIcon(
-            onPressed: _busy || (_kind == SyncKind.afeka && !_hasCookie)
-                ? null
-                : () => _syncNow(provider),
-            icon: _busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync_rounded),
-            label: Text(l10n.translate('calendar_sync_now')),
-          ),
-          const SizedBox(height: 16),
-          Text('${l10n.translate('calendar_sync_last')}: $last'),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: _turnOff,
-            child: Text(l10n.translate('calendar_sync_off')),
-          ),
+            const SizedBox(height: 16),
+            if (_kind == SyncKind.afeka)
+              FilledButton.icon(
+                onPressed: _busy ? null : () => _signIn(provider),
+                icon: const Icon(Icons.login_rounded),
+                label: Text(l10n.translate('calendar_sync_sign_in')),
+              ),
+            const SizedBox(height: 8),
+            FilledButton.tonalIcon(
+              onPressed: _busy || (_kind == SyncKind.afeka && !_hasCookie)
+                  ? null
+                  : () => _syncNow(provider),
+              icon: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.sync_rounded),
+              label: Text(l10n.translate('calendar_sync_now')),
+            ),
+            const SizedBox(height: 16),
+            Text('${l10n.translate('calendar_sync_last')}: $last'),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _turnOff,
+              child: Text(l10n.translate('calendar_sync_off')),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  List<Widget> _webBody(
+    AppLocalizations l10n,
+    CourseProvider provider,
+    String last,
+  ) => [
+    Text(l10n.translate('calendar_sync_web_hint')),
+    const SizedBox(height: 16),
+    FilledButton.icon(
+      onPressed: _busy ? null : () => _importFile(provider),
+      icon: _busy
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.upload_file_rounded),
+      label: Text(l10n.translate('calendar_sync_import_file')),
+    ),
+    const SizedBox(height: 16),
+    Text('${l10n.translate('calendar_sync_last')}: $last'),
+  ];
 }
 
 /// Used for the re-run after the user maps courses: nothing to announce.

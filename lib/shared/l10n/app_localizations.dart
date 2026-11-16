@@ -24,6 +24,9 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'calendar_sync_import_file': 'Import calendar file (.ics)',
+      'calendar_sync_web_hint':
+          'Download your calendar file from Afeka while signed in, then import it here. Automatic sync runs in the mobile app.',
       'calendar_sync_map_title': 'Match your courses',
       'calendar_sync_map_body':
           'Choose which of your courses each calendar course belongs to. Your course details stay as they are.',
@@ -246,7 +249,8 @@ class AppLocalizations {
       'given_in_lecture': 'Given in lecture',
       'no_lecture_linked': 'No lecture linked',
       'choose_lecture': 'Choose the lecture',
-      'no_lectures_for_course': 'This course has no lectures in the schedule yet',
+      'no_lectures_for_course':
+          'This course has no lectures in the schedule yet',
       'no_lecture_dates': 'No dates found for this lecture',
       'lecture_date_help': 'Date of the lecture',
       'attachments': 'Attachments',
@@ -255,13 +259,16 @@ class AppLocalizations {
       'remove': 'Remove',
       'attachment_too_large': '{name} is too large even after compression',
       'attachment_limit_reached': 'You can attach up to {max} files',
-      'attachment_processing': 'Still processing an attachment, try again in a moment',
+      'attachment_processing':
+          'Still processing an attachment, try again in a moment',
       'attachment_failed': 'Could not add the attachment',
       'attachment_unavailable': 'Attachment is not available offline',
-      'attachments_guest_warning': 'You\'re using ROCIs Schedule as a guest. Files stay on this device only and won\'t sync or show up in ROCIs Tasks. Sign in to sync them.',
+      'attachments_guest_warning':
+          'You\'re using ROCIs Schedule as a guest. Files stay on this device only and won\'t sync or show up in ROCIs Tasks. Sign in to sync them.',
       'lecture_assignments': 'Assignments from this lecture',
       'assignment_reminders': 'Unfinished assignment reminders',
-      'assignment_reminders_desc': 'A daily notice at 09:00 until they are marked done',
+      'assignment_reminders_desc':
+          'A daily notice at 09:00 until they are marked done',
       'assignment_reminder_title': '{count} unfinished assignments',
       'assignment_reminder_title_one': '1 unfinished assignment',
       'assignment_reminder_overdue': '{title} is overdue',
@@ -507,6 +514,9 @@ class AppLocalizations {
       'flip_camera': 'Flip camera',
     },
     'he': {
+      'calendar_sync_import_file': 'ייבוא קובץ יומן (.ics)',
+      'calendar_sync_web_hint':
+          'הורד את קובץ היומן מאפקה כשאתה מחובר, ואז ייבא אותו כאן. סנכרון אוטומטי פועל באפליקציית הנייד.',
       'calendar_sync_map_title': 'התאמת הקורסים שלך',
       'calendar_sync_map_body':
           'בחר לאיזה מהקורסים שלך שייך כל קורס ביומן. פרטי הקורסים שלך נשארים כפי שהם.',
@@ -734,10 +744,12 @@ class AppLocalizations {
       'attachment_processing': 'מעבד קובץ מצורף, נסה שוב בעוד רגע',
       'attachment_failed': 'לא ניתן היה להוסיף את הקובץ',
       'attachment_unavailable': 'הקובץ אינו זמין במצב לא מקוון',
-      'attachments_guest_warning': 'אתם משתמשים ב-ROCIs Schedule כאורחים. הקבצים נשמרים במכשיר זה בלבד ולא יסונכרנו או יופיעו ב-ROCIs Tasks. התחברו כדי לסנכרן אותם.',
+      'attachments_guest_warning':
+          'אתם משתמשים ב-ROCIs Schedule כאורחים. הקבצים נשמרים במכשיר זה בלבד ולא יסונכרנו או יופיעו ב-ROCIs Tasks. התחברו כדי לסנכרן אותם.',
       'lecture_assignments': 'מטלות מהרצאה זו',
       'assignment_reminders': 'תזכורות על מטלות שלא הושלמו',
-      'assignment_reminders_desc': 'הודעה יומית ב-09:00 עד שמסמנים אותן כהושלמו',
+      'assignment_reminders_desc':
+          'הודעה יומית ב-09:00 עד שמסמנים אותן כהושלמו',
       'assignment_reminder_title': '{count} מטלות שלא הושלמו',
       'assignment_reminder_title_one': 'מטלה אחת שלא הושלמה',
       'assignment_reminder_overdue': '{title} באיחור',
@@ -981,6 +993,9 @@ class AppLocalizations {
       'flip_camera': 'החלפת מצלמה',
     },
     'es': {
+      'calendar_sync_import_file': 'Importar archivo de calendario (.ics)',
+      'calendar_sync_web_hint':
+          'Descarga tu archivo de calendario de Afeka con la sesión iniciada e impórtalo aquí. La sincronización automática funciona en la app móvil.',
       'calendar_sync_map_title': 'Empareja tus cursos',
       'calendar_sync_map_body':
           'Elige a cuál de tus cursos pertenece cada curso del calendario. Los datos de tus cursos no cambian.',
@@ -1210,13 +1225,16 @@ class AppLocalizations {
       'remove': 'Quitar',
       'attachment_too_large': '{name} es demasiado grande incluso comprimido',
       'attachment_limit_reached': 'Puedes adjuntar hasta {max} archivos',
-      'attachment_processing': 'Aún se está procesando un adjunto, inténtalo de nuevo',
+      'attachment_processing':
+          'Aún se está procesando un adjunto, inténtalo de nuevo',
       'attachment_failed': 'No se pudo añadir el adjunto',
       'attachment_unavailable': 'El adjunto no está disponible sin conexión',
-      'attachments_guest_warning': 'Estás usando ROCIs Schedule como invitado. Los archivos se quedan solo en este dispositivo y no se sincronizan ni aparecen en ROCIs Tasks. Inicia sesión para sincronizarlos.',
+      'attachments_guest_warning':
+          'Estás usando ROCIs Schedule como invitado. Los archivos se quedan solo en este dispositivo y no se sincronizan ni aparecen en ROCIs Tasks. Inicia sesión para sincronizarlos.',
       'lecture_assignments': 'Tareas de esta clase',
       'assignment_reminders': 'Recordatorios de tareas sin terminar',
-      'assignment_reminders_desc': 'Un aviso diario a las 09:00 hasta marcarlas como hechas',
+      'assignment_reminders_desc':
+          'Un aviso diario a las 09:00 hasta marcarlas como hechas',
       'assignment_reminder_title': '{count} tareas sin terminar',
       'assignment_reminder_title_one': '1 tarea sin terminar',
       'assignment_reminder_overdue': '{title} está atrasada',
@@ -1472,6 +1490,9 @@ class AppLocalizations {
       'flip_camera': 'Voltear cámara',
     },
     'de': {
+      'calendar_sync_import_file': 'Kalenderdatei importieren (.ics)',
+      'calendar_sync_web_hint':
+          'Lade deine Kalenderdatei bei Afeka im angemeldeten Zustand herunter und importiere sie hier. Die automatische Synchronisierung läuft in der mobilen App.',
       'calendar_sync_map_title': 'Kurse zuordnen',
       'calendar_sync_map_body':
           'Wähle, zu welchem deiner Kurse jeder Kalenderkurs gehört. Deine Kursdaten bleiben unverändert.',
@@ -1692,7 +1713,8 @@ class AppLocalizations {
       'given_in_lecture': 'Gegeben in Vorlesung',
       'no_lecture_linked': 'Keine Vorlesung verknüpft',
       'choose_lecture': 'Vorlesung wählen',
-      'no_lectures_for_course': 'Dieser Kurs hat noch keine Vorlesungen im Stundenplan',
+      'no_lectures_for_course':
+          'Dieser Kurs hat noch keine Vorlesungen im Stundenplan',
       'no_lecture_dates': 'Keine Termine für diese Vorlesung',
       'lecture_date_help': 'Datum der Vorlesung',
       'attachments': 'Anhänge',
@@ -1701,13 +1723,16 @@ class AppLocalizations {
       'remove': 'Entfernen',
       'attachment_too_large': '{name} ist auch komprimiert zu groß',
       'attachment_limit_reached': 'Du kannst bis zu {max} Dateien anhängen',
-      'attachment_processing': 'Ein Anhang wird noch verarbeitet, versuche es gleich erneut',
+      'attachment_processing':
+          'Ein Anhang wird noch verarbeitet, versuche es gleich erneut',
       'attachment_failed': 'Anhang konnte nicht hinzugefügt werden',
       'attachment_unavailable': 'Anhang ist offline nicht verfügbar',
-      'attachments_guest_warning': 'Du nutzt ROCIs Schedule als Gast. Dateien bleiben nur auf diesem Gerät und werden weder synchronisiert noch in ROCIs Tasks angezeigt. Melde dich an, um sie zu synchronisieren.',
+      'attachments_guest_warning':
+          'Du nutzt ROCIs Schedule als Gast. Dateien bleiben nur auf diesem Gerät und werden weder synchronisiert noch in ROCIs Tasks angezeigt. Melde dich an, um sie zu synchronisieren.',
       'lecture_assignments': 'Aufgaben aus dieser Vorlesung',
       'assignment_reminders': 'Erinnerungen an offene Aufgaben',
-      'assignment_reminders_desc': 'Täglich um 09:00, bis sie als erledigt markiert sind',
+      'assignment_reminders_desc':
+          'Täglich um 09:00, bis sie als erledigt markiert sind',
       'assignment_reminder_title': '{count} offene Aufgaben',
       'assignment_reminder_title_one': '1 offene Aufgabe',
       'assignment_reminder_overdue': '{title} ist überfällig',
@@ -1961,6 +1986,9 @@ class AppLocalizations {
       'flip_camera': 'Kamera wechseln',
     },
     'fr': {
+      'calendar_sync_import_file': 'Importer un fichier de calendrier (.ics)',
+      'calendar_sync_web_hint':
+          'Téléchargez votre fichier de calendrier depuis Afeka une fois connecté, puis importez-le ici. La synchronisation automatique fonctionne dans l\'application mobile.',
       'calendar_sync_map_title': 'Associez vos cours',
       'calendar_sync_map_body':
           'Choisissez à quel cours chaque cours du calendrier correspond. Les détails de vos cours restent inchangés.',
@@ -2182,22 +2210,28 @@ class AppLocalizations {
       'given_in_lecture': 'Donné pendant le cours',
       'no_lecture_linked': 'Aucun cours lié',
       'choose_lecture': 'Choisir le cours',
-      'no_lectures_for_course': 'Ce cours n\'a pas encore de séances dans l\'emploi du temps',
+      'no_lectures_for_course':
+          'Ce cours n\'a pas encore de séances dans l\'emploi du temps',
       'no_lecture_dates': 'Aucune date pour ce cours',
       'lecture_date_help': 'Date du cours',
       'attachments': 'Pièces jointes',
       'add_photo': 'Ajouter une photo',
       'add_file': 'Ajouter un fichier',
       'remove': 'Retirer',
-      'attachment_too_large': '{name} est trop volumineux même après compression',
+      'attachment_too_large':
+          '{name} est trop volumineux même après compression',
       'attachment_limit_reached': 'Vous pouvez joindre jusqu\'à {max} fichiers',
-      'attachment_processing': 'Une pièce jointe est en cours de traitement, réessayez',
+      'attachment_processing':
+          'Une pièce jointe est en cours de traitement, réessayez',
       'attachment_failed': 'Impossible d\'ajouter la pièce jointe',
-      'attachment_unavailable': 'La pièce jointe n\'est pas disponible hors ligne',
-      'attachments_guest_warning': 'Vous utilisez ROCIs Schedule en invité. Les fichiers restent uniquement sur cet appareil et ne sont ni synchronisés ni visibles dans ROCIs Tasks. Connectez-vous pour les synchroniser.',
+      'attachment_unavailable':
+          'La pièce jointe n\'est pas disponible hors ligne',
+      'attachments_guest_warning':
+          'Vous utilisez ROCIs Schedule en invité. Les fichiers restent uniquement sur cet appareil et ne sont ni synchronisés ni visibles dans ROCIs Tasks. Connectez-vous pour les synchroniser.',
       'lecture_assignments': 'Devoirs de ce cours',
       'assignment_reminders': 'Rappels des devoirs non terminés',
-      'assignment_reminders_desc': 'Un rappel quotidien à 09:00 jusqu\'à ce qu\'ils soient terminés',
+      'assignment_reminders_desc':
+          'Un rappel quotidien à 09:00 jusqu\'à ce qu\'ils soient terminés',
       'assignment_reminder_title': '{count} devoirs non terminés',
       'assignment_reminder_title_one': '1 devoir non terminé',
       'assignment_reminder_overdue': '{title} est en retard',
@@ -2455,6 +2489,9 @@ class AppLocalizations {
       'flip_camera': 'Changer de caméra',
     },
     'ar': {
+      'calendar_sync_import_file': 'استيراد ملف التقويم (.ics)',
+      'calendar_sync_web_hint':
+          'نزّل ملف التقويم من أفيكا وأنت مسجّل الدخول ثم استورده هنا. المزامنة التلقائية تعمل في تطبيق الجوال.',
       'calendar_sync_map_title': 'مطابقة مقرراتك',
       'calendar_sync_map_body':
           'اختر أي من مقرراتك ينتمي إليه كل مقرر في التقويم. تبقى تفاصيل مقرراتك كما هي.',
@@ -2677,10 +2714,12 @@ class AppLocalizations {
       'attachment_processing': 'ما زال يتم معالجة مرفق، حاول مرة أخرى بعد قليل',
       'attachment_failed': 'تعذّرت إضافة المرفق',
       'attachment_unavailable': 'المرفق غير متاح دون اتصال',
-      'attachments_guest_warning': 'أنت تستخدم ROCIs Schedule كضيف. تبقى الملفات على هذا الجهاز فقط ولن تتم مزامنتها أو تظهر في ROCIs Tasks. سجّل الدخول لمزامنتها.',
+      'attachments_guest_warning':
+          'أنت تستخدم ROCIs Schedule كضيف. تبقى الملفات على هذا الجهاز فقط ولن تتم مزامنتها أو تظهر في ROCIs Tasks. سجّل الدخول لمزامنتها.',
       'lecture_assignments': 'واجبات هذه المحاضرة',
       'assignment_reminders': 'تذكيرات الواجبات غير المكتملة',
-      'assignment_reminders_desc': 'إشعار يومي الساعة 09:00 حتى يتم تحديدها كمكتملة',
+      'assignment_reminders_desc':
+          'إشعار يومي الساعة 09:00 حتى يتم تحديدها كمكتملة',
       'assignment_reminder_title': '{count} واجبات غير مكتملة',
       'assignment_reminder_title_one': 'واجب واحد غير مكتمل',
       'assignment_reminder_overdue': '{title} متأخر',
@@ -2930,6 +2969,9 @@ class AppLocalizations {
       'flip_camera': 'تبديل الكاميرا',
     },
     'hi': {
+      'calendar_sync_import_file': 'कैलेंडर फ़ाइल (.ics) आयात करें',
+      'calendar_sync_web_hint':
+          'साइन इन रहते हुए अफेका से अपनी कैलेंडर फ़ाइल डाउनलोड करें, फिर उसे यहाँ आयात करें। स्वचालित सिंक मोबाइल ऐप में चलता है।',
       'calendar_sync_map_title': 'अपने कोर्स मिलाएँ',
       'calendar_sync_map_body':
           'चुनें कि कैलेंडर का हर कोर्स आपके किस कोर्स का है। आपके कोर्स का विवरण जैसा है वैसा रहेगा।',
@@ -3145,7 +3187,8 @@ class AppLocalizations {
       'given_in_lecture': 'इस लेक्चर में दिया गया',
       'no_lecture_linked': 'कोई लेक्चर लिंक नहीं',
       'choose_lecture': 'लेक्चर चुनें',
-      'no_lectures_for_course': 'इस कोर्स के लिए शेड्यूल में अभी कोई लेक्चर नहीं है',
+      'no_lectures_for_course':
+          'इस कोर्स के लिए शेड्यूल में अभी कोई लेक्चर नहीं है',
       'no_lecture_dates': 'इस लेक्चर की कोई तारीख नहीं मिली',
       'lecture_date_help': 'लेक्चर की तारीख',
       'attachments': 'अटैचमेंट',
@@ -3154,10 +3197,12 @@ class AppLocalizations {
       'remove': 'हटाएं',
       'attachment_too_large': '{name} कंप्रेस करने के बाद भी बहुत बड़ा है',
       'attachment_limit_reached': 'आप अधिकतम {max} फ़ाइलें जोड़ सकते हैं',
-      'attachment_processing': 'एक अटैचमेंट अभी प्रोसेस हो रहा है, थोड़ी देर बाद फिर कोशिश करें',
+      'attachment_processing':
+          'एक अटैचमेंट अभी प्रोसेस हो रहा है, थोड़ी देर बाद फिर कोशिश करें',
       'attachment_failed': 'अटैचमेंट नहीं जोड़ा जा सका',
       'attachment_unavailable': 'अटैचमेंट ऑफ़लाइन उपलब्ध नहीं है',
-      'attachments_guest_warning': 'आप ROCIs Schedule को अतिथि के रूप में उपयोग कर रहे हैं। फ़ाइलें केवल इसी डिवाइस पर रहेंगी और सिंक नहीं होंगी या ROCIs Tasks में नहीं दिखेंगी। सिंक करने के लिए साइन इन करें।',
+      'attachments_guest_warning':
+          'आप ROCIs Schedule को अतिथि के रूप में उपयोग कर रहे हैं। फ़ाइलें केवल इसी डिवाइस पर रहेंगी और सिंक नहीं होंगी या ROCIs Tasks में नहीं दिखेंगी। सिंक करने के लिए साइन इन करें।',
       'lecture_assignments': 'इस लेक्चर के असाइनमेंट',
       'assignment_reminders': 'अधूरे असाइनमेंट के रिमाइंडर',
       'assignment_reminders_desc': 'पूरा चिह्नित होने तक रोज़ 09:00 बजे सूचना',
@@ -3414,6 +3459,9 @@ class AppLocalizations {
       'flip_camera': 'कैमरा बदलें',
     },
     'sv': {
+      'calendar_sync_import_file': 'Importera kalenderfil (.ics)',
+      'calendar_sync_web_hint':
+          'Ladda ner din kalenderfil från Afeka när du är inloggad och importera den här. Automatisk synk körs i mobilappen.',
       'calendar_sync_map_title': 'Matcha dina kurser',
       'calendar_sync_map_body':
           'Välj vilken av dina kurser varje kalenderkurs hör till. Dina kursuppgifter ändras inte.',
@@ -3635,7 +3683,8 @@ class AppLocalizations {
       'given_in_lecture': 'Given på föreläsningen',
       'no_lecture_linked': 'Ingen föreläsning kopplad',
       'choose_lecture': 'Välj föreläsning',
-      'no_lectures_for_course': 'Den här kursen har inga föreläsningar i schemat ännu',
+      'no_lectures_for_course':
+          'Den här kursen har inga föreläsningar i schemat ännu',
       'no_lecture_dates': 'Inga datum hittades för föreläsningen',
       'lecture_date_help': 'Föreläsningens datum',
       'attachments': 'Bilagor',
@@ -3644,13 +3693,16 @@ class AppLocalizations {
       'remove': 'Ta bort',
       'attachment_too_large': '{name} är för stor även efter komprimering',
       'attachment_limit_reached': 'Du kan bifoga upp till {max} filer',
-      'attachment_processing': 'En bilaga bearbetas fortfarande, försök igen strax',
+      'attachment_processing':
+          'En bilaga bearbetas fortfarande, försök igen strax',
       'attachment_failed': 'Det gick inte att lägga till bilagan',
       'attachment_unavailable': 'Bilagan är inte tillgänglig offline',
-      'attachments_guest_warning': 'Du använder ROCIs Schedule som gäst. Filer finns bara på den här enheten och synkas inte eller visas i ROCIs Tasks. Logga in för att synka dem.',
+      'attachments_guest_warning':
+          'Du använder ROCIs Schedule som gäst. Filer finns bara på den här enheten och synkas inte eller visas i ROCIs Tasks. Logga in för att synka dem.',
       'lecture_assignments': 'Uppgifter från den här föreläsningen',
       'assignment_reminders': 'Påminnelser om ogjorda uppgifter',
-      'assignment_reminders_desc': 'En daglig avisering kl. 09:00 tills de är markerade som klara',
+      'assignment_reminders_desc':
+          'En daglig avisering kl. 09:00 tills de är markerade som klara',
       'assignment_reminder_title': '{count} ogjorda uppgifter',
       'assignment_reminder_title_one': '1 ogjord uppgift',
       'assignment_reminder_overdue': '{title} är försenad',
