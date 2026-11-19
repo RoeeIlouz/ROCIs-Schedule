@@ -193,6 +193,7 @@ class ScreenshotSeed {
         title: assignments[a.$2],
         dueDate: today.add(Duration(days: a.$3, hours: 23, minutes: 59)),
         priority: a.$4,
+        autoPriority: false,
         isCompleted: a.$5,
       ));
     }

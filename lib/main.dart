@@ -102,6 +102,7 @@ class MyApp extends StatelessWidget {
               s.sync(
                 assignments: assignments.assignments,
                 enabled: theme.assignmentReminders,
+                countdown: theme.dueCountdown,
                 locale: theme.locale,
               ),
             );

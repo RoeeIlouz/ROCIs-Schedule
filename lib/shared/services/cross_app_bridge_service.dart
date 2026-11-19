@@ -41,7 +41,7 @@ class CrossAppBridgeService {
       final queryParams = <String, String>{
         'title': assignment.title,
         'dueDate': assignment.dueDate.toIso8601String(),
-        'priority': assignment.priority.name,
+        'priority': assignment.effectivePriority().name,
         if (assignment.description.isNotEmpty) 'notes': assignment.description,
         if (course != null) 'category': course.name,
       };

@@ -5,6 +5,12 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10+20] - 2026-11-19 (Patch 3)
+
+### Added
+- Automatic priority: new assignments start low, turn medium a week before the due date and high 2 days before. Pick Low, Medium or High to set it yourself.
+- Due date countdown (Settings, off by default): notices 1 week, 2 days and 1 day before an assignment is due, and on the day.
+
 ## [0.0.10+20] - 2026-11-06 (Patch 2)
 
 ### Added

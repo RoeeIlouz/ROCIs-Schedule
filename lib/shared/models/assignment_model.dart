@@ -73,7 +73,13 @@ class Assignment {
   final String description;
   final DateTime dueDate;
   final bool isCompleted;
+
+  /// The priority the user picked. Only meaningful when [autoPriority] is
+  /// false; use [effectivePriority] for display and sorting.
   final AssignmentPriority priority;
+
+  /// When true the priority follows the due date (see [effectivePriority]).
+  final bool autoPriority;
 
   /// The lecture (a [ScheduleEvent] id) this assignment was given in, and the
   /// date of that session. Both are set together or not at all.
@@ -90,10 +96,29 @@ class Assignment {
     required this.dueDate,
     this.isCompleted = false,
     this.priority = AssignmentPriority.medium,
+    this.autoPriority = true,
     this.lectureEventId,
     this.lectureDate,
     this.attachments = const [],
   }) : id = id ?? const Uuid().v4();
+
+  /// Days left before an automatic priority goes up a level.
+  static const int autoMediumWithinDays = 7;
+  static const int autoHighWithinDays = 2;
+
+  /// The priority to show: the picked one, or for [autoPriority] low until a
+  /// week before the due day, medium within the week, high in the last two
+  /// days and when overdue.
+  AssignmentPriority effectivePriority([DateTime? now]) {
+    if (!autoPriority) return priority;
+    final n = now ?? DateTime.now();
+    final today = DateTime(n.year, n.month, n.day);
+    final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final daysLeft = dueDay.difference(today).inDays;
+    if (daysLeft <= autoHighWithinDays) return AssignmentPriority.high;
+    if (daysLeft <= autoMediumWithinDays) return AssignmentPriority.medium;
+    return AssignmentPriority.low;
+  }
 
   bool get hasLecture => lectureEventId != null && lectureDate != null;
 
@@ -107,6 +132,7 @@ class Assignment {
       'dueDate': dueDate.toIso8601String(),
       'isCompleted': isCompleted ? 1 : 0,
       'priority': priority.index,
+      'autoPriority': autoPriority,
       'lectureEventId': lectureEventId,
       'lectureDate': lectureDate?.toIso8601String(),
       'attachments': attachments.map((a) => a.toMap()).toList(),
@@ -117,6 +143,7 @@ class Assignment {
   Map<String, dynamic> toDbMap() {
     return {
       ...toMap(),
+      'autoPriority': autoPriority ? 1 : 0,
       'attachments': jsonEncode(attachments.map((a) => a.toMap()).toList()),
     };
   }
@@ -131,6 +158,13 @@ class Assignment {
         lectureEventId != null &&
         lectureEventId.isNotEmpty &&
         parsedLectureDate != null;
+    final priority = AssignmentPriority.values[map['priority'] ?? 1];
+    final rawAuto = map['autoPriority'];
+    // Saved before automatic priority existed: medium was the untouched
+    // default, so only those follow the due date.
+    final autoPriority = rawAuto == null
+        ? priority == AssignmentPriority.medium
+        : rawAuto == true || rawAuto == 1;
     return Assignment(
       id: map['id'],
       courseId: map['courseId'],
@@ -138,7 +172,8 @@ class Assignment {
       description: map['description'] ?? '',
       dueDate: DateTime.parse(map['dueDate']),
       isCompleted: map['isCompleted'] == 1,
-      priority: AssignmentPriority.values[map['priority'] ?? 1],
+      priority: priority,
+      autoPriority: autoPriority,
       lectureEventId: linked ? lectureEventId : null,
       lectureDate: linked ? parsedLectureDate : null,
       attachments: AssignmentAttachment.listFromRaw(map['attachments']),
@@ -151,6 +186,7 @@ class Assignment {
     DateTime? dueDate,
     bool? isCompleted,
     AssignmentPriority? priority,
+    bool? autoPriority,
     String? lectureEventId,
     DateTime? lectureDate,
     bool clearLecture = false,
@@ -164,6 +200,7 @@ class Assignment {
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
       priority: priority ?? this.priority,
+      autoPriority: autoPriority ?? this.autoPriority,
       lectureEventId: clearLecture
           ? null
           : (lectureEventId ?? this.lectureEventId),

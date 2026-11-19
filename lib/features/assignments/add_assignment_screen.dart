@@ -51,6 +51,9 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
   String? _selectedCourseId;
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
   AssignmentPriority _priority = AssignmentPriority.medium;
+
+  /// New assignments follow the due date until a priority is picked.
+  bool _autoPriority = true;
   bool _isLoading = false;
 
   /// The lecture this assignment was given in (event + the session's date).
@@ -79,6 +82,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
       _selectedCourseId = assignment.courseId;
       _selectedDate = assignment.dueDate;
       _priority = assignment.priority;
+      _autoPriority = assignment.autoPriority;
       _lectureEventId = assignment.lectureEventId;
       _lectureDate = assignment.lectureDate;
     } else if (widget.prefill case final prefill?) {
@@ -420,6 +424,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
         description: _descriptionController.text.trim(),
         dueDate: _selectedDate,
         priority: _priority,
+        autoPriority: _autoPriority,
         lectureEventId: _lectureEventId,
         lectureDate: _lectureDate,
         attachments: _attachments,
@@ -608,10 +613,16 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
           const SizedBox(height: 8),
-          SegmentedButton<AssignmentPriority>(
+          // -1 is "auto"; otherwise the AssignmentPriority index.
+          SegmentedButton<int>(
             segments: [
               ButtonSegment(
-                value: AssignmentPriority.low,
+                value: -1,
+                icon: const Icon(Icons.schedule_rounded, size: 14),
+                label: Text(l10n.translate('priority_auto')),
+              ),
+              ButtonSegment(
+                value: AssignmentPriority.low.index,
                 icon: Icon(
                   Icons.circle,
                   size: 10,
@@ -620,7 +631,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                 label: Text(l10n.translate('low')),
               ),
               ButtonSegment(
-                value: AssignmentPriority.medium,
+                value: AssignmentPriority.medium.index,
                 icon: Icon(
                   Icons.circle,
                   size: 10,
@@ -629,7 +640,7 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                 label: Text(l10n.translate('medium')),
               ),
               ButtonSegment(
-                value: AssignmentPriority.high,
+                value: AssignmentPriority.high.index,
                 icon: Icon(
                   Icons.circle,
                   size: 10,
@@ -638,9 +649,26 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
                 label: Text(l10n.translate('high')),
               ),
             ],
-            selected: {_priority},
-            onSelectionChanged: (v) => setState(() => _priority = v.first),
+            selected: {_autoPriority ? -1 : _priority.index},
+            onSelectionChanged: (v) => setState(() {
+              if (v.first < 0) {
+                _autoPriority = true;
+              } else {
+                _autoPriority = false;
+                _priority = AssignmentPriority.values[v.first];
+              }
+            }),
           ),
+          if (_autoPriority) ...[
+            const SizedBox(height: 6),
+            Text(
+              l10n.translate('priority_auto_desc'),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           // Description Field

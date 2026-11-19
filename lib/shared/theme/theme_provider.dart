@@ -27,6 +27,7 @@ class ThemeProvider extends ChangeNotifier {
   static const String _keyUse24HourFormat = 'use_24_hour_format';
   static const String _keyEnableReminders = 'enable_reminders';
   static const String _keyAssignmentReminders = 'enable_assignment_reminders';
+  static const String _keyDueCountdown = 'enable_due_countdown';
   static const String _keyCustomSeedColor = 'custom_seed_color';
   static const String _keyReminderLeadMinutes = 'reminder_lead_minutes';
   static const String _keyEnableTasksIntegration = 'beta_tasks_integration';
@@ -109,6 +110,7 @@ class ThemeProvider extends ChangeNotifier {
   bool _use24HourFormat = true;
   bool _enableReminders = true;
   bool _assignmentReminders = true;
+  bool _dueCountdown = false;
   Color _customSeedColor = brandSeed;
   int _reminderLeadMinutes = 15;
   bool _enableTasksIntegration = false;
@@ -123,6 +125,7 @@ class ThemeProvider extends ChangeNotifier {
   bool get use24HourFormat => _use24HourFormat;
   bool get enableReminders => _enableReminders;
   bool get assignmentReminders => _assignmentReminders;
+  bool get dueCountdown => _dueCountdown;
   Color get customSeedColor => _customSeedColor;
   int get reminderLeadMinutes => _reminderLeadMinutes;
   bool get enableTasksIntegration => _enableTasksIntegration;
@@ -147,6 +150,7 @@ class ThemeProvider extends ChangeNotifier {
     _use24HourFormat = prefs.getBool(_keyUse24HourFormat) ?? true;
     _enableReminders = prefs.getBool(_keyEnableReminders) ?? true;
     _assignmentReminders = prefs.getBool(_keyAssignmentReminders) ?? true;
+    _dueCountdown = prefs.getBool(_keyDueCountdown) ?? false;
 
     final colorVal = prefs.getInt(_keyCustomSeedColor);
     if (colorVal != null) {
@@ -267,6 +271,15 @@ class ThemeProvider extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyAssignmentReminders, value);
+  }
+
+  Future<void> setDueCountdown(bool value) async {
+    if (_dueCountdown == value) return;
+    _dueCountdown = value;
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyDueCountdown, value);
   }
 
   Future<void> setCustomSeedColor(Color color) async {

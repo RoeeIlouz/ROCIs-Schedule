@@ -81,7 +81,13 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
     if (_sortBy == 'dueDate') {
       assignments.sort((a, b) => a.dueDate.compareTo(b.dueDate));
     } else if (_sortBy == 'priority') {
-      assignments.sort((a, b) => b.priority.index.compareTo(a.priority.index));
+      final now = DateTime.now();
+      assignments.sort(
+        (a, b) => b
+            .effectivePriority(now)
+            .index
+            .compareTo(a.effectivePriority(now).index),
+      );
     }
 
     return LayoutBuilder(
@@ -851,7 +857,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                     }
                   },
                 ),
-              _buildPriorityBadge(context, assignment.priority),
+              _buildPriorityBadge(context, assignment.effectivePriority()),
               if (isDesktop) ...[
                 const SizedBox(width: 4),
                 IconButton(

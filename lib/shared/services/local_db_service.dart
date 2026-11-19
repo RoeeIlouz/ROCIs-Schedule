@@ -41,7 +41,7 @@ class LocalDbService {
     }
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -123,6 +123,14 @@ class LocalDbService {
       }
       await _createAttachmentBlobsTable(db);
     }
+    if (oldVersion < 10) {
+      // NULL for existing rows: Assignment.fromMap decides from the priority.
+      try {
+        await db.execute(
+          'ALTER TABLE assignments ADD COLUMN autoPriority INTEGER',
+        );
+      } catch (_) {}
+    }
   }
 
   /// Local copy of attachment bytes. Deliberately has no foreign key to
@@ -198,6 +206,7 @@ class LocalDbService {
         dueDate TEXT,
         isCompleted INTEGER,
         priority INTEGER,
+        autoPriority INTEGER,
         lectureEventId TEXT,
         lectureDate TEXT,
         attachments TEXT,

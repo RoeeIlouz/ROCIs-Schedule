@@ -20,8 +20,9 @@ class NotificationService {
     try {
       tz.initializeTimeZones();
 
-      const androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -71,7 +72,9 @@ class NotificationService {
           scheduledDate = scheduledDate.add(const Duration(days: 7));
         }
       } else {
-        scheduledDate = event.startTime.subtract(Duration(minutes: minutesBefore));
+        scheduledDate = event.startTime.subtract(
+          Duration(minutes: minutesBefore),
+        );
       }
 
       if (scheduledDate.isBefore(now)) return;
@@ -106,7 +109,9 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
-      debugPrint('NotificationService: Scheduled event reminder for ${event.title} at $scheduledDate');
+      debugPrint(
+        'NotificationService: Scheduled event reminder for ${event.title} at $scheduledDate',
+      );
     } catch (e) {
       debugPrint('NotificationService: Failed to schedule event reminder: $e');
     }
@@ -121,13 +126,17 @@ class NotificationService {
     try {
       final now = DateTime.now();
       // Remind 1 day before due date at 09:00 AM, or 3 hours before
-      final scheduledDate = assignment.dueDate.subtract(const Duration(days: 1));
+      final scheduledDate = assignment.dueDate.subtract(
+        const Duration(days: 1),
+      );
       if (scheduledDate.isBefore(now)) return;
 
       final notificationId = ('assign_${assignment.id}').hashCode.abs();
       final courseName = course?.name ?? '';
       final title = '📝 Assignment Due Tomorrow: ${assignment.title}';
-      final body = courseName.isNotEmpty ? 'Course: $courseName' : 'Make sure to finish on time!';
+      final body = courseName.isNotEmpty
+          ? 'Course: $courseName'
+          : 'Make sure to finish on time!';
 
       await _notificationsPlugin.zonedSchedule(
         id: notificationId,
@@ -138,7 +147,8 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'rocis_schedule_assignments',
             'Assignment Reminders',
-            channelDescription: 'Notifications for upcoming assignment due dates',
+            channelDescription:
+                'Notifications for upcoming assignment due dates',
             importance: Importance.defaultImportance,
             priority: Priority.defaultPriority,
           ),
@@ -151,7 +161,9 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     } catch (e) {
-      debugPrint('NotificationService: Failed to schedule assignment reminder: $e');
+      debugPrint(
+        'NotificationService: Failed to schedule assignment reminder: $e',
+      );
     }
   }
 
@@ -199,6 +211,38 @@ class NotificationService {
       );
     } catch (e) {
       debugPrint('NotificationService: digest schedule failed: $e');
+    }
+  }
+
+  /// Schedules one "assignment due in N days" countdown notice.
+  Future<void> scheduleDueCountdown({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime when,
+  }) async {
+    if (!_isInitialized || !when.isAfter(DateTime.now())) return;
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: tz.TZDateTime.from(when, tz.local),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'rocis_schedule_due_countdown',
+            'Due date countdown',
+            channelDescription:
+                'Notices a week and days before an assignment is due',
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint('NotificationService: countdown schedule failed: $e');
     }
   }
 

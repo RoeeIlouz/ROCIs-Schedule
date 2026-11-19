@@ -180,6 +180,7 @@ void main() {
           title: 'Homework 1',
           dueDate: DateTime.now().add(const Duration(days: 3)),
           priority: AssignmentPriority.high,
+          autoPriority: false,
         );
 
         courseProvider.addCourseFromSync(course);

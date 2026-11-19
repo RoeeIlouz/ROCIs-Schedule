@@ -1,3 +1,15 @@
+## Automatic Priority And Due Date Countdown - 2026-11-19 (Patch 3 on 0.0.10+20)
+
+#### Problems & User Requirements
+* Priority had to be set by hand and defaulted to medium; it should start low and rise as the due date nears unless the user picks one.
+* Optional notices counting down to each due date (1 week, 2 days, ...).
+
+#### Solutions Applied
+* **Model (`assignment_model.dart`)**: `autoPriority` flag (default true) and `effectivePriority()`: low, medium within 7 days, high within 2 days or overdue. Records saved before this follow the due date only if they were medium (the old default). Stored in Firestore and a new SQLite column (DB v10).
+* **UI**: "Auto" segment in the priority picker; list badge, priority sort and the ROCIs Tasks bridge use the effective priority.
+* **Countdown (`assignment_reminder_service.dart`)**: per-assignment notices at 09:00 on 7, 2, 1 and 0 days before, skipped when past, after the deadline or over 30 days ahead. Stable FNV ids; scheduled ids kept in SharedPreferences so stale ones are cancelled. Setting `dueCountdown` in `ThemeProvider`, default off.
+* Dart-only, icon set unchanged, shipped as a Shorebird patch. Covered by `assignment_priority_countdown_test.dart`.
+
 ## Unfinished Assignment Reminders - 2026-11-06 (Patch 2 on 0.0.10+20)
 
 #### Problems & User Requirements

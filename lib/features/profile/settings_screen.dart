@@ -353,6 +353,20 @@ class SettingsScreen extends StatelessWidget {
                   if (v) await NotificationService().requestPermission();
                 },
               ),
+              SwitchListTile(
+                secondary: _buildLeadingIcon(
+                  context,
+                  Icons.schedule_rounded,
+                  Colors.teal,
+                ),
+                title: Text(l10n.translate('due_countdown')),
+                subtitle: Text(l10n.translate('due_countdown_desc')),
+                value: themeProvider.dueCountdown,
+                onChanged: (v) async {
+                  await themeProvider.setDueCountdown(v);
+                  if (v) await NotificationService().requestPermission();
+                },
+              ),
               if (themeProvider.enableReminders)
                 ListTile(
                   leading: _buildLeadingIcon(
