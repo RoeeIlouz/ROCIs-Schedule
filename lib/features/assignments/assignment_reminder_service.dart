@@ -146,6 +146,11 @@ class AssignmentReminderService {
     final plans = <AssignmentReminder>[];
     for (final a in assignments) {
       if (a.isCompleted) continue;
+      // A date picked without a time is stored at midnight: due that day.
+      final d = a.dueDate;
+      final deadline = d.hour == 0 && d.minute == 0 && d.second == 0
+          ? DateTime(d.year, d.month, d.day, 23, 59)
+          : d;
       for (var m = 0; m < countdownDays.length; m++) {
         final days = countdownDays[m];
         final when = DateTime(
@@ -155,7 +160,7 @@ class AssignmentReminderService {
           hour,
         );
         if (!when.isAfter(now) ||
-            !when.isBefore(a.dueDate) ||
+            !when.isBefore(deadline) ||
             when.isAfter(horizon)) {
           continue;
         }

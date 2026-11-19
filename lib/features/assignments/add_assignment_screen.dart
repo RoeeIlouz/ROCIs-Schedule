@@ -23,10 +23,16 @@ class AssignmentPrefill {
   final String? lectureEventId;
   final DateTime? lectureDate;
 
+  /// Carried over from the quick-add panel's "More details".
+  final String? title;
+  final DateTime? dueDate;
+
   const AssignmentPrefill({
     required this.courseId,
     this.lectureEventId,
     this.lectureDate,
+    this.title,
+    this.dueDate,
   });
 }
 
@@ -49,7 +55,12 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
   final _descriptionController = TextEditingController();
 
   String? _selectedCourseId;
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
+  DateTime _selectedDate = _endOfDay(
+    DateTime.now().add(const Duration(days: 7)),
+  );
+
+  static DateTime _endOfDay(DateTime d) =>
+      DateTime(d.year, d.month, d.day, 23, 59);
   AssignmentPriority _priority = AssignmentPriority.medium;
 
   /// New assignments follow the due date until a priority is picked.
@@ -87,6 +98,8 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
       _lectureDate = assignment.lectureDate;
     } else if (widget.prefill case final prefill?) {
       _selectedCourseId = prefill.courseId;
+      if (prefill.title case final title?) _titleController.text = title;
+      if (prefill.dueDate case final due?) _selectedDate = due;
       if (prefill.lectureEventId != null && prefill.lectureDate != null) {
         _lectureEventId = prefill.lectureEventId;
         _lectureDate = DateUtils.dateOnly(prefill.lectureDate!);
@@ -122,7 +135,10 @@ class _AddAssignmentScreenState extends State<AddAssignmentScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (date != null) {
-      setState(() => _selectedDate = date);
+      // Due by the end of the picked day.
+      setState(
+        () => _selectedDate = DateTime(date.year, date.month, date.day, 23, 59),
+      );
     }
   }
 

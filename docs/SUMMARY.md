@@ -1,3 +1,14 @@
+## Quick Add Assignments - 2026-11-19 (Patch 4 on 0.0.10+20)
+
+#### Problems & User Requirements
+* Adding an assignment took about 7 taps (open form, course list, date picker, save). The user wanted far fewer, plus typing it as one line.
+
+#### Solutions Applied
+* **Panel (`quick_add_assignment_sheet.dart`)**: bottom sheet with an autofocused title, course chips (guess: class now or ended in the last 2 h, else last used, else first) and date chips (tomorrow, 3 days, next week, calendar). Enter saves; "More details" opens the full form through the extended `AssignmentPrefill` (title, due date). Wired to the list FAB, desktop header button, add menus and command palette.
+* **Parser (`quick_add_parser.dart`)**: English and Hebrew date words (today, tomorrow, weekdays, in N days/weeks, next week, d/m dates, מחר, מחרתיים, יום חמישי, בעוד שבוע) and courses by code or name-word prefix (Hebrew prefixes and quote marks handled, ambiguous matches ignored). Typed matches update the chips until the user taps one.
+* **Fix**: picked due dates are stored at 23:59, and the countdown treats midnight due dates as end of day, so the "due today" notice is no longer skipped.
+* Dart-only, icon set unchanged. Covered by `quick_add_parser_test.dart` and `assignment_priority_countdown_test.dart`.
+
 ## Automatic Priority And Due Date Countdown - 2026-11-19 (Patch 3 on 0.0.10+20)
 
 #### Problems & User Requirements

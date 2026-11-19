@@ -5,6 +5,14 @@ All notable user-facing changes to ROCIs Schedule are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10+20] - 2026-11-19 (Patch 4)
+
+### Added
+- Quick add: + opens a small panel with the course already guessed and date chips (Tomorrow, In 3 days, Next week). Or type one line like "calc homework friday" or "תרגיל חדו"א מחר" and the course and date fill in.
+
+### Fixed
+- The "due today" countdown notice now fires for dates picked from the calendar.
+
 ## [0.0.10+20] - 2026-11-19 (Patch 3)
 
 ### Added

@@ -114,6 +114,12 @@ void main() {
       ]);
     });
 
+    test('a date without a time still gets the "due today" notice', () {
+      final r = plan([due(DateTime(2026, 11, 6))]);
+      expect(r.last.when, DateTime(2026, 11, 6, 9));
+      expect(r.last.body, 'Essay is due today');
+    });
+
     test('finished assignments and far-off notices are left out', () {
       expect(plan([due(DateTime(2026, 11, 20), done: true)]), isEmpty);
       expect(plan([due(DateTime(2027, 3, 1))]), isEmpty);

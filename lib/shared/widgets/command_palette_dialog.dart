@@ -1,3 +1,4 @@
+import 'package:rocis_schedule/features/assignments/quick_add_assignment_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -118,7 +119,7 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         section: 'Actions',
         onSelect: () {
           Navigator.of(context).pop();
-          context.push('/assignments/add');
+          QuickAddAssignmentSheet.show(context);
         },
       ),
       CommandPaletteItem(

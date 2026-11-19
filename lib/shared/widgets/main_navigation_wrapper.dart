@@ -1,3 +1,4 @@
+import 'package:rocis_schedule/features/assignments/quick_add_assignment_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -151,7 +152,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
                     title: Text(l10n.translate('add_assignment')),
                     onTap: () {
                       Navigator.pop(ctx);
-                      context.push('/assignments/add');
+                      QuickAddAssignmentSheet.show(context);
                     },
                   ),
                   ListTile(
@@ -422,7 +423,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
               if (action == 'event') {
                 context.push('/schedule/add-event');
               } else if (action == 'assignment') {
-                context.push('/assignments/add');
+                QuickAddAssignmentSheet.show(context);
               } else if (action == 'course') {
                 context.push('/courses/add');
               }

@@ -1,3 +1,4 @@
+import 'package:rocis_schedule/features/assignments/quick_add_assignment_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -323,7 +324,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
           floatingActionButton: Padding(
             padding: EdgeInsets.only(bottom: fabBottomPadding),
             child: FloatingActionButton(
-              onPressed: () => context.push('/assignments/add'),
+              onPressed: () => QuickAddAssignmentSheet.show(context),
               child: const Icon(Icons.add_rounded),
             ),
           ),
@@ -499,7 +500,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: () => context.push('/assignments/add'),
+            onPressed: () => QuickAddAssignmentSheet.show(context),
           ),
         ],
       ),
